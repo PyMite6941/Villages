@@ -12,6 +12,7 @@ import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
 import Courses from './pages/Courses'
 import CourseDetail from './pages/CourseDetail'
+import StudyHub from './pages/StudyHub'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/forum" element={<Forum session={session} />} />
         <Route path="/courses" element={<Courses session={session} />} />
         <Route path="/courses/:id" element={<CourseDetail session={session} />} />
+        <Route path="/study-hub" element={<StudyHub session={session} />} />
         <Route path="/profile" element={<Profile session={session} />} />
         <Route path="/onboarding" element={<Onboarding session={session} />} />
         <Route path="*" element={<Navigate to="/" />} />

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import { Home, Users, MessageSquare, User, LogOut, BookOpen } from 'lucide-react'
+import { Home, Users, MessageSquare, User, LogOut, BookOpen, Brain } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface Props {
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/villages', label: 'Villages', icon: Users },
   { to: '/courses', label: 'Courses', icon: BookOpen },
+  { to: '/study-hub', label: 'Study Hub', icon: Brain },
   { to: '/forum', label: 'Forum', icon: MessageSquare },
   { to: '/profile', label: 'Profile', icon: User },
 ]

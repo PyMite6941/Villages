@@ -139,6 +139,9 @@ village-700 → #a74916  (header background, dark text)
 - `POST /ai/village-elder/:village_id/prompt` — generate discussion post
 - `POST /ai/village-elder/:village_id/challenge` — generate collaborative challenge
 - `POST /ai/courses/:course_id/study-tips` — generate study tips for a course
+- `POST /ai/study-buddy` — Socratic AI tutor (body: `{subject, message, history[]}`)
+- `POST /ai/essay-coach` — structured essay critique, anti-ghostwriting (body: `{essay, essay_prompt?, student_context?}`)
+- `POST /ai/study-plan` — personalized weekly schedule (body: `{goals[], strengths[], weaknesses[], academic_level, weekly_hours}`)
 
 ---
 
@@ -151,6 +154,7 @@ village-700 → #a74916  (header background, dark text)
 /courses        → Knowledge Grove — school & hobby courses
 /courses/:id    → Course detail (lessons, progress, AI study tips)
 /forum          → Global forum
+/study-hub      → Study Hub — Socratic Study Buddy, Essay Coach, Study Planner
 /profile        → User profile + Village Scholar (verified teacher) application
 /onboarding     → New user setup (3-step wizard)
 ```

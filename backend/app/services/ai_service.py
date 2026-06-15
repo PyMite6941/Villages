@@ -130,6 +130,83 @@ async def generate_course_study_tips(
     return await call_groq(messages, system)
 
 
+async def generate_socratic_response(
+    subject: str,
+    message: str,
+    history: list[dict],
+) -> str:
+    system = (
+        "You are a Socratic Study Buddy in a student community called Villages. "
+        "Your single rule: NEVER give direct answers or explanations. "
+        "Instead, respond ONLY with probing questions and hints that guide the student "
+        "to discover the answer themselves. 2-3 sentences max. "
+        "Be warm and encouraging, like a patient Socratic tutor. "
+        "If the student is on the right track, affirm it and push deeper with another question."
+    )
+    trimmed_history = history[-8:] if len(history) > 8 else history
+    messages = [
+        *[{"role": m["role"], "content": m["content"]} for m in trimmed_history],
+        {"role": "user", "content": f"[Subject: {subject}]\n\n{message}"},
+    ]
+    return await call_groq(messages, system)
+
+
+async def generate_essay_feedback(
+    essay: str,
+    essay_prompt: str,
+    student_context: str,
+) -> dict:
+    system = (
+        "You are an objective college admissions coach. "
+        "CRITICAL RULE: You MUST NOT write, rewrite, or generate any essay content for the student. "
+        "Your ONLY job is to critique and analyze the existing text. "
+        "Identify concrete strengths, specific improvements needed, and strategic vulnerabilities. "
+        "Respond with JSON only: "
+        '{"strengths": ["..."], "improvements": ["..."], "vulnerabilities": ["..."], "overall": "2-3 sentence summary"}'
+    )
+    parts = ["Critique this college essay.\n"]
+    if essay_prompt:
+        parts.append(f"[ESSAY PROMPT]\n{essay_prompt}\n")
+    if student_context:
+        parts.append(f"[STUDENT CONTEXT — use to evaluate achievement in context]\n{student_context}\n")
+    parts.append(f"[ESSAY]\n{essay}\n\nJSON only.")
+    messages = [{"role": "user", "content": "\n".join(parts)}]
+    raw = await call_groq(messages, system)
+    return _parse_json(raw, {
+        "strengths": [],
+        "improvements": [],
+        "vulnerabilities": [],
+        "overall": raw,
+    })
+
+
+async def generate_study_plan(
+    goals: list[str],
+    strengths: list[str],
+    weaknesses: list[str],
+    academic_level: str,
+    weekly_hours: int,
+) -> str:
+    system = (
+        "You are a study planner for a student learning community called Villages. "
+        "Create a realistic, specific day-by-day weekly schedule. "
+        "Prioritize weak areas and exam goals. Be concrete about time blocks and tasks."
+    )
+    messages = [{
+        "role": "user",
+        "content": (
+            f"Create a weekly study plan for this student:\n"
+            f"- Academic level: {academic_level}\n"
+            f"- Goals: {', '.join(goals) if goals else 'general improvement'}\n"
+            f"- Strengths (spend less time): {', '.join(strengths) if strengths else 'not specified'}\n"
+            f"- Needs work (prioritize): {', '.join(weaknesses) if weaknesses else 'not specified'}\n"
+            f"- Available study hours per week: {weekly_hours}h\n\n"
+            f"Give a clear Mon–Sun schedule with subject and time for each block."
+        ),
+    }]
+    return await call_groq(messages, system)
+
+
 async def moderate_content(content: str) -> dict:
     system = (
         "You are a content moderator for a student platform (ages 13-18). "

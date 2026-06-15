@@ -77,5 +77,13 @@ export const api = {
       req<unknown>('POST', `/ai/village-elder/${villageId}/challenge?subject=${subject}&difficulty=${difficulty}`),
     courseStudyTips: (courseId: string) =>
       req<{ tips: string }>('POST', `/ai/courses/${courseId}/study-tips`),
+    studyBuddy: (subject: string, message: string, history: { role: string; content: string }[]) =>
+      req<{ response: string }>('POST', '/ai/study-buddy', { subject, message, history }),
+    essayCoach: (essay: string, essay_prompt: string, student_context: string) =>
+      req<{ strengths: string[]; improvements: string[]; vulnerabilities: string[]; overall: string }>(
+        'POST', '/ai/essay-coach', { essay, essay_prompt, student_context }
+      ),
+    studyPlan: (data: { goals: string[]; strengths: string[]; weaknesses: string[]; academic_level: string; weekly_hours: number }) =>
+      req<{ plan: string }>('POST', '/ai/study-plan', data),
   },
 }
