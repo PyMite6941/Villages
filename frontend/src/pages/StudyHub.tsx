@@ -35,14 +35,30 @@ export default function StudyHub({ session }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Brain className="text-village-600" size={24} />
-          Study Hub
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">
-          AI-powered study tools — Socratic tutoring, essay coaching, and personalized planning
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Brain className="text-village-600" size={24} />
+            Study Hub
+          </h1>
+          <span className="badge bg-village-100 text-village-700 text-xs">👤 Personal</span>
+        </div>
+        <p className="text-gray-500 text-sm">
+          Your private AI study space — 1-on-1 tools that exist outside your Villages
         </p>
+      </div>
+
+      {/* Distinction callout */}
+      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 text-sm">
+        <span className="text-lg mt-0.5">🏘️</span>
+        <div>
+          <span className="font-medium text-amber-900">Study Hub vs. Villages</span>
+          <span className="text-amber-800 ml-1.5">
+            Study Hub is for personal work — solo AI tutoring, your own essays, your own schedule.
+            For group discussion, peer collaboration, and shared challenges, go to your{' '}
+            <a href="/villages" className="underline font-medium">Villages</a>.
+          </span>
+        </div>
       </div>
 
       {/* Tabs */}

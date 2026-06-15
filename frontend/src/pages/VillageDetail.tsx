@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
 import { supabase } from '../lib/supabase'
@@ -139,18 +139,31 @@ export default function VillageDetail({ session: _session }: Props) {
         )}
       </div>
 
-      {/* AI tools */}
-      <div className="flex gap-3 mb-6 flex-wrap">
-        <button onClick={callVillageElder} disabled={elderLoading} className="btn-secondary flex items-center gap-2 text-sm">
-          <Sparkles size={15} className="text-village-600" />
-          {elderLoading ? 'Summoning...' : 'Ask Village Elder'}
-        </button>
-        <div className="flex gap-2 flex-1 min-w-48">
-          <input value={challengeSubject} onChange={(e) => setChallengeSubject(e.target.value)} className="input text-sm" placeholder="Subject for AI challenge..." />
-          <button onClick={generateChallenge} disabled={challengeLoading || !challengeSubject} className="btn-primary text-sm flex items-center gap-1.5 whitespace-nowrap">
-            <Zap size={14} /> {challengeLoading ? 'Generating...' : 'Challenge'}
-          </button>
+      {/* Group AI tools */}
+      <div className="mb-3">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">👥 Group Tools</span>
+          <span className="text-xs text-gray-400">— shared with everyone in this village</span>
         </div>
+        <div className="flex gap-3 flex-wrap">
+          <button onClick={callVillageElder} disabled={elderLoading} className="btn-secondary flex items-center gap-2 text-sm">
+            <Sparkles size={15} className="text-village-600" />
+            {elderLoading ? 'Summoning...' : 'Ask Village Elder'}
+          </button>
+          <div className="flex gap-2 flex-1 min-w-48">
+            <input value={challengeSubject} onChange={(e) => setChallengeSubject(e.target.value)} className="input text-sm" placeholder="Subject for AI challenge..." />
+            <button onClick={generateChallenge} disabled={challengeLoading || !challengeSubject} className="btn-primary text-sm flex items-center gap-1.5 whitespace-nowrap">
+              <Zap size={14} /> {challengeLoading ? 'Generating...' : 'Challenge'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Personal tools nudge */}
+      <div className="flex items-center gap-2 mb-6 px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs text-gray-500">
+        <span>👤</span>
+        <span>Need solo AI tutoring, essay coaching, or a personal study plan?</span>
+        <Link to="/study-hub" className="text-village-600 font-medium hover:underline shrink-0">Study Hub →</Link>
       </div>
 
       {/* Tabs */}
