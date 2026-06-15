@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="32" fill="#fdf8f0"/>
+
+  <!-- Sky gradient hint -->
+  <circle cx="32" cy="32" r="32" fill="url(#sky)" opacity="0.4"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#faecd6"/>
+      <stop offset="100%" stop-color="#fdf8f0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ground -->
+  <ellipse cx="32" cy="52" rx="26" ry="5" fill="#ca6118" opacity="0.12"/>
+
+  <!-- Left house -->
+  <rect x="7" y="36" width="13" height="13" rx="1" fill="#e3953e"/>
+  <polygon points="6,37 13.5,26 21,37" fill="#a74916"/>
+  <!-- Left door -->
+  <rect x="11" y="42" width="4" height="7" rx="1" fill="#7c3a12"/>
+  <!-- Left window -->
+  <rect x="8" y="38" width="4" height="3" rx="0.5" fill="#faecd6"/>
+
+  <!-- Middle house (tallest) -->
+  <rect x="22" y="29" width="20" height="20" rx="1" fill="#d97a20"/>
+  <polygon points="21,30 32,14 43,30" fill="#863c18"/>
+  <!-- Middle door -->
+  <rect x="29" y="37" width="6" height="12" rx="1" fill="#7c3a12"/>
+  <!-- Middle windows -->
+  <rect x="24" y="32" width="5" height="4" rx="0.5" fill="#faecd6"/>
+  <rect x="35" y="32" width="5" height="4" rx="0.5" fill="#faecd6"/>
+  <!-- Chimney -->
+  <rect x="38" y="18" width="3" height="7" rx="0.5" fill="#863c18"/>
+  <!-- Smoke puffs -->
+  <circle cx="39.5" cy="16" r="2" fill="#e8d5c0" opacity="0.7"/>
+  <circle cx="41" cy="13" r="1.5" fill="#e8d5c0" opacity="0.5"/>
+
+  <!-- Right house -->
+  <rect x="44" y="34" width="13" height="15" rx="1" fill="#e3953e"/>
+  <polygon points="43,35 50.5,25 58,35" fill="#a74916"/>
+  <!-- Right door -->
+  <rect x="48" y="41" width="4" height="8" rx="1" fill="#7c3a12"/>
+  <!-- Right window -->
+  <rect x="52" y="36" width="4" height="3" rx="0.5" fill="#faecd6"/>
+
+  <!-- Path connecting houses -->
+  <path d="M15 49 Q32 46 49 49" stroke="#ca6118" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.3"/>
+
+  <!-- Sun -->
+  <circle cx="54" cy="14" r="4" fill="#e3953e" opacity="0.75"/>
+  <line x1="54" y1="8" x2="54" y2="6" stroke="#e3953e" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="58.8" y1="9.2" x2="60.2" y2="7.8" stroke="#e3953e" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="60" y1="14" x2="62" y2="14" stroke="#e3953e" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+</svg>
