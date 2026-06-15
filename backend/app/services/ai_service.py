@@ -11,12 +11,12 @@ async def call_openrouter(messages: list[dict], system: Optional[str] = None) ->
         "X-Title": "Villages Platform",
         "Content-Type": "application/json",
     }
-
+    
     payload = {
         "model": settings.openrouter_model,
         "messages": [{"role": "system", "content": system}] + messages if system else messages,
     }
-
+    
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(OPENROUTER_API_URL, json=payload, headers=headers)
         resp.raise_for_status()
@@ -37,14 +37,14 @@ async def generate_village_match_reasoning(
         for v in available_villages
         if v["member_count"] < v["max_members"]
     )
-
+    
     system = (
         "You are an AI matching system for a student community platform called Villages. "
         "Villages are small study cohorts (5-10 students). Your job is to match students "
         "to the best Village based on their academic goals and profile. "
         "Respond with a JSON object: {\"village_id\": \"<id>\", \"reasoning\": \"<1-2 sentence explanation>\"}"
     )
-
+    
     messages = [{
         "role": "user",
         "content": (
@@ -57,7 +57,7 @@ async def generate_village_match_reasoning(
             f"Which village is the best match? Return JSON only."
         )
     }]
-
+    
     import json
     raw = await call_openrouter(messages, system)
     try:

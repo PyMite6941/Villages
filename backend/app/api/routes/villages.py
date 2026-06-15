@@ -36,7 +36,7 @@ async def create_village(data: VillageCreate, x_user_id: str = Header(...)):
     result = sb.table("villages").insert(village).execute()
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to create village")
-
+    
     # Auto-join creator as chief
     sb.table("village_members").insert({
         "user_id": x_user_id,
@@ -44,10 +44,10 @@ async def create_village(data: VillageCreate, x_user_id: str = Header(...)):
         "role": "chief",
         "joined_at": datetime.utcnow().isoformat(),
     }).execute()
-
+    
     # Update profile with village
     sb.table("profiles").update({"village_id": village_id}).eq("id", x_user_id).execute()
-
+    
     return Village(**result.data[0])
 
 @router.get("/{village_id}", response_model=Village)
@@ -64,42 +64,42 @@ async def join_village(village_id: str, x_user_id: str = Header(...)):
     village_result = sb.table("villages").select("*").eq("id", village_id).execute()
     if not village_result.data:
         raise HTTPException(status_code=404, detail="Village not found")
-
+    
     village = village_result.data[0]
     if village["member_count"] >= village["max_members"]:
         raise HTTPException(status_code=400, detail="Village is full")
-
+    
     # Check not already a member
     existing = sb.table("village_members").select("*").eq("user_id", x_user_id).eq("village_id", village_id).execute()
     if existing.data:
         raise HTTPException(status_code=400, detail="Already a member")
-
+    
     sb.table("village_members").insert({
         "user_id": x_user_id,
         "village_id": village_id,
         "role": "member",
         "joined_at": datetime.utcnow().isoformat(),
     }).execute()
-
+    
     sb.table("villages").update({"member_count": village["member_count"] + 1}).eq("id", village_id).execute()
     sb.table("profiles").update({"village_id": village_id}).eq("id", x_user_id).execute()
-
+    
     return {"message": f"Successfully joined village '{village['name']}'"}
 
 @router.post("/match")
 async def ai_match_village(x_user_id: str = Header(...)):
     sb = get_supabase()
-
+    
     profile_result = sb.table("profiles").select("*").eq("id", x_user_id).execute()
     if not profile_result.data:
         raise HTTPException(status_code=404, detail="Profile not found — create one first")
-
+    
     profile = profile_result.data[0]
     villages_result = sb.table("villages").select("*").eq("is_active", True).execute()
-
+    
     if not villages_result.data:
         raise HTTPException(status_code=404, detail="No villages available yet")
-
+    
     match = await generate_village_match_reasoning(
         user_goals=profile.get("goals", []),
         user_strengths=profile.get("strengths", []),
@@ -107,7 +107,7 @@ async def ai_match_village(x_user_id: str = Header(...)):
         academic_level=profile.get("academic_level", ""),
         available_villages=villages_result.data,
     )
-
+    
     return {
         "recommended_village_id": match.get("village_id"),
         "reasoning": match.get("reasoning"),
