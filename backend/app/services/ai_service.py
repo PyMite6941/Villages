@@ -207,6 +207,42 @@ async def generate_study_plan(
     return await call_groq(messages, system)
 
 
+async def generate_college_advisor_response(
+    message: str,
+    gpa: str,
+    test_scores: str,
+    interests: list[str],
+    preferences: str,
+    history: list[dict],
+) -> str:
+    system = (
+        "You are a college admissions advisor inside a student community called Villages. "
+        "Help high school students find schools that fit their profile, interests, and goals. "
+        "When suggesting schools, always provide a range: 1-2 reach, 2-3 match, 1-2 safety schools. "
+        "Be realistic, specific, and encouraging. Name actual schools. "
+        "If you need more information, ask focused clarifying questions. "
+        "Keep responses under 350 words. "
+        "NEVER generate application essay content — only advise on school selection and the application process."
+    )
+    context_parts = []
+    if gpa:
+        context_parts.append(f"GPA: {gpa}")
+    if test_scores:
+        context_parts.append(f"Test scores: {test_scores}")
+    if interests:
+        context_parts.append(f"Interests/intended major: {', '.join(interests)}")
+    if preferences:
+        context_parts.append(f"Preferences: {preferences}")
+    context = "\n".join(context_parts)
+    trimmed_history = history[-8:] if len(history) > 8 else history
+    first_message = f"[Student Profile]\n{context}\n\n{message}" if (context and not trimmed_history) else message
+    messages = [
+        *[{"role": m["role"], "content": m["content"]} for m in trimmed_history],
+        {"role": "user", "content": first_message},
+    ]
+    return await call_groq(messages, system)
+
+
 async def moderate_content(content: str) -> dict:
     system = (
         "You are a content moderator for a student platform (ages 13-18). "

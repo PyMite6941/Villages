@@ -15,6 +15,7 @@ class UserProfile(BaseModel):
     is_verified_teacher: Optional[bool] = False
     teacher_subjects: Optional[list[str]] = []
     bio: Optional[str] = None
+    study_tags: Optional[list[str]] = []
     created_at: Optional[datetime] = None
 
 class UserProfileCreate(BaseModel):
@@ -31,3 +32,4 @@ class UserProfileUpdate(BaseModel):
     strengths: Optional[list[str]] = None
     weaknesses: Optional[list[str]] = None
     bio: Optional[str] = None
+    study_tags: Optional[list[str]] = None

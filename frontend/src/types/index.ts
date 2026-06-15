@@ -11,7 +11,21 @@ export interface UserProfile {
   is_verified_teacher?: boolean
   teacher_subjects?: string[]
   bio?: string
+  study_tags?: string[]
   created_at?: string
+}
+
+export interface Message {
+  id: string
+  village_id: string
+  user_id: string
+  author_name: string
+  content: string
+  message_type: 'text' | 'code' | 'link'
+  reply_to_id: string | null
+  reply_preview: string | null
+  is_pinned: boolean
+  created_at: string
 }
 
 export interface Village {

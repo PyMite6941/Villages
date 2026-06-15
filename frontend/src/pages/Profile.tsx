@@ -12,6 +12,33 @@ const COMMON_GOALS = [
   'AP Chemistry', 'AP Physics', 'AP History', 'AP English', 'College Essays', 'Study Habits',
 ]
 
+const STUDY_TRACK_OPTIONS = [
+  {
+    tag: 'high_schooler',
+    label: '🎓 High Schooler',
+    desc: 'Currently in high school (grades 9-12)',
+    unlocks: ['College Prep track', 'Application Essay Workshop', 'College Fit Advisor'],
+  },
+  {
+    tag: 'college_student',
+    label: '🏛️ College Student',
+    desc: 'Enrolled in a college or university',
+    unlocks: ['Research writing tools'],
+  },
+  {
+    tag: 'hobbyist',
+    label: '🎨 Hobbyist / Lifelong Learner',
+    desc: 'Learning for personal growth or passion projects',
+    unlocks: null,
+  },
+  {
+    tag: 'educator',
+    label: '📖 Educator / Tutor',
+    desc: 'A teacher, tutor, or mentor helping others learn',
+    unlocks: ['Village Scholar application'],
+  },
+]
+
 const ALL_SUBJECTS = [
   'Mathematics', 'Science', 'English', 'History', 'Computer Science', 'Languages',
   'Social Studies', 'Test Prep', 'Physics', 'Chemistry', 'Biology', 'Economics',
@@ -25,6 +52,8 @@ export default function Profile({ session }: Props) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ display_name: '', academic_level: '', goals: [] as string[], bio: '' })
   const [saving, setSaving] = useState(false)
+  const [studyTags, setStudyTags] = useState<string[]>([])
+  const [savingTags, setSavingTags] = useState(false)
 
   const [verification, setVerification] = useState<TeacherVerification | null | undefined>(undefined)
   const [showScholarForm, setShowScholarForm] = useState(false)
@@ -35,9 +64,27 @@ export default function Profile({ session }: Props) {
     api.users.getProfile(session.user.id).then((p) => {
       setProfile(p)
       setForm({ display_name: p.display_name, academic_level: p.academic_level, goals: p.goals, bio: p.bio ?? '' })
+      setStudyTags(p.study_tags ?? [])
     })
     api.teacher.getVerification().then((v) => setVerification(v)).catch(() => setVerification(null))
   }, [session.user.id])
+
+  const toggleTag = async (tag: string) => {
+    const next = studyTags.includes(tag)
+      ? studyTags.filter((t) => t !== tag)
+      : [...studyTags, tag]
+    setStudyTags(next)
+    setSavingTags(true)
+    try {
+      await api.users.updateProfile({ study_tags: next })
+      setProfile((p) => p ? { ...p, study_tags: next } : p)
+    } catch {
+      toast.error('Could not save track preference')
+      setStudyTags(studyTags)
+    } finally {
+      setSavingTags(false)
+    }
+  }
 
   const toggleGoal = (g: string) => {
     setForm((prev) => ({
@@ -261,6 +308,48 @@ export default function Profile({ session }: Props) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Study Tracks */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">🎯</span>
+          <h2 className="font-semibold text-gray-900">Study Tracks</h2>
+          {savingTags && <span className="text-xs text-gray-400 ml-auto">Saving...</span>}
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Select tags that describe you. Active tags unlock relevant tools and tracks in your Study Hub.
+        </p>
+        <div className="space-y-2">
+          {STUDY_TRACK_OPTIONS.map(({ tag, label, desc, unlocks }) => (
+            <button
+              key={tag}
+              onClick={() => toggleTag(tag)}
+              className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
+                studyTags.includes(tag)
+                  ? 'bg-village-50 border-village-400 ring-1 ring-village-300'
+                  : 'bg-white border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className={`w-4 h-4 rounded border-2 shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
+                studyTags.includes(tag) ? 'bg-village-600 border-village-600' : 'border-gray-300'
+              }`}>
+                {studyTags.includes(tag) && <span className="text-white text-xs font-bold leading-none">✓</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm text-gray-900">{label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+                {unlocks && studyTags.includes(tag) && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {unlocks.map((u) => (
+                      <span key={u} className="badge bg-village-100 text-village-700 text-xs">🔓 {u}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       <button

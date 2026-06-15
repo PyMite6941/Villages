@@ -9,6 +9,7 @@ from app.services.ai_service import (
     generate_socratic_response,
     generate_essay_feedback,
     generate_study_plan,
+    generate_college_advisor_response,
 )
 import uuid
 from datetime import datetime
@@ -142,3 +143,25 @@ async def study_plan(data: StudyPlanRequest, _user_id: str = Depends(get_current
         weekly_hours=data.weekly_hours,
     )
     return {"plan": plan}
+
+
+class CollegeAdvisorRequest(BaseModel):
+    message: str
+    gpa: str = ""
+    test_scores: str = ""
+    interests: list[str] = []
+    preferences: str = ""
+    history: list[dict] = []
+
+
+@router.post("/college-advisor")
+async def college_advisor(data: CollegeAdvisorRequest, _user_id: str = Depends(get_current_user)):
+    response = await generate_college_advisor_response(
+        message=data.message,
+        gpa=data.gpa,
+        test_scores=data.test_scores,
+        interests=data.interests,
+        preferences=data.preferences,
+        history=data.history,
+    )
+    return {"response": response}

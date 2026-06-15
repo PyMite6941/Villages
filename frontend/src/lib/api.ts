@@ -85,5 +85,13 @@ export const api = {
       ),
     studyPlan: (data: { goals: string[]; strengths: string[]; weaknesses: string[]; academic_level: string; weekly_hours: number }) =>
       req<{ plan: string }>('POST', '/ai/study-plan', data),
+    collegeAdvisor: (data: {
+      message: string
+      gpa?: string
+      test_scores?: string
+      interests?: string[]
+      preferences?: string
+      history?: { role: string; content: string }[]
+    }) => req<{ response: string }>('POST', '/ai/college-advisor', data),
   },
 }

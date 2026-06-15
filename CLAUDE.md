@@ -195,7 +195,7 @@ Each subject has a canonical emoji (defined in `Courses.tsx` → `SUBJECT_EMOJIS
 ## Database Tables
 
 ```
-profiles            — extends auth.users; has goals[], teacher fields
+profiles            — extends auth.users; has goals[], teacher fields, study_tags[]
 villages            — study cohorts
 village_members     — many-to-many; roles: member/elder/chief
 posts               — forum posts (village-scoped or global)
@@ -205,7 +205,76 @@ teacher_verifications — Village Scholar applications
 courses             — school & hobby courses
 lessons             — ordered lessons within a course
 course_enrollments  — user ↔ course with completed_lesson_ids[]
+messages            — village real-time chat (Supabase Realtime enabled)
 ```
+
+---
+
+## Village Chat
+
+Real-time group chat is built **directly on Supabase** — no FastAPI involved. This keeps the free deployment viable (no backend compute for high-frequency messages).
+
+### Architecture
+- Frontend reads/writes `messages` table directly via `supabase-js`
+- `supabase.channel()` with `postgres_changes` for live INSERT + UPDATE events
+- `author_name` is denormalized (passed from client profile) for display without joins
+- Supabase RLS enforces: only village members can read/write; `user_id` must equal `auth.uid()` on insert
+
+### Message types
+- `text` — normal chat bubble
+- `code` — dark monospace code block (`bg-gray-900 text-green-400`)
+- `link` — underlined clickable URL
+
+### Features
+- Reply-to: `reply_to_id` + `reply_preview` (120-char snapshot)
+- Pin: any village member can pin; pinned messages appear at top of chat
+- Load last 100 messages on mount, then realtime for new ones
+- Auto-scroll to bottom on new messages
+
+### Component
+`frontend/src/components/VillageChat.tsx` — receives `{ villageId, session, authorName }` props
+
+---
+
+## Study Tracks System
+
+Users self-select tags in their Profile page under "Study Tracks". Tags are stored in `profiles.study_tags text[]` and saved via `PATCH /users/profile` (the `UserProfileUpdate` model includes `study_tags`).
+
+### Available tags
+| Tag | Label | Unlocks |
+|---|---|---|
+| `high_schooler` | 🎓 High Schooler | College Prep track in Study Hub |
+| `college_student` | 🏛️ College Student | Research writing tools (future) |
+| `hobbyist` | 🎨 Hobbyist / Lifelong Learner | — |
+| `educator` | 📖 Educator / Tutor | Village Scholar application nudge |
+
+### Track detection in Study Hub
+```typescript
+const isHighSchooler = profile?.study_tags?.includes('high_schooler') ?? false
+```
+Locked tabs show `🔒 High Schooler track` description and are `cursor-not-allowed`.
+
+---
+
+## College Prep Track (High Schooler tag)
+
+Appears as a 4th tab in Study Hub when `high_schooler` tag is active. Contains two sub-tabs:
+
+### Application Essay Workshop
+- Common App prompt selector (all 7 official prompts, selectable)
+- Custom supplemental essay prompt input
+- Student context field (auto-filled from profile)
+- Essay textarea with char + word count
+- Uses existing `api.ai.essayCoach` → `/ai/essay-coach` (anti-ghostwriting policy enforced)
+- Feedback output: Overall / Strengths / Improvements / Vulnerabilities
+
+### College Fit Advisor
+- Profile setup form: GPA, test scores, interests/major, preferences
+- Conversational AI chat with memory (last 8 turns)
+- Backend: `generate_college_advisor_response()` in `ai_service.py`
+- Endpoint: `POST /ai/college-advisor` (body: `{message, gpa, test_scores, interests[], preferences, history[]}`)
+- Always suggests reach / match / safety school mix
+- Anti-ghostwriting: will not write application content
 
 ---
 
@@ -218,6 +287,10 @@ Functions:
 - `generate_discussion_prompt()` — Village Elder forum posts
 - `generate_study_challenge()` — collaborative group challenges
 - `generate_course_study_tips()` — personalized study advice per course
+- `generate_socratic_response()` — Socratic Study Buddy (never gives direct answers)
+- `generate_essay_feedback()` — Essay Coach critique (anti-ghostwriting enforced in system prompt)
+- `generate_study_plan()` — personalized weekly schedule
+- `generate_college_advisor_response()` — college fit suggestions (reach/match/safety)
 - `moderate_content()` — safety check for student platform
 
 Model configured via `settings.groq_model` in `app/config.py`.

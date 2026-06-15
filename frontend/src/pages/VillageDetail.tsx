@@ -5,7 +5,8 @@ import { api } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import type { Village, Post } from '../types'
 import PostCard from '../components/PostCard'
-import { Sparkles, Zap, Users, BookOpen, Send, Wifi } from 'lucide-react'
+import VillageChat from '../components/VillageChat'
+import { Sparkles, Zap, Users, BookOpen, Send, Wifi, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props { session: Session }
@@ -15,14 +16,21 @@ export default function VillageDetail({ session: _session }: Props) {
   const [village, setVillage] = useState<Village | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [members, setMembers] = useState<unknown[]>([])
+  const [displayName, setDisplayName] = useState('')
   const [newPost, setNewPost] = useState('')
   const [posting, setPosting] = useState(false)
   const [elderLoading, setElderLoading] = useState(false)
   const [challengeSubject, setChallengeSubject] = useState('')
   const [challengeLoading, setChallengeLoading] = useState(false)
-  const [tab, setTab] = useState<'discussion' | 'members'>('discussion')
+  const [tab, setTab] = useState<'discussion' | 'chat' | 'members'>('discussion')
   const [live, setLive] = useState(false)
   const postIdsRef = useRef(new Set<string>())
+
+  useEffect(() => {
+    api.users.getProfile(_session.user.id)
+      .then((p) => setDisplayName(p.display_name))
+      .catch(() => setDisplayName(_session.user.email?.split('@')[0] ?? 'Villager'))
+  }, [_session.user.id])
 
   useEffect(() => {
     if (!id) return
@@ -168,10 +176,10 @@ export default function VillageDetail({ session: _session }: Props) {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-gray-200">
-        {(['discussion', 'members'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t as typeof tab)}
+        {(['discussion', 'chat', 'members'] as const).map((t) => (
+          <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${tab === t ? 'border-village-600 text-village-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {t}
+            {t === 'chat' ? '💬 Chat' : t}
           </button>
         ))}
       </div>
@@ -188,6 +196,22 @@ export default function VillageDetail({ session: _session }: Props) {
             </div>
           </div>
           {posts.map((p) => <PostCard key={p.id} post={p} />)}
+        </div>
+      )}
+
+      {tab === 'chat' && id && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageCircle size={16} className="text-village-600" />
+            <span className="font-semibold text-gray-900">Village Chat</span>
+            <span className="badge bg-emerald-100 text-emerald-700 text-xs">Live</span>
+            <span className="text-xs text-gray-400 ml-auto">Share code, links, or ask quick questions</span>
+          </div>
+          <VillageChat
+            villageId={id}
+            session={_session}
+            authorName={displayName || _session.user.email?.split('@')[0] || 'Villager'}
+          />
         </div>
       )}
 
