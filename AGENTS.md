@@ -19,7 +19,10 @@ AI-powered student community platform. Students form study cohorts ("Villages"),
 - `frontend/vercel.json` added with production API rewrites
 - CORS updated in `backend/app/main.py` for Vercel domains
 - `supabase/migrations/001_initial_schema.sql` — full DDL + RLS + Realtime ready
+- `supabase/migrations/002_performance_indexes.sql` — 7 indexes for query speed
+- `backend/Dockerfile` — for Koyeb deployment
 - `run.sh` — script to start both backend + frontend locally
+- `AGENTS.md` — This file — instructions for Claude Code
 
 ## Key Files
 
@@ -34,9 +37,11 @@ AI-powered student community platform. Students form study cohorts ("Villages"),
 | `backend/app/auth.py` | JWT bearer token validation |
 | `backend/app/database.py` | Supabase admin client singleton |
 | `backend/.env` | Actual keys (gitignored) |
+| `backend/Dockerfile` | Container config for Koyeb deployment |
 | `frontend/.env` | Frontend Supabase keys (gitignored) |
 | `frontend/vercel.json` | Vercel deploy + API rewrite config |
 | `supabase/migrations/001_initial_schema.sql` | Database schema + RLS + Realtime |
+| `supabase/migrations/002_performance_indexes.sql` | Performance indexes |
 
 ## How to Run Locally
 
@@ -61,24 +66,36 @@ Users → https://villages.vercel.app
         │   Vercel       │  ← Frontend (React/Vite)
         │  (free tier)   │     Always-on, global CDN, SSL
         └───────┬───────┘
-                │  /api/* → https://villages-api.onrender.com
+                │  /api/* → https://villages-xxx.koyeb.app
         ┌───────┴───────┐
-        │   Render       │  ← Backend (FastAPI/Python)
-        │  (free tier)   │     750 hrs/mo, auto-deploy from GitHub
-        │                │     Spins down after 15min idle
-        │                │     → cron-job.org pings every 14min
+        │   Koyeb        │  ← Backend (FastAPI/Python)
+        │  (free tier)   │     1 always-on instance, 512MB RAM
+        │                │     Scales to zero after 1hr idle
+        │                │     → cron-job.org pings every 30min
         └───────┬───────┘
                 │  SUPABASE_SERVICE_ROLE_KEY
         ┌───────┴───────┐
         │   Supabase     │  ← Database + Auth + Realtime
         │  (free tier)   │     500MB DB, 50k users, Realtime
-        │                │     → cron-job.org also prevents 7-day pause
         └───────────────┘
 
-Keep-alive: cron-job.org (free) → pings /health every 14 minutes
-             → Prevents Render spin-down + Supabase 7-day pause
-             → ~90 pings/day, well within free tier
+Keep-alive: cron-job.org (free, no CC) → pings /health every 30 min
+             → Prevents Koyeb scale-to-zero (1hr idle timeout)
+             → Also prevents Supabase 7-day project pause
+             → ~48 pings/day, well within cron-job.org free tier
 ```
+
+## Why Koyeb Over Render
+
+| Factor | Render | Koyeb ✅ |
+|--------|--------|---------|
+| Free forever? | ✅ 750 hrs/mo (enough) | ✅ 1 free instance, truly forever |
+| Credit card? | ❌ Not required | ❌ Not required |
+| Spin-down | ❌ After 15 min idle | ❌ After 1hr idle (fixable with cron) |
+| Python/FastAPI | ✅ Native | ✅ Buildpacks or Docker |
+| Free DB | ⚠️ 90-day PostgreSQL | ❌ No free DB (we use Supabase) |
+| Git auto-deploy | ✅ | ✅ |
+| Global CDN | ❌ Single region | ❌ Single region (Frankfurt/DC) |
 
 ## Phase 1 — Launch: Step-by-Step Delegation
 
@@ -113,17 +130,16 @@ VITE_SUPABASE_URL=<new-project-url>
 VITE_SUPABASE_ANON_KEY=<new-anon-key>
 ```
 
-### Task 1.3: Run Database Migration (👤 Human)
+### Task 1.3: Run Database Migrations (👤 Human)
 
-1. Open Supabase Dashboard → **SQL Editor**
-2. Paste the entire contents of `supabase/migrations/001_initial_schema.sql`
-3. Click **Run**
-4. Verify all 6 tables were created: `profiles`, `villages`, `village_members`, `posts`, `comments`, `challenges`
-5. Tell Claude when done
+Run **both** migrations in order in the Supabase SQL Editor:
+
+1. `supabase/migrations/001_initial_schema.sql` — Tables + RLS + Realtime
+2. `supabase/migrations/002_performance_indexes.sql` — Indexes for speed
+
+Verify all 6 tables: `profiles`, `villages`, `village_members`, `posts`, `comments`, `challenges`
 
 ### Task 1.4: Deploy Frontend to Vercel (⬜ Claude Code + 👤 Human)
-
-Steps for Claude to walk the human through:
 
 1. Go to https://vercel.com → **Add New → Project**
 2. Import the `Villages` GitHub repo
@@ -136,21 +152,23 @@ Steps for Claude to walk the human through:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
 5. Click **Deploy**
-6. After deploy, the Vercel URL will be `https://villages-*.vercel.app`
-7. Tell Claude the URL — Claude will update CORS in the backend
+6. After deploy, Vercel URL is `https://villages-xxx.vercel.app`
+7. Tell Claude the URL — Claude updates CORS
 
-### Task 1.5: Deploy Backend to Render (⬜ Claude Code + 👤 Human)
+### Task 1.5: Deploy Backend to Koyeb (⬜ Claude Code + 👤 Human)
 
-Steps for Claude to walk the human through:
-
-1. Go to https://dashboard.render.com → **New + → Web Service**
-2. Connect your GitHub repo
+1. Go to https://app.koyeb.com → **Create App**
+2. Connect GitHub, select the `Villages` repo
 3. Configure:
    - **Name:** `villages-api`
-   - **Root Directory:** (leave as repo root, or specify `./`)
-   - **Runtime:** Python
-   - **Build:** `pip install -r backend/requirements.txt`
-   - **Start:** `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance type:** Free (512MB RAM, 0.1 vCPU)
+   - **Region:** Frankfurt or Washington DC
+   - **Builder:** Dockerfile (uses `backend/Dockerfile` automatically)
+   - **Port:** 8080 (matches Dockerfile EXPOSE)
+   **OR** use Buildpacks:
+   - **Root Directory:** `backend/`
+   - **Build Command:** (leave default)
+   - **Run Command:** `uvicorn app.main:app --host 0.0.0.0 --port 8000`
 4. Add environment variables (all from `backend/.env`):
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
@@ -159,12 +177,12 @@ Steps for Claude to walk the human through:
    - `OPENROUTER_API_KEY`
    - `OPENROUTER_MODEL`
    - `OPENROUTER_MODEL_FALLBACK`
-5. Click **Deploy Web Service**
-6. Wait for build + deploy (first deploy may take 2-5 min)
-7. Render URL will be `https://villages-api.onrender.com`
+5. Click **Deploy**
+6. Wait for build + deploy (first deploy takes 2-5 min)
+7. Koyeb URL will be `https://villages-api-<org>.koyeb.app`
 8. Tell Claude the URL
 
-### Task 1.6: Update vercel.json with real Render URL (⬜ Claude Code)
+### Task 1.6: Update vercel.json with real Koyeb URL (⬜ Claude Code)
 
 Update `frontend/vercel.json`:
 
@@ -173,43 +191,40 @@ Update `frontend/vercel.json`:
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://villages-api.onrender.com/$1"
+      "destination": "https://villages-api-<org>.koyeb.app/$1"
     }
   ]
 }
 ```
 
-Then open a PR to merge to `main` — Vercel auto-deploys.
+Then open a PR to merge — Vercel auto-deploys.
 
 ### Task 1.7: Update CORS in Backend (⬜ Claude Code)
 
-Update `backend/app/main.py` to include the real Vercel URL:
+Update `backend/app/main.py` with the real Vercel URL:
 
 ```python
 allow_origins=[
     "http://localhost:5173",
-    "https://villages-xxx.vercel.app",  # ← real Vercel URL
-    "https://villages.app",             # ← custom domain (optional)
+    "https://villages-xxx.vercel.app",  # real Vercel URL
+    "https://villages.app",             # optional custom domain
 ],
 ```
 
-Open a PR → merged → Render auto-deploys.
+Open a PR → merged → Koyeb auto-deploys.
 
 ### Task 1.8: Set Up Keep-Alive Cron Job (👤 Human via Claude walkthrough)
 
-1. Go to https://cron-job.org → **Sign up** (free, no CC)
+1. Go to https://cron-job.org → **Sign up** (free, no credit card)
 2. Create a cron job:
-   - **URL:** `https://villages-api.onrender.com/health`
-   - **Schedule:** Every 5 minutes
+   - **URL:** `https://villages-api-<org>.koyeb.app/health`
+   - **Schedule:** Every 30 minutes (prevents both Koyeb 1hr scale-to-zero AND Supabase 7-day inactivity pause)
    - **Save**
-3. This prevents:
-   - Render free tier spin-down (15 min idle)
-   - Supabase free project pause (7 days idle)
-4. Tell Claude when done
+3. Tell Claude when done
 
 ### Task 1.9: Verify End-to-End (⬜ Claude Code)
 
-After everything is deployed, verify:
+After deployment, verify:
 
 1. Visit `https://villages-xxx.vercel.app` — Login page loads
 2. Enter email → Magic link sent
