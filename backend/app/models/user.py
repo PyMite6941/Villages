@@ -6,12 +6,15 @@ class UserProfile(BaseModel):
     id: str
     email: str
     display_name: str
-    academic_level: str  # e.g. "Grade 10", "SAT Prep", "AP Physics"
-    goals: list[str]     # e.g. ["SAT Math", "College Apps"]
+    academic_level: str
+    goals: list[str]
     strengths: list[str]
     weaknesses: list[str]
     village_id: Optional[str] = None
     avatar_url: Optional[str] = None
+    is_verified_teacher: Optional[bool] = False
+    teacher_subjects: Optional[list[str]] = []
+    bio: Optional[str] = None
     created_at: Optional[datetime] = None
 
 class UserProfileCreate(BaseModel):
@@ -27,3 +30,4 @@ class UserProfileUpdate(BaseModel):
     goals: Optional[list[str]] = None
     strengths: Optional[list[str]] = None
     weaknesses: Optional[list[str]] = None
+    bio: Optional[str] = None

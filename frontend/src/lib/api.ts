@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { UserProfile, Village, Post, Comment } from '../types'
+import type { UserProfile, Village, Post, Comment, Course, CourseWithLessons, EnrollmentStatus, CourseCreate, LessonCreate, Lesson, TeacherVerification } from '../types'
 
 const BASE = '/api'
 
@@ -48,10 +48,34 @@ export const api = {
     addComment: (postId: string, content: string) =>
       req<Comment>('POST', `/posts/${postId}/comments`, { post_id: postId, content }),
   },
+  courses: {
+    list: (category?: string, subject?: string) => {
+      const params = new URLSearchParams()
+      if (category) params.set('category', category)
+      if (subject) params.set('subject', subject)
+      const qs = params.toString()
+      return req<Course[]>('GET', `/courses${qs ? `?${qs}` : ''}`)
+    },
+    get: (id: string) => req<CourseWithLessons>('GET', `/courses/${id}`),
+    create: (data: CourseCreate) => req<Course>('POST', '/courses', data),
+    enroll: (id: string) => req<EnrollmentStatus>('POST', `/courses/${id}/enroll`),
+    getEnrollment: (id: string) => req<EnrollmentStatus>('GET', `/courses/${id}/enrollment`),
+    completeLesson: (courseId: string, lessonId: string) =>
+      req<{ completed_lesson_ids: string[] }>('POST', `/courses/${courseId}/lessons/${lessonId}/complete`),
+    addLesson: (courseId: string, data: LessonCreate) =>
+      req<Lesson>('POST', `/courses/${courseId}/lessons`, data),
+  },
+  teacher: {
+    apply: (data: { degree_title: string; institution: string; subject_area: string }) =>
+      req<TeacherVerification>('POST', '/teacher/apply', data),
+    getVerification: () => req<TeacherVerification | null>('GET', '/teacher/verification'),
+  },
   ai: {
     villageElderPrompt: (villageId: string) =>
       req<{ prompt: string; post_id: string }>('POST', `/ai/village-elder/${villageId}/prompt`),
     generateChallenge: (villageId: string, subject: string, difficulty: string) =>
       req<unknown>('POST', `/ai/village-elder/${villageId}/challenge?subject=${subject}&difficulty=${difficulty}`),
+    courseStudyTips: (courseId: string) =>
+      req<{ tips: string }>('POST', `/ai/courses/${courseId}/study-tips`),
   },
 }

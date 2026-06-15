@@ -104,6 +104,32 @@ async def generate_study_challenge(
     return _parse_json(raw, {"title": "Study Challenge", "description": raw, "steps": []})
 
 
+async def generate_course_study_tips(
+    course_title: str,
+    subject: str,
+    category: str,
+    difficulty: str,
+    lesson_count: int,
+) -> str:
+    system = (
+        "You are the Village Elder — a wise AI guide in a learning community called Villages. "
+        "Generate 4-5 practical, encouraging study tips for a student taking a course. "
+        "Be warm and specific to the subject matter. Keep each tip to 1-2 sentences."
+    )
+    messages = [{
+        "role": "user",
+        "content": (
+            f"Course: {course_title}\n"
+            f"Subject: {subject}\n"
+            f"Category: {'academic' if category == 'school' else 'hobby'}\n"
+            f"Difficulty: {difficulty}\n"
+            f"Number of lessons: {lesson_count}\n\n"
+            f"What study tips would help a student succeed in this course?"
+        ),
+    }]
+    return await call_groq(messages, system)
+
+
 async def moderate_content(content: str) -> dict:
     system = (
         "You are a content moderator for a student platform (ages 13-18). "

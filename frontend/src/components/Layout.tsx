@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import { Home, Users, MessageSquare, User, LogOut } from 'lucide-react'
+import { Home, Users, MessageSquare, User, LogOut, BookOpen } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
 const navItems = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/villages', label: 'Villages', icon: Users },
+  { to: '/courses', label: 'Courses', icon: BookOpen },
   { to: '/forum', label: 'Forum', icon: MessageSquare },
   { to: '/profile', label: 'Profile', icon: User },
 ]
@@ -46,7 +47,7 @@ export default function Layout({ children, session }: Props) {
               key={to}
               to={to}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                pathname === to
+                pathname === to || (to !== '/' && pathname.startsWith(to))
                   ? 'bg-village-100 text-village-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}

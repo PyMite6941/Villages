@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import users, villages, posts, ai
+from app.api.routes.courses import router as courses_router, teacher_router
 
 app = FastAPI(
     title="Villages Platform API",
@@ -20,6 +21,8 @@ app.include_router(users.router)
 app.include_router(villages.router)
 app.include_router(posts.router)
 app.include_router(ai.router)
+app.include_router(courses_router)
+app.include_router(teacher_router)
 
 @app.get("/health")
 async def health():

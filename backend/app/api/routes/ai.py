@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_supabase
 from app.auth import get_current_user
-from app.services.ai_service import generate_discussion_prompt, generate_study_challenge
+from app.services.ai_service import generate_discussion_prompt, generate_study_challenge, generate_course_study_tips
 import uuid
 from datetime import datetime
 
@@ -66,3 +66,21 @@ async def generate_challenge(
         "created_at": datetime.utcnow().isoformat(),
     }).execute()
     return {**challenge_data, "challenge_id": challenge_id}
+
+
+@router.post("/courses/{course_id}/study-tips")
+async def course_study_tips(course_id: str, _user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    course_res = sb.table("courses").select("*").eq("id", course_id).execute()
+    if not course_res.data:
+        raise HTTPException(status_code=404, detail="Course not found")
+    c = course_res.data[0]
+    lessons_res = sb.table("lessons").select("id").eq("course_id", course_id).execute()
+    tips = await generate_course_study_tips(
+        course_title=c["title"],
+        subject=c["subject"],
+        category=c["category"],
+        difficulty=c["difficulty"],
+        lesson_count=len(lessons_res.data),
+    )
+    return {"tips": tips}
