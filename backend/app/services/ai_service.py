@@ -3,22 +3,46 @@ import json
 from app.config import settings
 from typing import Optional
 
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
-async def call_groq(messages: list[dict], system: Optional[str] = None) -> str:
+async def call_llm(messages: list[dict], system: Optional[str] = None) -> str:
+    models = [settings.openrouter_model, settings.openrouter_model_fallback]
+    last_error: Exception | None = None
+
+    for attempt, model in enumerate(models):
+        try:
+            return await _call_model(model, messages, system)
+        except httpx.HTTPStatusError as e:
+            last_error = e
+            if e.response.status_code == 429:
+                continue
+            raise
+        except Exception as e:
+            last_error = e
+            if attempt < len(models) - 1:
+                continue
+            raise
+
+    raise last_error or RuntimeError("All models exhausted")
+
+
+async def _call_model(model: str, messages: list[dict], system: Optional[str] = None) -> str:
     headers = {
-        "Authorization": f"Bearer {settings.groq_api_key}",
+        "Authorization": f"Bearer {settings.openrouter_api_key}",
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://villages.app",
+        "X-Title": "Villages",
     }
+    full_messages = [{"role": "system", "content": system}] + messages if system else messages
     payload = {
-        "model": settings.groq_model,
-        "messages": [{"role": "system", "content": system}] + messages if system else messages,
+        "model": model,
+        "messages": full_messages,
         "temperature": 0.7,
         "max_tokens": 1024,
     }
     async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(GROQ_API_URL, json=payload, headers=headers)
+        resp = await client.post(OPENROUTER_API_URL, json=payload, headers=headers)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
 
@@ -62,7 +86,7 @@ async def generate_village_match_reasoning(
             f"Which village is the best match? JSON only."
         ),
     }]
-    raw = await call_groq(messages, system)
+    raw = await call_llm(messages, system)
     fallback = {"village_id": available_villages[0]["id"] if available_villages else None, "reasoning": raw}
     return _parse_json(raw, fallback)
 
@@ -81,7 +105,7 @@ async def generate_discussion_prompt(village_name: str, focus_area: str, resourc
             f"Generate a discussion prompt for this village."
         ),
     }]
-    return await call_groq(messages, system)
+    return await call_llm(messages, system)
 
 
 async def generate_study_challenge(
@@ -100,7 +124,7 @@ async def generate_study_challenge(
             f"Create a collaborative challenge they can work on together. JSON only."
         ),
     }]
-    raw = await call_groq(messages, system)
+    raw = await call_llm(messages, system)
     return _parse_json(raw, {"title": "Study Challenge", "description": raw, "steps": []})
 
 
@@ -110,5 +134,5 @@ async def moderate_content(content: str) -> dict:
         'Respond with JSON only: {"safe": true/false, "reason": "..."}'
     )
     messages = [{"role": "user", "content": f"Is this appropriate for students?\n\n{content}\n\nJSON only."}]
-    raw = await call_groq(messages, system)
+    raw = await call_llm(messages, system)
     return _parse_json(raw, {"safe": True, "reason": "Could not evaluate"})
