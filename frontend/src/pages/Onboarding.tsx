@@ -9,7 +9,7 @@ interface Props { session: Session }
 const ACADEMIC_LEVELS = ['Middle School', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12', 'SAT Prep', 'ACT Prep', 'AP Student', 'College Freshman']
 const COMMON_GOALS = ['SAT Math', 'SAT Reading', 'ACT', 'AP Calculus', 'AP Biology', 'AP Chemistry', 'AP Physics', 'AP History', 'AP English', 'College Essays', 'Study Habits']
 
-export default function Onboarding({ session }: Props) {
+export default function Onboarding({ session: _session }: Props) {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
