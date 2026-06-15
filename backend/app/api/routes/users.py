@@ -21,8 +21,13 @@ async def create_profile(data: UserProfileCreate, user_id: str = Depends(get_cur
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create profile")
         return UserProfile(**result.data[0])
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Database error — have you run the SQL migrations? {e}")
+    except Exception:
+        base_fields = {"id", "email", "display_name", "academic_level", "goals", "strengths", "weaknesses", "created_at"}
+        profile = {k: v for k, v in profile.items() if k in base_fields}
+        result = sb.table("profiles").upsert(profile).execute()
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create profile")
+        return UserProfile(**result.data[0])
 
 
 @router.get("/profile/{user_id}", response_model=UserProfile)
