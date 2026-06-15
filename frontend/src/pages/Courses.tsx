@@ -133,7 +133,7 @@ export default function Courses({ session }: Props) {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BookOpen className="text-village-600" size={24} />
+            <BookOpen className="text-village-600" size={22} />
             Knowledge Grove
           </h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -141,7 +141,7 @@ export default function Courses({ session }: Props) {
           </p>
         </div>
         <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2 text-sm">
-          <Plus size={16} />
+          <Plus size={14} />
           Teach a Course
         </button>
       </div>
@@ -229,7 +229,7 @@ export default function Courses({ session }: Props) {
             <div className="flex items-center justify-between px-5 py-4 border-b border-amber-100">
               <h2 className="font-semibold text-gray-900">Teach a Course in the Village</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
             <div className="p-5 space-y-4">
@@ -378,8 +378,8 @@ function CourseCard({
       </div>
 
       <div className="flex items-center gap-3 text-xs text-gray-400 mb-4">
-        <span className="flex items-center gap-1"><Clock size={11} />{course.estimated_hours}h</span>
-        <span className="flex items-center gap-1"><Users size={11} />{course.enrollment_count} enrolled</span>
+        <span className="flex items-center gap-1"><Clock size={12} className="text-gray-400" />{course.estimated_hours}h</span>
+        <span className="flex items-center gap-1"><Users size={12} className="text-gray-400" />{course.enrollment_count} enrolled</span>
       </div>
 
       <div className="flex gap-2 mt-auto">

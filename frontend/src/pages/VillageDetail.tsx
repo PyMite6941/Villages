@@ -118,20 +118,20 @@ export default function VillageDetail({ session: _session }: Props) {
               <h1 className="text-xl font-bold text-village-800">{village.name}</h1>
               {live && (
                 <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                  <Wifi size={11} /> Live
+            <Wifi size={12} className="text-green-500" /> Live
                 </span>
               )}
             </div>
             <p className="text-sm text-gray-600 mb-3">{village.description}</p>
             <div className="flex items-center gap-3 flex-wrap">
               <span className="badge bg-village-100 text-village-700">{village.focus_area}</span>
-              <span className="flex items-center gap-1 text-sm text-gray-500"><Users size={13} />{village.member_count}/{village.max_members} members</span>
+              <span className="flex items-center gap-1 text-sm text-gray-500"><Users size={12} className="text-gray-400" />{village.member_count}/{village.max_members} members</span>
             </div>
           </div>
         </div>
         {village.resources.length > 0 && (
           <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-            <BookOpen size={13} className="text-gray-400" />
+            <BookOpen size={12} className="text-gray-400" />
             {village.resources.map((r) => (
               <span key={r} className="badge bg-white border border-village-200 text-village-700">{r}</span>
             ))}
@@ -147,7 +147,7 @@ export default function VillageDetail({ session: _session }: Props) {
         </div>
         <div className="flex gap-3 flex-wrap">
           <button onClick={callVillageElder} disabled={elderLoading} className="btn-secondary flex items-center gap-2 text-sm">
-            <Sparkles size={15} className="text-village-600" />
+            <Sparkles size={14} className="text-village-600" />
             {elderLoading ? 'Summoning...' : 'Ask Village Elder'}
           </button>
           <div className="flex gap-2 flex-1 min-w-48">

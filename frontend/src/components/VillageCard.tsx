@@ -20,7 +20,7 @@ export default function VillageCard({ village, onJoin, currentVillageId }: Props
           <span className="badge bg-village-100 text-village-700 mt-1">{village.focus_area}</span>
         </div>
         <div className="flex items-center gap-1 text-sm text-gray-500">
-          <Users size={14} />
+          <Users size={12} className="text-gray-400" />
           <span>{village.member_count}/{village.max_members}</span>
         </div>
       </div>
@@ -29,7 +29,7 @@ export default function VillageCard({ village, onJoin, currentVillageId }: Props
 
       {village.resources.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap mb-4">
-          <BookOpen size={13} className="text-gray-400" />
+          <BookOpen size={12} className="text-gray-400" />
           {village.resources.slice(0, 3).map((r) => (
             <span key={r} className="badge bg-amber-50 text-amber-700">{r}</span>
           ))}

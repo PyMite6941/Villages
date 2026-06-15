@@ -28,9 +28,9 @@ export default function StudyHub({ session }: Props) {
   }, [session.user.id])
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; desc: string }[] = [
-    { id: 'buddy', label: 'Study Buddy', icon: <Brain size={16} />, desc: 'Socratic AI tutor' },
-    { id: 'essay', label: 'Essay Coach', icon: <PenLine size={16} />, desc: 'Application critique' },
-    { id: 'plan',  label: 'Study Plan',  icon: <CalendarDays size={16} />, desc: 'Weekly schedule' },
+    { id: 'buddy', label: 'Study Buddy', icon: <Brain size={15} />, desc: 'Socratic AI tutor' },
+    { id: 'essay', label: 'Essay Coach', icon: <PenLine size={15} />, desc: 'Application critique' },
+    { id: 'plan',  label: 'Study Plan',  icon: <CalendarDays size={15} />, desc: 'Weekly schedule' },
   ]
 
   return (
@@ -38,7 +38,7 @@ export default function StudyHub({ session }: Props) {
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Brain className="text-village-600" size={24} />
+            <Brain className="text-village-600" size={22} />
             Study Hub
           </h1>
           <span className="badge bg-village-100 text-village-700 text-xs">👤 Personal</span>
@@ -143,14 +143,14 @@ function StudyBuddy() {
         </div>
         {messages.length > 0 && (
           <button onClick={reset} className="btn-secondary text-xs flex items-center gap-1 mt-5">
-            <RotateCcw size={11} /> New chat
+            <RotateCcw size={12} /> New chat
           </button>
         )}
       </div>
 
       {/* Anti-direct-answer notice */}
       <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-        <AlertCircle size={13} className="mt-0.5 shrink-0 text-amber-500" />
+        <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-500" />
         <span>
           Your Study Buddy uses the <strong>Socratic method</strong> — it guides you to find the
           answer yourself with questions, rather than just telling you. This builds deeper understanding.
@@ -161,7 +161,7 @@ function StudyBuddy() {
       <div className="min-h-56 max-h-96 overflow-y-auto space-y-3 pr-1">
         {messages.length === 0 && (
           <div className="text-center py-12 text-gray-400 text-sm">
-            <Brain size={28} className="mx-auto mb-2 text-village-300" />
+            <Brain size={24} className="mx-auto mb-2 text-village-300" />
             Ask anything about <strong className="text-gray-600">{subject}</strong> — your Study Buddy will
             guide you with questions.
           </div>
@@ -264,7 +264,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
     <div className="card space-y-4">
       {/* Anti-ghostwriting notice */}
       <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-        <AlertCircle size={13} className="mt-0.5 shrink-0 text-amber-500" />
+        <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-500" />
         <span>
           <strong>Anti-ghostwriting policy:</strong> This tool only critiques and analyzes your writing.
           It will never generate essay content for you, in compliance with academic integrity standards.
@@ -323,7 +323,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
           {feedback.strengths.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 mb-2">
-                <CheckCircle size={15} /> Key Strengths
+                <CheckCircle size={14} /> Key Strengths
               </div>
               <ul className="space-y-1.5">
                 {feedback.strengths.map((s, i) => (
@@ -338,7 +338,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
           {feedback.improvements.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 mb-2">
-                <PenLine size={15} /> Areas to Improve
+                <PenLine size={14} /> Areas to Improve
               </div>
               <ul className="space-y-1.5">
                 {feedback.improvements.map((s, i) => (
@@ -353,7 +353,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
           {feedback.vulnerabilities.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-700 mb-2">
-                <AlertCircle size={15} /> Strategic Vulnerabilities
+                <AlertCircle size={14} /> Strategic Vulnerabilities
               </div>
               <ul className="space-y-1.5">
                 {feedback.vulnerabilities.map((s, i) => (

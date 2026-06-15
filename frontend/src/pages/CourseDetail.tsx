@@ -144,10 +144,10 @@ export default function CourseDetail({ session }: Props) {
                   {course.subject}
                 </span>
                 <span className="flex items-center gap-1 text-gray-400">
-                  <Clock size={10} /> {course.estimated_hours}h
+                  <Clock size={12} className="text-gray-400" /> {course.estimated_hours}h
                 </span>
                 <span className="flex items-center gap-1 text-gray-400">
-                  <Users size={10} /> {course.enrollment_count} enrolled
+                  <Users size={12} className="text-gray-400" /> {course.enrollment_count} enrolled
                 </span>
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function CourseDetail({ session }: Props) {
             disabled={loadingTips}
             className="btn-secondary text-xs flex items-center gap-1.5"
           >
-            <Sparkles size={13} />
+            <Sparkles size={14} />
             {loadingTips ? 'Thinking...' : 'Get Tips'}
           </button>
         </div>
@@ -250,14 +250,14 @@ export default function CourseDetail({ session }: Props) {
                     className="w-full flex items-center gap-3 p-3 text-left hover:bg-amber-50 transition-colors"
                   >
                     {isDone ? (
-                      <CheckCircle size={18} className="text-emerald-500 shrink-0" />
+                      <CheckCircle size={16} className="text-emerald-500 shrink-0" />
                     ) : (
-                      <Circle size={18} className="text-gray-300 shrink-0" />
+                      <Circle size={16} className="text-gray-300 shrink-0" />
                     )}
                     <span className="text-xs text-gray-400 w-5 shrink-0 font-mono">{idx + 1}</span>
                     <span className="flex-1 text-sm font-medium text-gray-800">{lesson.title}</span>
                     <span className="text-xs text-gray-400 flex items-center gap-1 shrink-0">
-                      <Clock size={10} /> {lesson.duration_minutes}m
+                      <Clock size={12} className="text-gray-400" /> {lesson.duration_minutes}m
                     </span>
                     {isExpanded ? <ChevronUp size={14} className="text-gray-400 shrink-0" /> : <ChevronDown size={14} className="text-gray-400 shrink-0" />}
                   </button>
