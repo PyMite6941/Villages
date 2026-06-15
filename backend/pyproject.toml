@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Conservative, high-signal rule set so existing code passes and PRs stay
+# consistent without bikeshedding: pycodestyle errors, pyflakes, import order.
+select = ["E", "F", "I"]
+# E501 (line too long) is handled by the formatter, not enforced as a hard error.
+ignore = ["E501"]

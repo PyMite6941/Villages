@@ -38,6 +38,7 @@ create index if not exists idx_village_members_user
 create index if not exists idx_profiles_village
   on public.profiles (village_id);
 
--- Realtime: ensure publication includes all indexed tables
-alter publication supabase_realtime add table public.posts;
-alter publication supabase_realtime add table public.comments;
+-- NOTE: posts/comments are already added to the supabase_realtime publication
+-- in 001_initial_schema.sql. Re-adding them here errors with
+-- "relation is already member of publication" and rolls back this migration,
+-- so the publication management intentionally lives only in 001.

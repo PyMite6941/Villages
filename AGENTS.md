@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-AI-powered student community platform. Students form study cohorts ("Villages"), get AI-matched, discuss in forums, take collaborative challenges, and interact with the "Village Elder" AI.
+AI-powered **community learning platform** for students **and adult learners**. Users form study cohorts ("Villages"), get AI-matched, discuss in forums, take collaborative challenges, interact with the "Village Elder" AI, and use the **Topic Explorer** to turn confusing information into plain language + checklists + next steps.
+
+**Competition context:** Built for an AI competition/hackathon (Brief 1 — community support & understanding). The AI acts as a "Crisis-to-Action Translator" — helping groups understand complex topics together. Human-in-the-loop + responsible AI guardrails throughout.
 
 **Stack:** React + Vite (frontend), FastAPI + Python (backend), Supabase (DB + Auth + Realtime), OpenRouter (AI via free `:free` models)
 
@@ -23,6 +25,22 @@ AI-powered student community platform. Students form study cohorts ("Villages"),
 - `backend/Dockerfile` — for Koyeb deployment
 - `run.sh` — script to start both backend + frontend locally
 - `AGENTS.md` — This file — instructions for Claude Code
+- `run.ps1` — Windows PowerShell native launcher (parallel to `run.sh`)
+- `supabase/migrations/003_competition_features.sql` — Group learning + adult learners + topic_explanations + learning_paths
+- Competition features added: AI Topic Explorer (plain language + checklists + next steps), AI Learning Paths, adult learner support (interests, learning_style), responsible AI guardrails
+- All frontend pages updated: Onboarding (4 steps + adult levels + interests), Profile (interests/learning_style), Home (Topic Explorer), VillageDetail (Learning Path tab + Topic Explain)
+
+## Debug Pass (2026-06-15)
+
+Verified the whole codebase compiles/builds and fixed 6 real bugs. See
+`FEATURES.md → Bugs Fixed (Debug Pass — 2026-06-15)` for the full table.
+
+- **Verification:** backend imports clean (`from app.main import app`, all API routes register), frontend `tsc --noEmit` passes, `npm run build` produces a production bundle.
+- **Fixed (high):** `users.py create_profile` was dropping `interests`/`learning_style` → now persisted (AI matching + adult-learner feature were degraded).
+- **Fixed (high):** `posts.py list_posts` and `villages.py get_village_members` used PostgREST `profiles(...)` embeds with no backing FK → would 400 / show "Unknown". Posts now `select("*")`; members now fetch + merge profiles via a second `.in_()` query.
+- **Fixed (high):** `002_performance_indexes.sql` re-added posts/comments to the realtime publication (already in 001) → migration would error & roll back. Removed the duplicate adds.
+- **Fixed (med/low):** `api.ts generateChallenge` now URL-encodes params; `vercel.json` API rewrite + Phase 1 docs reconciled from Render → Koyeb (the actual architecture).
+- **Still pending (human):** live end-to-end test requires a real Supabase project + Vercel/Koyeb deploy (Phase 1 tasks 1.1–1.9).
 
 ## Key Files
 
@@ -40,8 +58,19 @@ AI-powered student community platform. Students form study cohorts ("Villages"),
 | `backend/Dockerfile` | Container config for Koyeb deployment |
 | `frontend/.env` | Frontend Supabase keys (gitignored) |
 | `frontend/vercel.json` | Vercel deploy + API rewrite config |
+| `run.ps1` | Windows PowerShell launcher (`.\run.ps1`) |
+| `backend/app/models/learning.py` | TopicExplanation + LearningPath models |
+| `backend/app/services/ai_service.py` | AI calls (OpenRouter) + explain_topic + generate_learning_path |
+| `backend/app/main.py` | FastAPI app entry, CORS config |
+| `backend/app/auth.py` | JWT bearer token validation |
+| `backend/app/database.py` | Supabase admin client singleton |
+| `backend/.env` | Actual keys (gitignored) |
+| `backend/Dockerfile` | Container config for Koyeb deployment |
+| `frontend/.env` | Frontend Supabase keys (gitignored) |
+| `frontend/vercel.json` | Vercel deploy + API rewrite config |
 | `supabase/migrations/001_initial_schema.sql` | Database schema + RLS + Realtime |
 | `supabase/migrations/002_performance_indexes.sql` | Performance indexes |
+| `supabase/migrations/003_competition_features.sql` | Group learning + adult + topic_explanations + learning_paths |
 
 ## How to Run Locally
 
@@ -56,6 +85,8 @@ cd backend && uvicorn app.main:app --reload
 # Terminal 2 — Frontend
 cd frontend && npm run dev
 ```
+
+Debug log: `villages.log` in the project root — wiped each run, captures all server output.
 
 ## Hosting Architecture (Zero-Cost)
 
@@ -276,3 +307,20 @@ After launch, work through the FEATURES.md master checklist:
 - 20 requests/minute
 - 28+ free models with `:free` suffix
 - Current models: `meta-llama/llama-3.3-70b-instruct:free` (primary), `google/gemini-2.0-flash-exp:free` (fallback)
+
+---
+
+## Custom ("Other") Goals — AI Support
+
+The `goals[]` field on profiles is **free-form text**, not limited to a predefined list. Users can type any custom goal (e.g., "Bar Exam Prep", "Learn Python for Work", "Understand My Child's IEP").
+
+**AI matching already supports this natively** — the `generate_village_match_reasoning()` LLM prompt passes `user_goals` as a comma-separated string. Since the LLM (Llama 3.3 70B or Gemini 2.0 Flash) understands free text, a custom goal like "Pass the Plumbing License Exam" will naturally match to relevant villages.
+
+**No backend changes needed** to add new goal categories. The `goals[]` text array in `profiles` has no CHECK constraint — any string is valid.
+
+**UI behavior:**
+- Onboarding step 2 and Profile edit mode both have:
+  - Preset toggle chips for common goals
+  - A text input + "Add" button for custom goals
+  - Custom goals appear as village-colored badges with an × to remove
+- Step 2 is **skippable** — the Next button has no `disabled` condition on goals, so users studying nothing specific can pass through

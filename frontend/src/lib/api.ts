@@ -26,6 +26,9 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 }
 
 export const api = {
+  auth: {
+    checkEmail: (email: string) => req<{ exists: boolean }>('GET', `/auth/check-email?email=${encodeURIComponent(email)}`),
+  },
   users: {
     createProfile: (data: Partial<UserProfile>) => req<UserProfile>('POST', '/users/profile', data),
     getProfile: (id: string) => req<UserProfile>('GET', `/users/profile/${id}`),
@@ -51,7 +54,33 @@ export const api = {
   ai: {
     villageElderPrompt: (villageId: string) =>
       req<{ prompt: string; post_id: string }>('POST', `/ai/village-elder/${villageId}/prompt`),
-    generateChallenge: (villageId: string, subject: string, difficulty: string) =>
-      req<unknown>('POST', `/ai/village-elder/${villageId}/challenge?subject=${subject}&difficulty=${difficulty}`),
+    generateChallenge: (villageId: string, subject: string, difficulty: string) => {
+      const params = new URLSearchParams({ subject, difficulty })
+      return req<unknown>('POST', `/ai/village-elder/${villageId}/challenge?${params}`)
+    },
+    explainTopic: (topic: string, villageId?: string) => {
+      const params = new URLSearchParams({ topic })
+      if (villageId) params.set('village_id', villageId)
+      return req<{
+        plain_language: string
+        key_points: string[]
+        checklist: { title: string; done: boolean }[]
+        next_steps: { title: string; description: string }[]
+        _audience: string[]
+        _guardrail: { safe: boolean; concerns: string[]; ethical_notes: string[] }
+        explanation_id?: string
+      }>('POST', `/ai/topic/explain?${params}`)
+    },
+    generateLearningPath: (villageId: string) =>
+      req<{
+        title: string
+        description: string
+        steps: { title: string; description: string; estimated_minutes: number }[]
+        learning_path_id: string
+      }>('POST', `/ai/village/${villageId}/learning-path`),
+    getTopicExplanations: (villageId: string) =>
+      req<unknown[]>('GET', `/ai/topic/explanations/${villageId}`),
+    getLearningPaths: (villageId: string) =>
+      req<unknown[]>('GET', `/ai/village/${villageId}/learning-paths`),
   },
 }

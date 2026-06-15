@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends
-from app.models.post import Post, PostCreate, Comment, CommentCreate
-from app.database import get_supabase
-from app.auth import get_current_user
-from app.services.ai_service import moderate_content
-from typing import Optional
 import uuid
 from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.auth import get_current_user
+from app.database import get_supabase
+from app.models.post import Comment, CommentCreate, Post, PostCreate
+from app.services.ai_service import moderate_content
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -13,9 +15,12 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 @router.get("/")
 async def list_posts(village_id: Optional[str] = None, limit: int = 20, offset: int = 0):
     sb = get_supabase()
+    # NOTE: posts.author_id is a free-text column (allows the synthetic
+    # "village-elder-ai" author), so there is no FK to profiles and PostgREST
+    # cannot embed it. author_name is denormalized onto the row instead.
     query = (
         sb.table("posts")
-        .select("*, profiles(display_name)")
+        .select("*")
         .order("created_at", desc=True)
         .range(offset, offset + limit - 1)
     )

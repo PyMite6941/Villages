@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import users, villages, posts, ai
+
+from app.api.routes import ai, auth, posts, users, villages
+from app.config import settings
 
 app = FastAPI(
     title="Villages Platform API",
@@ -10,17 +12,15 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:4173",
-        "https://villages.vercel.app",
-        "https://villages.app",
-    ],
+    allow_origins=settings.cors_origins,
+    # Match Vercel production + preview deploys (https://<project>-<hash>.vercel.app)
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(villages.router)
 app.include_router(posts.router)

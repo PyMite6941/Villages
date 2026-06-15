@@ -5,7 +5,7 @@ import { api } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import type { Village, Post } from '../types'
 import PostCard from '../components/PostCard'
-import { Sparkles, Zap, Users, BookOpen, Send, Wifi } from 'lucide-react'
+import { Sparkles, Zap, Users, BookOpen, Send, Wifi, Lightbulb, ListChecks, CheckSquare } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props { session: Session }
@@ -20,8 +20,23 @@ export default function VillageDetail({ session: _session }: Props) {
   const [elderLoading, setElderLoading] = useState(false)
   const [challengeSubject, setChallengeSubject] = useState('')
   const [challengeLoading, setChallengeLoading] = useState(false)
-  const [tab, setTab] = useState<'discussion' | 'members'>('discussion')
+  const [tab, setTab] = useState<'discussion' | 'members' | 'learning'>('discussion')
   const [live, setLive] = useState(false)
+  const [learningPath, setLearningPath] = useState<{
+    title: string
+    description: string
+    steps: { title: string; description: string; estimated_minutes: number }[]
+    learning_path_id: string
+  } | null>(null)
+  const [learningPathLoading, setLearningPathLoading] = useState(false)
+  const [topicInput, setTopicInput] = useState('')
+  const [topicResult, setTopicResult] = useState<{
+    plain_language: string
+    key_points: string[]
+    checklist: { title: string; done: boolean }[]
+    next_steps: { title: string; description: string }[]
+  } | null>(null)
+  const [topicLoading, setTopicLoading] = useState(false)
   const postIdsRef = useRef(new Set<string>())
 
   useEffect(() => {
@@ -91,6 +106,35 @@ export default function VillageDetail({ session: _session }: Props) {
     }
   }
 
+  const generateLearningPath = async () => {
+    if (!id) return
+    setLearningPathLoading(true)
+    try {
+      const result = await api.ai.generateLearningPath(id)
+      setLearningPath(result)
+      toast.success('Learning path created!')
+      setTab('learning')
+    } catch {
+      toast.error('Could not generate learning path')
+    } finally {
+      setLearningPathLoading(false)
+    }
+  }
+
+  const handleTopicExplain = async () => {
+    if (!id || !topicInput.trim()) return
+    setTopicLoading(true)
+    setTopicResult(null)
+    try {
+      const result = await api.ai.explainTopic(topicInput.trim(), id)
+      setTopicResult(result)
+    } catch {
+      toast.error('Could not explain topic')
+    } finally {
+      setTopicLoading(false)
+    }
+  }
+
   const generateChallenge = async () => {
     if (!id || !challengeSubject) return
     setChallengeLoading(true)
@@ -151,11 +195,15 @@ export default function VillageDetail({ session: _session }: Props) {
             <Zap size={14} /> {challengeLoading ? 'Generating...' : 'Challenge'}
           </button>
         </div>
+        <button onClick={generateLearningPath} disabled={learningPathLoading} className="btn-secondary flex items-center gap-2 text-sm">
+          <ListChecks size={15} className="text-village-600" />
+          {learningPathLoading ? 'Generating...' : 'Learning Path'}
+        </button>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-gray-200">
-        {(['discussion', 'members'] as const).map((t) => (
+        {(['discussion', 'members', 'learning'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t as typeof tab)}
             className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${tab === t ? 'border-village-600 text-village-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             {t}
@@ -194,6 +242,93 @@ export default function VillageDetail({ session: _session }: Props) {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === 'learning' && (
+        <div className="space-y-4">
+          {/* Topic explainer */}
+          <div className="card border-amber-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb size={16} className="text-amber-500" />
+              <h3 className="font-medium text-sm text-gray-800">Topic Explorer</h3>
+            </div>
+            <p className="text-xs text-gray-500 mb-2">
+              Turn confusing information into plain language, a checklist, and next steps for your group.
+            </p>
+            <div className="flex gap-2">
+              <input value={topicInput} onChange={(e) => setTopicInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleTopicExplain()}
+                className="input flex-1 text-sm" placeholder="Any topic..." />
+              <button onClick={handleTopicExplain} disabled={topicLoading || !topicInput.trim()}
+                className="btn-primary text-sm">
+                {topicLoading ? '...' : 'Explain'}
+              </button>
+            </div>
+            {topicResult && (
+              <div className="mt-3 space-y-3 border-t border-amber-100 pt-3">
+                <div className="p-3 bg-amber-50 rounded text-sm text-gray-700">
+                  {topicResult.plain_language}
+                </div>
+                {topicResult.checklist.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                      <CheckSquare size={12} /> Checklist
+                    </p>
+                    {topicResult.checklist.map((item, i) => (
+                      <label key={i} className="flex items-center gap-2 text-xs text-gray-600 py-0.5">
+                        <input type="checkbox" className="rounded" /> {item.title}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {topicResult.next_steps.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                      <ListChecks size={12} /> Next steps
+                    </p>
+                    {topicResult.next_steps.map((step, i) => (
+                      <div key={i} className="p-2 bg-gray-50 rounded text-xs mb-1">
+                        <span className="font-medium">{step.title}</span>
+                        <p className="text-gray-500">{step.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Learning path */}
+          {learningPath ? (
+            <div className="card border-village-200">
+              <div className="flex items-center gap-2 mb-1">
+                <ListChecks size={16} className="text-village-600" />
+                <h3 className="font-semibold text-village-800">{learningPath.title}</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">{learningPath.description}</p>
+              <div className="space-y-2">
+                {learningPath.steps.map((step, i) => (
+                  <div key={i} className="flex gap-3 p-3 bg-village-50 rounded-lg">
+                    <div className="w-7 h-7 rounded-full bg-village-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      {i + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-gray-800">{step.title}</p>
+                      <p className="text-xs text-gray-500">{step.description}</p>
+                      {step.estimated_minutes && (
+                        <span className="text-xs text-village-600 mt-1 inline-block">{step.estimated_minutes} min</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="card text-center py-6">
+              <p className="text-sm text-gray-500">Click <strong>Learning Path</strong> above to generate an AI-curated study plan for your village.</p>
+            </div>
+          )}
         </div>
       )}
     </div>

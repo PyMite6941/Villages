@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
 import type { UserProfile, Village, Post } from '../types'
 import PostCard from '../components/PostCard'
-import { Sparkles, Users, ArrowRight } from 'lucide-react'
+import { Sparkles, Users, ArrowRight, Lightbulb, CheckSquare, ListChecks } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props { session: Session }
@@ -17,6 +17,16 @@ export default function Home({ session }: Props) {
   const [matchResult, setMatchResult] = useState<{ recommended_village_id: string; reasoning: string } | null>(null)
   const [matching, setMatching] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  const [topicInput, setTopicInput] = useState('')
+  const [topicResult, setTopicResult] = useState<{
+    plain_language: string
+    key_points: string[]
+    checklist: { title: string; done: boolean }[]
+    next_steps: { title: string; description: string }[]
+    _audience: string[]
+  } | null>(null)
+  const [topicLoading, setTopicLoading] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -48,6 +58,20 @@ export default function Home({ session }: Props) {
       toast.error(e instanceof Error ? e.message : 'Matching failed')
     } finally {
       setMatching(false)
+    }
+  }
+
+  const handleTopicExplain = async () => {
+    if (!topicInput.trim()) return
+    setTopicLoading(true)
+    setTopicResult(null)
+    try {
+      const result = await api.ai.explainTopic(topicInput.trim(), village?.id)
+      setTopicResult(result)
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not explain topic')
+    } finally {
+      setTopicLoading(false)
     }
   }
 
@@ -111,6 +135,86 @@ export default function Home({ session }: Props) {
           </div>
         </div>
       )}
+
+      {/* Topic Explorer — AI plain-language explainer */}
+      <div className="card border-amber-200">
+        <div className="flex items-center gap-2 mb-3">
+          <Lightbulb size={18} className="text-amber-500" />
+          <h2 className="font-semibold text-gray-900">Topic Explorer</h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-3">
+          Turn confusing topics into plain language, a checklist, and clear next steps — for you or your group.
+        </p>
+        <div className="flex gap-2">
+          <input
+            value={topicInput}
+            onChange={(e) => setTopicInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleTopicExplain()}
+            className="input flex-1 text-sm"
+            placeholder="e.g. State education standards, AP Physics, career change..."
+          />
+          <button onClick={handleTopicExplain} disabled={topicLoading || !topicInput.trim()}
+            className="btn-primary text-sm whitespace-nowrap">
+            {topicLoading ? 'Explaining...' : 'Explain'}
+          </button>
+        </div>
+
+        {topicResult && (
+          <div className="mt-4 space-y-4 border-t border-amber-100 pt-4">
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">Plain language summary</p>
+              <div className="p-3 bg-amber-50 rounded-lg text-sm text-gray-700">
+                {topicResult.plain_language}
+              </div>
+            </div>
+            {topicResult.key_points.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-1">Key points</p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  {topicResult.key_points.map((p, i) => (
+                    <li key={i}>{p}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {topicResult.checklist.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <CheckSquare size={14} /> Checklist
+                </p>
+                <div className="space-y-1">
+                  {topicResult.checklist.map((item, i) => (
+                    <label key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                      <input type="checkbox" className="rounded" />
+                      {item.title}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+            {topicResult.next_steps.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <ListChecks size={14} /> Next steps
+                </p>
+                <div className="space-y-2">
+                  {topicResult.next_steps.map((step, i) => (
+                    <div key={i} className="p-2 bg-gray-50 rounded text-sm">
+                      <span className="font-medium">{step.title}</span>
+                      <p className="text-gray-500">{step.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {topicResult._audience.length > 0 && (
+              <p className="text-xs text-gray-400">
+                Tailored for: {topicResult._audience.join(', ')}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

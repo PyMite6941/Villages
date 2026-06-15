@@ -6,6 +6,8 @@ export interface UserProfile {
   goals: string[]
   strengths: string[]
   weaknesses: string[]
+  interests: string[]
+  learning_style: string
   village_id?: string
   avatar_url?: string
   created_at?: string

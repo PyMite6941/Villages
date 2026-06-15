@@ -1,8 +1,10 @@
-# Villages — AI-Powered Student Community Platform
+# Villages — AI-Powered Community Learning Platform
 
 ## Overview
 
-**Villages** is a web platform where students form small study cohorts ("Villages") powered by AI facilitation. Students create profiles, get AI-matched to a Village, participate in discussion forums, take on collaborative challenges, and interact with the "Village Elder" AI.
+**Villages** is a community learning platform where **students and adult learners** form small study cohorts ("Villages") powered by AI facilitation. Users create profiles, get AI-matched to a Village, participate in discussion forums, take on collaborative challenges, and interact with the "Village Elder" AI.
+
+**AI Competition Context:** This project is built for **Brief 1 — support & understanding** of a hackathon/competition. It transforms the original idea of individual AI tutoring into a **community-first** platform where learning happens through **shared goals, AI-matched cohorts, and collaborative AI tools**. The AI acts as a **Crisis-to-Action Translator** — turning confusing/stressful information into plain language, checklists, and clear next steps for groups. Human-in-the-loop design ensures AI suggests but humans decide. Responsible AI guardrails continuously moderate content for safety, accuracy, and inclusivity.
 
 ---
 
@@ -38,17 +40,23 @@
 │  └────────────┘ └────────────┘ └────────────────┘ │
 │  ┌────────────┐ ┌────────────────────────────────┐ │
 │  │  /ai/*     │ │  Services:                     │ │
-│  │  Elder     │ │  ai_service.py (Groq API)      │ │
+│  │  Elder     │ │  ai_service.py (OpenRouter)    │ │
 │  │  Challenge │ │  auth.py (JWT verification)    │ │
-│  └────────────┘ │  database.py (Supabase client) │ │
-│                 └────────────────────────────────┘ │
+│  │  Topic     │ │  database.py (Supabase client) │ │
+│  │  Explain   │ └────────────────────────────────┘ │
+│  │  Learning  │                                     │
+│  │  Path      │                                     │
+│  └────────────┘                                     │
 └───────────────────────┬────────────────────────────┘
                         │ service_role_key (bypasses RLS)
 ┌───────────────────────▼────────────────────────────┐
 │              Supabase (PostgreSQL + Auth)           │
-│  Tables: profiles, villages, village_members,       │
-│          posts, comments, challenges                │
-│  Realtime enabled on: posts, comments               │
+│  Tables: profiles (+interests, +learning_style),   │
+│          villages, village_members, posts,          │
+│          comments, challenges,                      │
+│          topic_explanations, learning_paths         │
+│  Realtime enabled on: posts, comments,              │
+│          topic_explanations, learning_paths         │
 │  Row Level Security with policies                   │
 │  Auth: Magic link email OTP                         │
 └────────────────────────────────────────────────────┘
@@ -68,11 +76,12 @@
 ### 2. Onboarding / Profile Creation
 
 - **File:** `frontend/src/pages/Onboarding.tsx`, `backend/app/api/routes/users.py`
-- **3-step flow:**
-  1. **Basic info:** Display name + academic level (dropdown: Middle School → College Freshman)
-  2. **Goals:** Multi-select from 11 common goals (SAT Math, AP Calculus, College Essays, etc.)
+- **4-step flow (expanded for inclusivity):**
+  1. **Basic info:** Display name + academic level (dropdown includes adult-friendly options: Adult Learner, Professional, Parent, Lifelong Learner, Career Changer, Hobbyist)
+  2. **Goals:** Multi-select from 11+ common goals
   3. **Strengths & Weaknesses:** Same goal list color-coded green (strengths) / red (needs help)
-- **API:** `POST /users/profile` → upserts into `public.profiles` table.
+  4. **Interests & Learning Style:** Broader topic interests (Science, Tech, Language, Parenting, etc.) + learning preference (visual, auditory, reading, kinesthetic)
+- **API:** `POST /users/profile` → upserts into `public.profiles` table (now includes `interests[]` and `learning_style`).
 - **Auto-redirect:** If a user has no profile, `Home.tsx` catches the 404 and redirects to `/onboarding`.
 
 ### 3. AI Village Matching
@@ -80,11 +89,12 @@
 - **File:** `frontend/src/pages/Home.tsx:42-52`, `backend/app/api/routes/villages.py:22-39`, `backend/app/services/ai_service.py:34-67`
 - **Trigger:** "AI Match me" button on the Home page when the user has no Village.
 - **Backend flow:**
-  1. Fetches the user's profile (goals, strengths, weaknesses, academic_level)
+  1. Fetches the user's profile (goals, strengths, weaknesses, academic_level, interests, learning_style)
   2. Fetches all active villages with available slots
-  3. Calls Groq API (LLM) with a system prompt describing the matching task
+  3. Calls OpenRouter LLM with a system prompt describing the matching task
   4. Returns `{ village_id, reasoning }` explaining the match
-- **Prompt engineering:** The system prompt tells the model to act as an "AI matching system" and respond with JSON only.
+- **Enhanced matching (competition feature):** Matching now considers broader `interests` and `learning_style` alongside academic goals, making it suitable for both students and adult learners. System prompt updated for an "inclusive community learning platform."
+- **Prompt engineering:** The system prompt tells the model to act as an "AI matching system" for "both students and adult learners" and respond with JSON only.
 
 ### 4. Village CRUD & Discovery
 
@@ -202,18 +212,67 @@
   - `get <name>` — Show population + resources for a village
   - `exit` — Quit
 
+### 15. AI Topic Explorer (Crisis-to-Action Translator) — Competition Feature
+
+- **File:** `frontend/src/pages/Home.tsx`, `frontend/src/pages/VillageDetail.tsx`, `backend/app/api/routes/ai.py`, `backend/app/services/ai_service.py`
+- **Purpose:** Turn confusing/stressful information about any topic into **plain language, a checklist, and clear next steps** — for an individual or a whole village group.
+- **Trigger:** User types any topic in the "Topic Explorer" input on Home or VillageDetail → clicks "Explain"
+- **Backend flow:**
+  1. Calls `explain_topic()` AI service which creates a plain-language summary, key points, checklist items, and next steps
+  2. If a `village_id` is provided, fetches the village's member profiles to tailor the explanation to their academic levels and interests
+  3. Passes through `moderate_topic_content()` responsible AI guardrail (checks safety, accuracy, inclusivity)
+  4. Saves to `topic_explanations` table scoped to the village
+- **Human-in-the-loop:** AI generates the explanation, but users decide which steps to take and who to share with
+- **Responsible AI:** `moderate_topic_content()` reviews each explanation for factual accuracy, age-appropriateness, and harmful stereotypes before returning to the user
+
+### 16. AI Learning Paths — Competition Feature
+
+- **File:** `frontend/src/pages/VillageDetail.tsx`, `backend/app/api/routes/ai.py`, `backend/app/services/ai_service.py`
+- **Purpose:** Generate a structured collaborative learning plan for any village, tailored to their focus area, resources, and member interests.
+- **Trigger:** "Learning Path" button on VillageDetail page
+- **Backend flow:**
+  1. Fetches village data + all member profiles (collects interests)
+  2. Calls `generate_learning_path()` AI service → deduplicates interests across members
+  3. AI returns JSON: `{ title, description, steps[{ title, description, estimated_minutes }] }`
+  4. Saves to `learning_paths` table
+  5. Shown in the "Learning" tab with step-by-step numbered display
+- **AI reasoning:** The AI acts as a "curriculum designer" — identifies what matters most for the group based on shared interests and creates a structured path
+
+### 17. Adult Learners & Inclusivity — Competition Feature
+
+- **File:** `frontend/src/pages/Onboarding.tsx`, `frontend/src/pages/Profile.tsx`, `backend/app/models/user.py`, `supabase/migrations/003_competition_features.sql`
+- **New academic levels:** Adult Learner, Professional, Parent, Lifelong Learner, Career Changer, Hobbyist
+- **New profile fields:**
+  - `interests[]` — broad topics (Science, Technology, Parenting, Health, Finance, etc.)
+  - `learning_style` — visual, auditory, reading, kinesthetic
+- **4-step onboarding** instead of 3 — step 4 captures interests and learning style
+- **Purpose:** Expands the platform beyond just K-12/test-prep students to serve everyday life challenges for all ages — increasing impact and versatility for competition judging
+
+### 18. Responsible AI Guardrails — Competition Feature
+
+- **File:** `backend/app/services/ai_service.py`, `backend/app/api/routes/ai.py`
+- **`moderate_topic_content()`** — Reviews every AI-generated topic explanation for:
+  - Factual accuracy and misinformation
+  - Age-appropriateness for the audience
+  - Harmful stereotypes or bias
+  - Ethical considerations
+- **Output:** `{ safe, concerns[], ethical_notes[] }` — if flagged, concerns are surfaced to the user
+- **Design mitigation:** AI suggests, but humans decide. AI acts as a moderator ensuring group education stays grounded in ethical principles. All content moderation is non-blocking — warnings are surfaced alongside results rather than silently dropping content.
+
 ---
 
 ## Database Schema (Supabase / PostgreSQL)
 
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
-| `profiles` | Student profiles | `id` (FK auth.users), `display_name`, `academic_level`, `goals[]`, `strengths[]`, `weaknesses[]`, `village_id` |
+| `profiles` | User profiles (students + adults) | `id` (FK auth.users), `display_name`, `academic_level`, `goals[]`, `strengths[]`, `weaknesses[]`, `interests[]`, `learning_style`, `village_id` |
 | `villages` | Study cohorts | `name`, `description`, `focus_area`, `resources[]`, `max_members`, `member_count`, `created_by` |
 | `village_members` | Many-to-many | `user_id`, `village_id`, `role` (member/chief) |
 | `posts` | Discussions | `content`, `author_id`, `author_name`, `village_id` (nullable=global), `is_ai_generated`, `upvotes` |
 | `comments` | Post comments | `post_id`, `content`, `author_id`, `author_name`, `is_ai_generated` |
 | `challenges` | Collaborative challenges | `village_id`, `title`, `description`, `subject`, `difficulty`, `completed_by[]` |
+| `topic_explanations` | AI plain-language topic breakdowns | `village_id`, `topic`, `plain_language`, `checklist` (jsonb), `next_steps` (jsonb) |
+| `learning_paths` | AI-structured group learning plans | `village_id`, `title`, `description`, `steps` (jsonb) |
 
 ---
 
@@ -264,7 +323,7 @@
 
 ---
 
-## Bugs Fixed (This Session)
+## Bugs Fixed (Initial Session)
 
 | # | File | Issue | Fix |
 |---|------|-------|-----|
@@ -272,6 +331,20 @@
 | 2 | `Profile.tsx` | `academic_level`, `strengths`, and `weaknesses` were not editable in the profile edit UI | Added `academic_level` select dropdown, strengths/weaknesses toggle-chip grids to the edit form |
 | 3 | `Profile.tsx:85` | `toggleGoal` was removed but still referenced in edit mode | Replaced `toggleGoal` with the generic `toggleItem('goals', g)` |
 | 4 | `PostCard.tsx:103` | Pressing Enter in the comment input could submit an empty/whitespace-only comment | Added `newComment.trim()` guard before `submitComment()` |
+
+## Bugs Fixed (Debug Pass — 2026-06-15)
+
+Full debug pass: backend import check, frontend `tsc --noEmit` type-check, and a
+production `npm run build` all pass clean. Six real bugs found and fixed:
+
+| # | File | Severity | Issue | Fix |
+|---|------|----------|-------|-----|
+| 5 | `backend/app/api/routes/users.py` | **High (data loss)** | `create_profile` accepted `interests` + `learning_style` (collected in onboarding step 4) but never wrote them to the DB. Every new profile saved empty interests → AI matching (which reads `interests`) and the adult-learner feature were silently degraded. | Added `interests` and `learning_style` to the inserted profile dict. |
+| 6 | `backend/app/api/routes/posts.py` | **High (breaks feed)** | `list_posts` used `.select("*, profiles(display_name)")`. `posts.author_id` is a free-text column (no FK to `profiles`, and `text` vs `uuid`), so PostgREST can't embed `profiles` → request errors and **no posts ever load**. The embedded field wasn't even used (`author_name` is denormalized). | Changed to `.select("*")` and documented why. |
+| 7 | `backend/app/api/routes/villages.py` | **High (breaks members tab)** | `get_village_members` used `.select("*, profiles(...))")`. `village_members` has no direct FK to `profiles` (both only reference `auth.users`), so PostgREST can't embed → members render as "Unknown". | Rewrote to fetch profiles in a second `.in_()` query and merge them under each member's `profiles` key (FK-independent, always works). |
+| 8 | `supabase/migrations/002_performance_indexes.sql` | **High (migration fails)** | Re-ran `alter publication supabase_realtime add table posts/comments`, but 001 already added them. Postgres errors with "relation is already member of publication", rolling back the whole migration → **indexes never get created**. | Removed the duplicate publication adds; publication management lives only in 001. |
+| 9 | `frontend/src/lib/api.ts` | Medium | `generateChallenge` interpolated `subject`/`difficulty` straight into the query string with no encoding → any subject with a space, `&`, or `#` produced a malformed URL. | Switched to `URLSearchParams` (matches the `explainTopic` pattern). |
+| 10 | `frontend/vercel.json` | Low (config drift) | API rewrite still pointed at `villages-api.onrender.com`, but the whole deployment architecture (AGENTS.md + this file) standardized on **Koyeb**. | Updated placeholder to `https://villages-api-<org>.koyeb.app/$1`. |
 
 ---
 
@@ -294,21 +367,22 @@ Villages/
 │       ├── auth.py                  # JWT bearer token validation
 │       ├── models/
 │       │   ├── __init__.py
-│       │   ├── user.py              # UserProfile, Create, Update
+│       │   ├── user.py              # UserProfile (+interests, +learning_style)
 │       │   ├── village.py           # Village, VillageCreate, VillageMember
 │       │   ├── post.py              # Post, PostCreate, Comment, CommentCreate
-│       │   └── challenge.py         # Challenge, ChallengeCreate
+│       │   ├── challenge.py         # Challenge, ChallengeCreate
+│       │   └── learning.py          # TopicExplanation, LearningPath
 │       ├── api/
 │       │   ├── __init__.py
 │       │   └── routes/
 │       │       ├── __init__.py
 │       │       ├── users.py         # Profile CRUD
-│       │       ├── villages.py      # Village CRUD, join, AI match
+│       │       ├── villages.py      # Village CRUD, join, AI match, members
 │       │       ├── posts.py         # Post CRUD, upvote, comments
-│       │       └── ai.py            # Village Elder prompts, challenges
+│       │       └── ai.py            # Elder prompts, challenges, topic explain, learning paths
 │       └── services/
 │           ├── __init__.py
-│           └── ai_service.py        # Groq API integration
+│           └── ai_service.py        # OpenRouter API integration (+ fallback model)
 │
 ├── frontend/
 │   ├── package.json
@@ -345,7 +419,9 @@ Villages/
 │
 └── supabase/
     └── migrations/
-        └── 001_initial_schema.sql   # Full DDL + RLS policies + realtime
+        ├── 001_initial_schema.sql       # Full DDL + RLS policies + realtime
+        ├── 002_performance_indexes.sql  # Query-speed indexes
+        └── 003_competition_features.sql # interests/learning_style + topic_explanations + learning_paths
 ```
 
 ---
@@ -461,86 +537,84 @@ Configured via:
 Users → https://villages.yourdomain.com
                 │
         ┌───────┴───────┐
-        │   Vercel      │  ← Frontend (React + Vite, static build)
-        │  (free tier)  │
+        │   Vercel       │  ← Frontend (React/Vite, static build)
+        │  (free tier)   │     Always-on, global CDN, SSL
         └───────┬───────┘
-                │  proxy /api/* → backend
+                │  /api/* → backend
         ┌───────┴───────┐
-        │   Render /    │  ← Backend (FastAPI, Python)
-        │   Railway     │     or DigitalOcean App Platform
+        │   Koyeb        │  ← Backend (FastAPI/Python)
+        │  (free tier)   │     1 always-on instance, 512MB RAM
+        │                │     Auto-deploys from GitHub
         └───────┬───────┘
-                │  service_role_key
+                │  SUPABASE_SERVICE_ROLE_KEY
         ┌───────┴───────┐
-        │   Supabase    │  ← Database + Auth + Realtime
-        │  (free tier)  │     (shared with AI-Teacher or separate)
+        │   Supabase     │  ← Database + Auth + Realtime
+        │  (free tier)   │     500MB DB, 50k users, Realtime
         └───────────────┘
+
+Keep-alive: cron-job.org (free, no CC) → pings /health every 30 min
+             → Prevents Koyeb scale-to-zero (1hr idle timeout)
+             → Also prevents Supabase 7-day project pause
 ```
 
-### Option 1: Vercel (Frontend) + Render (Backend) + Supabase (DB) — **Recommended**
+### Vercel (Frontend) + Koyeb (Backend) + Supabase (DB) — **Recommended**
 
 | Component | Service | Free Tier | Config |
 |-----------|---------|-----------|--------|
-| **Frontend** (React) | **Vercel** | 100GB bandwidth, 6000 build mins/mo | Connect GitHub repo, set `FRAMEWORK=Vite`, build command `npm run build`, output `dist/` |
-| **Backend** (FastAPI) | **Render** | 750 hrs/mo (always-on), 512MB RAM | Use Render Web Service, start command `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
-| **Database** | **Supabase** | 500MB DB, 2GB bandwidth, 50k users | Already exists (`ooarycauxwefmxdlpxvc.supabase.co`) or create new |
-| **AI** | **OpenRouter (free models)** | 28+ free models (`:free` suffix), 50 req/day, 20 RPM | `OPENROUTER_API_KEY` already configured |
+| **Frontend** (React/Vite) | **Vercel** | 100GB bandwidth, 6000 build mins/mo | Root `frontend/`, framework Vite, build `npm run build`, output `dist/` |
+| **Backend** (FastAPI) | **Koyeb** | 1 free instance, 512MB RAM, 0.1 vCPU. Scales to 0 after 1hr idle (fixed by cron-job) | Use Dockerfile or Buildpacks. Port 8080. Env vars from `backend/.env` |
+| **Database** | **Supabase** | 500MB DB, 2GB bandwidth, 50k users, Realtime | Create new project for Villages (separate from AI-Teacher) |
+| **AI** | **OpenRouter** | 28+ free `:free` models, 50 req/day, 20 RPM | `OPENROUTER_API_KEY` already configured |
+| **Keep-alive** | **cron-job.org** | Free tier, unlimited jobs | Ping `/health` every 30 min → prevents both Koyeb sleep + Supabase pause |
 
 #### Step-by-Step
 
 **1. Frontend → Vercel**
 ```bash
-# Connect your GitHub repo to Vercel
-# Settings:
+# Vercel Dashboard → Add New → Project
+#   Import: Villages GitHub repo
+#   Root: frontend/
 #   Framework: Vite
 #   Build: npm run build
 #   Output: dist/
-#   Root: frontend/
-# Environment variables (from frontend/.env.example):
-#   VITE_SUPABASE_URL=https://ooarycauxwefmxdlpxvc.supabase.co
-#   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
+# Environment variables:
+#   VITE_SUPABASE_URL=<new-supabase-project-url>
+#   VITE_SUPABASE_ANON_KEY=<new-supabase-anon-key>
 ```
 
-**2. Backend → Render**
+**2. Backend → Koyeb**
 ```bash
-# Create a Web Service on Render
-#   Root: ./ (or backend/)
-#   Build: pip install -r backend/requirements.txt
-#   Start: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-# Environment variables (from backend/.env.example):
-#   SUPABASE_URL=https://ooarycauxwefmxdlpxvc.supabase.co
-#   SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
-#   SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
-#   SUPABASE_JWT_SECRET=<get from Supabase Dashboard>
-#   OPENROUTER_API_KEY=sk-or-v1-28cf25bb...
+# Koyeb Dashboard → Create App
+#   GitHub repo: Villages
+#   Name: villages-api
+#   Builder: Dockerfile (uses backend/Dockerfile automatically)
+#   Port: 8080
+# Environment variables (from backend/.env):
+#   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
+#   SUPABASE_JWT_SECRET, OPENROUTER_API_KEY, OPENROUTER_MODEL,
+#   OPENROUTER_MODEL_FALLBACK
 ```
 
-**3. Update Vite proxy for production**
-```typescript
-// frontend/vite.config.ts — proxy only needed for local dev
-// In production, Vercel rewrites handle /api → backend URL
-```
-Add a `vercel.json` to `frontend/`:
+**3. Update vercel.json with Koyeb URL**
 ```json
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://villages-api.onrender.com/$1" }
+    { "source": "/api/(.*)", "destination": "https://villages-api-<org>.koyeb.app/$1" }
   ]
 }
 ```
 
-**4. Run Supabase migration**
+**4. Run migrations**
 ```sql
--- Run 001_initial_schema.sql in the Supabase SQL Editor
--- on your chosen Supabase project
+-- Run both in Supabase SQL Editor:
+-- 1. supabase/migrations/001_initial_schema.sql
+-- 2. supabase/migrations/002_performance_indexes.sql
 ```
 
-### Option 2: All-in-One — Railway
-
-Railway can host the frontend (static), backend (Docker/Python), and even run PostgreSQL. But Supabase's free tier (with auth + realtime built in) is hard to beat.
-
-### Option 3: DigitalOcean App Platform
-
-Similar to Render — supports static sites + Python services with free-tier credits.
+**5. Set up cron-job.org**
+- URL: `https://villages-api-<org>.koyeb.app/health`
+- Every 30 minutes
+- Prevents Koyeb scale-to-zero + Supabase 7-day pause
 
 ### Environment Variables Checklist
 
@@ -563,13 +637,13 @@ Create these in your hosting dashboards:
 - Buy a domain (e.g. `villages.app`) from Cloudflare, Namecheap, etc.
 - Point DNS to Vercel (CNAME `cname.vercel-dns.com` or use Vercel's nameservers)
 - Vercel handles SSL automatically (Let's Encrypt)
-- Backend gets a subdomain: `api.villages.app` → Render/Railway
+- Backend gets a subdomain: `api.villages.app` → Koyeb
 
 ---
 
 ## Master Project Checklist
 
-**Legend:** ✅ Done | ⬜ Needs Claude Code (AI agent) | 👤 Needs human action (create accounts, click buttons)
+**Legend:** ✅ Done | 🟦 Partially done (blocked on a human/deploy step) | ⬜ Needs Claude Code (AI agent) | 👤 Needs human action (create accounts, click buttons)
 
 ### Phase 0 — Foundation ✅ (Completed by AI)
 
@@ -597,10 +671,10 @@ Create these in your hosting dashboards:
 | 1.3 | ⬜ | **Get Supabase JWT secret & update backend `.env`** | 👤 **Human** | Supabase Dashboard → Settings → API → JWT Settings → Copy `SUPABASE_JWT_SECRET` |
 | 1.4 | ⬜ | **Run `001_initial_schema.sql`** | 👤 **Human** | Supabase SQL Editor → paste the migration → Run. Creates all 6 tables + RLS + Realtime |
 | 1.5 | ⬜ | **Deploy frontend to Vercel** | 👤 **Human** | Connect GitHub repo → Vite preset → Root `frontend/` → Set env vars from `frontend/.env` → Deploy |
-| 1.6 | ⬜ | **Deploy backend to Render** | 👤 **Human** | Web Service → Python → Start command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT` → Set env vars from `backend/.env` → Deploy |
-| 1.7 | ⬜ | **Update vercel.json with real Render URL** | ⬜ Claude | After Render deploy, update `frontend/vercel.json` destination URL |
-| 1.8 | ⬜ | **Set up keep-alive cron job** | 👤 **Human** | Use cron-job.org (free): ping `https://villages-api.onrender.com/health` every 5 min to prevent Render sleep + Supabase project pause |
-| 1.9 | ⬜ | **Verify full flow works end-to-end** | ⬜ Claude | Test: sign up → onboarding → create/join village → post → AI match → Village Elder → challenge |
+| 1.6 | ⬜ | **Deploy backend to Koyeb** | 👤 **Human** | Create App → Dockerfile builder (`backend/Dockerfile`, port 8080) → Set env vars from `backend/.env` → Deploy |
+| 1.7 | ⬜ | **Update vercel.json with real Koyeb URL** | ⬜ Claude | After Koyeb deploy, replace `villages-api-<org>.koyeb.app` placeholder in `frontend/vercel.json` |
+| 1.8 | ⬜ | **Set up keep-alive cron job** | 👤 **Human** | Use cron-job.org (free): ping `https://villages-api-<org>.koyeb.app/health` every 30 min to prevent Koyeb scale-to-zero + Supabase project pause |
+| 1.9 | 🟦 | **Verify full flow works end-to-end** | ⬜ Claude | **Static verification done (2026-06-15):** backend imports clean, frontend type-checks + production build passes, all API routes register. **Live end-to-end still pending** a real Supabase project + deploy: sign up → onboarding → create/join village → post → AI match → Village Elder → challenge |
 | 1.10 | ⬜ | **Buy domain & point DNS** | 👤 **Human** | Optional: purchase domain → point to Vercel → update CORS in backend |
 
 ### Phase 2 — Feature Completion (⬜ Claude Code)
@@ -618,11 +692,11 @@ Create these in your hosting dashboards:
 
 | # | Status | Task | Files | Notes |
 |---|--------|------|-------|-------|
-| 3.1 | ⬜ | **Add TypeScript lint** — eslint config | `frontend/package.json` | Currently no linting |
+| 3.1 | ✅ | **TypeScript/ESLint + Prettier** | `frontend/eslint.config.js`, `.prettierrc.json`, `package.json` | `npm run lint`/`typecheck`/`format`; backend lint via Ruff (`backend/pyproject.toml`). All pass clean. |
 | 3.2 | ⬜ | **Backend tests** — pytest + httpx async | `backend/tests/` | Zero test coverage |
 | 3.3 | ⬜ | **Rate limiting** on AI endpoints | `backend/app/api/routes/ai.py` | Prevent API key abuse |
 | 3.4 | ⬜ | **Cache AI responses** in DB | `ai_service.py` | Store elder prompts, deduplicate |
-| 3.5 | ⬜ | **CI/CD pipeline** — GitHub Actions | `.github/workflows/` | Auto-test + auto-deploy on push |
+| 3.5 | 🟦 | **CI/CD pipeline** — GitHub Actions | `.github/workflows/ci.yml` | PR gate done (lint + typecheck + build + backend lint/import). Auto-deploy is handled by Vercel/Koyeb git integration. |
 | 3.6 | ⬜ | **Error monitoring** — Sentry integration | Backend + Frontend | Catch production errors |
 
 ### Phase 4 — Future Growth (⬜ Claude Code)

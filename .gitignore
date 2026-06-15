@@ -34,3 +34,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local run markers (created by run.sh / run.ps1)
+.deps-installed

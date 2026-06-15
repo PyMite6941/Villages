@@ -4,19 +4,23 @@ import { supabase } from '../lib/supabase'
 import { api } from '../lib/api'
 import toast from 'react-hot-toast'
 
-export default function Login() {
+export default function SignUp() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
-  const [isNew, setIsNew] = useState(false)
+  const [exists, setExists] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
     setLoading(true)
     try {
-      const { exists } = await api.auth.checkEmail(email)
-      setIsNew(!exists)
+      const result = await api.auth.checkEmail(email)
+      if (result.exists) {
+        setExists(true)
+        setLoading(false)
+        return
+      }
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
       if (error) { toast.error(error.message); setLoading(false); return }
       setSent(true)
@@ -32,8 +36,8 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <span className="text-6xl">🏘️</span>
-          <h1 className="text-3xl font-bold text-village-800 mt-3">Villages</h1>
-          <p className="text-gray-600 mt-2">AI-powered community learning</p>
+          <h1 className="text-3xl font-bold text-village-800 mt-3">Join Villages</h1>
+          <p className="text-gray-600 mt-2">Create your account to get started</p>
         </div>
 
         <div className="card">
@@ -42,18 +46,21 @@ export default function Login() {
               <span className="text-4xl">📬</span>
               <h2 className="font-semibold text-gray-900 mt-3 mb-1">Check your inbox</h2>
               <p className="text-sm text-gray-600">
-                {isNew
-                  ? "We're creating your account. Click the magic link sent to "
-                  : "Click the magic link sent to "}
-                <strong>{email}</strong>
+                We sent a magic link to <strong>{email}</strong>
               </p>
-              <p className="text-xs text-gray-400 mt-2">No email? Check spam or try again.</p>
+              <p className="text-xs text-gray-400 mt-2">Click it to activate your account and set up your profile.</p>
+            </div>
+          ) : exists ? (
+            <div className="text-center py-4">
+              <span className="text-4xl">👋</span>
+              <h2 className="font-semibold text-gray-900 mt-3 mb-1">You're already here</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                An account with <strong>{email}</strong> already exists.
+              </p>
+              <Link to="/login" className="btn-primary inline-block">Sign in instead</Link>
             </div>
           ) : (
             <>
-              <p className="text-sm text-gray-600 mb-4 text-center">
-                Enter your email and we'll check if you're already part of Villages.
-              </p>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
@@ -61,11 +68,11 @@ export default function Login() {
                     placeholder="you@example.com" required className="input" />
                 </div>
                 <button type="submit" disabled={loading} className="btn-primary w-full">
-                  {loading ? 'Checking...' : 'Continue with email'}
+                  {loading ? 'Checking...' : 'Create account'}
                 </button>
               </form>
               <p className="text-xs text-center text-gray-500 mt-4">
-                <Link to="/signup" className="text-village-600 hover:underline font-medium">New here? Create an account</Link>
+                Already have an account? <Link to="/login" className="text-village-600 hover:underline font-medium">Sign in</Link>
               </p>
             </>
           )}

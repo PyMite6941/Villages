@@ -11,6 +11,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$ROOT/backend"
 FRONTEND_DIR="$ROOT/frontend"
+LOG_FILE="$ROOT/villages.log"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -26,21 +27,28 @@ fail() { echo -e "${RED}[ fail ]${NC} $*"; exit 1; }
 # ── Prerequisites ────────────────────────────────────────────
 
 check_prereqs() {
-  if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
+  PYTHON=""
+  command -v python3 >/dev/null 2>&1 && PYTHON="python3"
+  command -v python   >/dev/null 2>&1 && PYTHON="python"
+  if [ -z "$PYTHON" ]; then
     fail "Python 3 is required (https://python.org)"
   fi
-  PYTHON=$(command -v python3 || command -v python)
+  PYTHON_VER=$($PYTHON --version 2>&1)
   $PYTHON -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" || \
-    fail "Python 3.10+ required (found: \$($PYTHON --version 2>&1))"
+    fail "Python 3.10+ required (found: $PYTHON_VER)"
+  ok "Python $PYTHON_VER found"
 
-  if ! command -v node &>/dev/null; then
+  NODE=""
+  command -v node     >/dev/null 2>&1 && NODE="node"
+  command -v node.exe >/dev/null 2>&1 && NODE="node.exe"
+  if [ -z "$NODE" ]; then
     fail "Node.js is required (https://nodejs.org)"
   fi
-  NODE_VER=$(node --version 2>&1 | sed 's/v//' | cut -d. -f1)
-  [ "$NODE_VER" -ge 18 ] || fail "Node.js 18+ required (found: $(node --version))"
-
-  ok "Python $(python3 --version 2>&1) found"
-  ok "Node $(node --version 2>&1) found"
+  RAW=$($NODE --version 2>&1)
+  CLEAN=${RAW#v}
+  MAJOR=${CLEAN%%.*}
+  [ "$MAJOR" -ge 18 ] || fail "Node.js 18+ required (found: $RAW)"
+  ok "Node $RAW found"
 }
 
 # ── Environment files ────────────────────────────────────────
@@ -89,18 +97,22 @@ cleanup() {
 start() {
   trap cleanup SIGINT SIGTERM EXIT
 
+  # Wipe previous log before this run
+  : > "$LOG_FILE"
+
   log "Starting backend (uvicorn)..."
-  (cd "$BACKEND_DIR" && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000) &
+  (cd "$BACKEND_DIR" && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 2>&1 | tee -a "$LOG_FILE") &
   BACKEND_PID=$!
 
   log "Starting frontend (Vite)..."
-  (cd "$FRONTEND_DIR" && npx vite --host 0.0.0.0 --port 5173) &
+  (cd "$FRONTEND_DIR" && npx vite --host 0.0.0.0 --port 5173 2>&1 | tee -a "$LOG_FILE") &
   FRONTEND_PID=$!
 
   echo ""
   echo -e "  ${GREEN}Frontend:${NC}  http://localhost:5173"
   echo -e "  ${GREEN}Backend:${NC}   http://localhost:8000"
   echo -e "  ${GREEN}API docs:${NC}  http://localhost:8000/docs"
+  echo -e "  ${YELLOW}Log:${NC}      $LOG_FILE"
   echo ""
   log "Press Ctrl+C to stop both servers"
 

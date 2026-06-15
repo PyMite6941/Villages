@@ -1,0 +1,28 @@
+# Secrets — never bake into the image (Koyeb injects env vars at runtime)
+.env
+.env.local
+.env.production
+
+# Python caches / build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Local run markers / logs
+.deps-installed
+*.log
+
+# VCS / IDE / OS
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

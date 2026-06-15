@@ -1,21 +1,22 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, Outlet } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import { Home, Users, MessageSquare, User, LogOut } from 'lucide-react'
+import { Home, Users, MessageSquare, User, LogOut, Lightbulb, Info } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface Props {
-  children: React.ReactNode
   session: Session
 }
 
 const navItems = [
   { to: '/', label: 'Home', icon: Home },
+  { to: '/study', label: 'Study', icon: Lightbulb },
   { to: '/villages', label: 'Villages', icon: Users },
   { to: '/forum', label: 'Forum', icon: MessageSquare },
   { to: '/profile', label: 'Profile', icon: User },
+  { to: '/about', label: 'About', icon: Info },
 ]
 
-export default function Layout({ children, session }: Props) {
+export default function Layout({ session }: Props) {
   const { pathname } = useLocation()
 
   return (
@@ -58,7 +59,7 @@ export default function Layout({ children, session }: Props) {
         </nav>
 
         {/* Main content */}
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-6 overflow-auto"><Outlet /></main>
       </div>
     </div>
   )

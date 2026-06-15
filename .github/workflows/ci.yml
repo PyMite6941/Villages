@@ -1,0 +1,52 @@
+name: CI
+
+# Runs on every PR and on pushes to main. These checks are the gate that keeps
+# incoming pull requests from breaking the style or functionality of the app.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend (lint · types · build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Lint (ESLint)
+        run: npm run lint
+      - name: Type-check (tsc)
+        run: npm run typecheck
+      - name: Production build
+        run: npm run build
+
+  backend:
+    name: Backend (lint · import)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt ruff
+      - name: Lint (Ruff)
+        run: ruff check .
+      - name: Import smoke test
+        # Settings default to empty strings and the Supabase client is created
+        # lazily, so the app imports cleanly without any secrets in CI.
+        run: python -c "from app.main import app; assert app.routes, 'no routes registered'; print('OK')"

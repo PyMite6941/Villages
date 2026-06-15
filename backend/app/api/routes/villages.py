@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends
-from app.models.village import Village, VillageCreate
-from app.database import get_supabase
-from app.auth import get_current_user
-from app.services.ai_service import generate_village_match_reasoning
-from typing import Optional
 import uuid
 from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.auth import get_current_user
+from app.database import get_supabase
+from app.models.village import Village, VillageCreate
+from app.services.ai_service import generate_village_match_reasoning
 
 router = APIRouter(prefix="/villages", tags=["villages"])
 
@@ -34,6 +36,8 @@ async def ai_match_village(user_id: str = Depends(get_current_user)):
         user_strengths=profile.get("strengths", []),
         user_weaknesses=profile.get("weaknesses", []),
         academic_level=profile.get("academic_level", ""),
+        interests=profile.get("interests", []),
+        learning_style=profile.get("learning_style", "visual"),
         available_villages=villages_result.data,
     )
     return {"recommended_village_id": match.get("village_id"), "reasoning": match.get("reasoning")}
@@ -103,5 +107,20 @@ async def join_village(village_id: str, user_id: str = Depends(get_current_user)
 @router.get("/{village_id}/members")
 async def get_village_members(village_id: str):
     sb = get_supabase()
-    result = sb.table("village_members").select("*, profiles(display_name, academic_level, goals)").eq("village_id", village_id).execute()
-    return result.data
+    members = sb.table("village_members").select("*").eq("village_id", village_id).execute().data
+    # village_members.user_id and profiles.id both reference auth.users but have
+    # no direct FK between them, so PostgREST can't embed profiles. Fetch + merge.
+    user_ids = [m["user_id"] for m in members]
+    profiles_by_id: dict = {}
+    if user_ids:
+        profiles = (
+            sb.table("profiles")
+            .select("id, display_name, academic_level, goals")
+            .in_("id", user_ids)
+            .execute()
+            .data
+        )
+        profiles_by_id = {p["id"]: p for p in profiles}
+    for m in members:
+        m["profiles"] = profiles_by_id.get(m["user_id"])
+    return members

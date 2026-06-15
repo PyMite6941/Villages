@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
-from app.models.user import UserProfile, UserProfileCreate, UserProfileUpdate
-from app.database import get_supabase
-from app.auth import get_current_user
 from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.auth import get_current_user
+from app.database import get_supabase
+from app.models.user import UserProfile, UserProfileCreate, UserProfileUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -10,20 +12,17 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("/profile", response_model=UserProfile)
 async def create_profile(data: UserProfileCreate, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
-    profile = {
-        "id": user_id,
-        "display_name": data.display_name,
-        "academic_level": data.academic_level,
-        "goals": data.goals,
-        "strengths": data.strengths,
-        "weaknesses": data.weaknesses,
-        "email": "",
-        "created_at": datetime.utcnow().isoformat(),
-    }
-    result = sb.table("profiles").upsert(profile).execute()
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create profile")
-    return UserProfile(**result.data[0])
+    profile = data.model_dump()
+    profile["id"] = user_id
+    profile["email"] = ""
+    profile["created_at"] = datetime.utcnow().isoformat()
+    try:
+        result = sb.table("profiles").upsert(profile).execute()
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create profile")
+        return UserProfile(**result.data[0])
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Database error — have you run the SQL migrations? {e}")
 
 
 @router.get("/profile/{user_id}", response_model=UserProfile)
