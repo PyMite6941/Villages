@@ -7,7 +7,7 @@ async function authHeaders() {
   const { data: { session } } = await supabase.auth.getSession()
   return {
     'Content-Type': 'application/json',
-    ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
+    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
   }
 }
 

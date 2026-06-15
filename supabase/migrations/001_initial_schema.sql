@@ -106,3 +106,7 @@ create policy "Challenges are viewable by everyone" on public.challenges for sel
 -- Village members
 create policy "Village members are viewable by everyone" on public.village_members for select using (true);
 create policy "Users can join villages" on public.village_members for insert with check (auth.uid() = user_id);
+
+-- Enable Realtime for live chat
+alter publication supabase_realtime add table public.posts;
+alter publication supabase_realtime add table public.comments;

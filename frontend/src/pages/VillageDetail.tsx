@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import type { Village, Post } from '../types'
 import PostCard from '../components/PostCard'
-import { Sparkles, Zap, Users, BookOpen, Send } from 'lucide-react'
+import { Sparkles, Zap, Users, BookOpen, Send, Wifi } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props { session: Session }
 
-export default function VillageDetail({ session }: Props) {
+export default function VillageDetail({ session: _session }: Props) {
   const { id } = useParams<{ id: string }>()
   const [village, setVillage] = useState<Village | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -19,15 +20,36 @@ export default function VillageDetail({ session }: Props) {
   const [elderLoading, setElderLoading] = useState(false)
   const [challengeSubject, setChallengeSubject] = useState('')
   const [challengeLoading, setChallengeLoading] = useState(false)
-  const [tab, setTab] = useState<'discussion' | 'challenges' | 'members'>('discussion')
+  const [tab, setTab] = useState<'discussion' | 'members'>('discussion')
+  const [live, setLive] = useState(false)
+  const postIdsRef = useRef(new Set<string>())
 
   useEffect(() => {
     if (!id) return
     Promise.all([
       api.villages.get(id).then(setVillage),
-      api.posts.list(id).then(setPosts),
+      api.posts.list(id).then((data) => {
+        data.forEach((p) => postIdsRef.current.add(p.id))
+        setPosts(data)
+      }),
       api.villages.getMembers(id).then(setMembers),
     ])
+
+    const channel = supabase
+      .channel(`village-posts-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'posts', filter: `village_id=eq.${id}` },
+        (payload) => {
+          const incoming = payload.new as Post
+          if (postIdsRef.current.has(incoming.id)) return
+          postIdsRef.current.add(incoming.id)
+          setPosts((prev) => [incoming, ...prev])
+        },
+      )
+      .subscribe((status) => setLive(status === 'SUBSCRIBED'))
+
+    return () => { supabase.removeChannel(channel) }
   }, [id])
 
   const submitPost = async () => {
@@ -35,6 +57,7 @@ export default function VillageDetail({ session }: Props) {
     setPosting(true)
     try {
       const p = await api.posts.create({ content: newPost, village_id: id })
+      postIdsRef.current.add(p.id)
       setPosts((prev) => [p, ...prev])
       setNewPost('')
     } catch (e: unknown) {
@@ -51,13 +74,14 @@ export default function VillageDetail({ session }: Props) {
       const result = await api.ai.villageElderPrompt(id)
       const elderPost: Post = {
         id: result.post_id,
-        content: `**Village Elder:** ${result.prompt}`,
+        content: result.prompt,
         author_id: 'village-elder-ai',
         author_name: 'Village Elder',
         village_id: id,
         is_ai_generated: true,
         upvotes: 0,
       }
+      postIdsRef.current.add(result.post_id)
       setPosts((prev) => [elderPost, ...prev])
       toast.success('Village Elder has spoken!')
     } catch {
@@ -92,6 +116,11 @@ export default function VillageDetail({ session }: Props) {
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">🏘️</span>
               <h1 className="text-xl font-bold text-village-800">{village.name}</h1>
+              {live && (
+                <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                  <Wifi size={11} /> Live
+                </span>
+              )}
             </div>
             <p className="text-sm text-gray-600 mb-3">{village.description}</p>
             <div className="flex items-center gap-3 flex-wrap">

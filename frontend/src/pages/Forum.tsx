@@ -1,21 +1,44 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import type { Post } from '../types'
 import PostCard from '../components/PostCard'
-import { Send } from 'lucide-react'
+import { Send, Wifi } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props { session: Session }
 
-export default function Forum({ session }: Props) {
+export default function Forum({ session: _session }: Props) {
   const [posts, setPosts] = useState<Post[]>([])
   const [newPost, setNewPost] = useState('')
   const [posting, setPosting] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [live, setLive] = useState(false)
+  const postIdsRef = useRef(new Set<string>())
 
   useEffect(() => {
-    api.posts.list().then(setPosts).finally(() => setLoading(false))
+    api.posts.list().then((data) => {
+      data.forEach((p) => postIdsRef.current.add(p.id))
+      setPosts(data)
+    }).finally(() => setLoading(false))
+
+    const channel = supabase
+      .channel('global-forum-posts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'posts' },
+        (payload) => {
+          const incoming = payload.new as Post
+          if (incoming.village_id) return  // only global posts here
+          if (postIdsRef.current.has(incoming.id)) return
+          postIdsRef.current.add(incoming.id)
+          setPosts((prev) => [incoming, ...prev])
+        },
+      )
+      .subscribe((status) => setLive(status === 'SUBSCRIBED'))
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   const submitPost = async () => {
@@ -23,6 +46,7 @@ export default function Forum({ session }: Props) {
     setPosting(true)
     try {
       const p = await api.posts.create({ content: newPost })
+      postIdsRef.current.add(p.id)
       setPosts((prev) => [p, ...prev])
       setNewPost('')
     } catch (e: unknown) {
@@ -34,9 +58,16 @@ export default function Forum({ session }: Props) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Global Forum</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Open discussion for all Villages students</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Global Forum</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Open discussion for all Villages students</p>
+        </div>
+        {live && (
+          <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+            <Wifi size={12} /> Live
+          </span>
+        )}
       </div>
 
       <div className="card mb-6">
