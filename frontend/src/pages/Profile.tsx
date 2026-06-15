@@ -8,24 +8,25 @@ import { supabase } from '../lib/supabase'
 interface Props { session: Session }
 
 const COMMON_GOALS = ['SAT Math', 'SAT Reading', 'ACT', 'AP Calculus', 'AP Biology', 'AP Chemistry', 'AP Physics', 'AP History', 'AP English', 'College Essays', 'Study Habits']
+const ACADEMIC_LEVELS = ['Middle School', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12', 'SAT Prep', 'ACT Prep', 'AP Student', 'College Freshman']
 
 export default function Profile({ session }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ display_name: '', academic_level: '', goals: [] as string[] })
+  const [form, setForm] = useState({ display_name: '', academic_level: '', goals: [] as string[], strengths: [] as string[], weaknesses: [] as string[] })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     api.users.getProfile(session.user.id).then((p) => {
       setProfile(p)
-      setForm({ display_name: p.display_name, academic_level: p.academic_level, goals: p.goals })
+      setForm({ display_name: p.display_name, academic_level: p.academic_level, goals: p.goals, strengths: p.strengths, weaknesses: p.weaknesses })
     })
   }, [session.user.id])
 
-  const toggleGoal = (g: string) => {
+  const toggleItem = (field: 'goals' | 'strengths' | 'weaknesses', item: string) => {
     setForm((prev) => ({
       ...prev,
-      goals: prev.goals.includes(g) ? prev.goals.filter((x) => x !== g) : [...prev.goals, g],
+      [field]: prev[field].includes(item) ? prev[field].filter((x) => x !== item) : [...prev[field], item],
     }))
   }
 
@@ -78,11 +79,39 @@ export default function Profile({ session }: Props) {
               <input value={form.display_name} onChange={(e) => setForm((p) => ({ ...p, display_name: e.target.value }))} className="input" />
             </div>
             <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Academic level</label>
+              <select value={form.academic_level} onChange={(e) => setForm((p) => ({ ...p, academic_level: e.target.value }))} className="input">
+                {ACADEMIC_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+            <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Goals</label>
               <div className="flex flex-wrap gap-2">
                 {COMMON_GOALS.map((g) => (
-                  <button key={g} onClick={() => toggleGoal(g)}
+                  <button key={g} onClick={() => toggleItem('goals', g)}
                     className={`badge cursor-pointer py-1 px-3 ${form.goals.includes(g) ? 'bg-village-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Strengths</p>
+              <div className="flex flex-wrap gap-2">
+                {COMMON_GOALS.map((g) => (
+                  <button key={g} onClick={() => toggleItem('strengths', g)}
+                    className={`badge cursor-pointer py-1 px-3 ${form.strengths.includes(g) ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Areas to improve</p>
+              <div className="flex flex-wrap gap-2">
+                {COMMON_GOALS.map((g) => (
+                  <button key={g} onClick={() => toggleItem('weaknesses', g)}
+                    className={`badge cursor-pointer py-1 px-3 ${form.weaknesses.includes(g) ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                     {g}
                   </button>
                 ))}

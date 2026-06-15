@@ -100,7 +100,7 @@ export default function PostCard({ post, showComments = false }: Props) {
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add a comment..."
               className="input text-sm"
-              onKeyDown={(e) => e.key === 'Enter' && submitComment()}
+              onKeyDown={(e) => e.key === 'Enter' && newComment.trim() && submitComment()}
             />
             <button onClick={submitComment} className="btn-primary text-sm px-3">Post</button>
           </div>

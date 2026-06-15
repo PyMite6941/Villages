@@ -15,31 +15,41 @@ def list_villages():
 
 def main():
     print("Welcome to the Villages Project CLI!")
-    print("Available commands: list, get <village_name>")
+    print("Available commands: list, get <village_name>, exit")
 
     while True:
-        command = input("> ").strip().split(maxsplit=1)
-        action = command[0]
+        try:
+            raw = input("> ").strip()
+            if not raw:
+                continue
+            parts = raw.split(maxsplit=1)
+            action = parts[0]
+            arg = parts[1] if len(parts) > 1 else ""
 
-        if action == "list":
-            villages = list_villages()
-            print("Villages:")
-            for village in villages:
-                print(f"- {village}")
-        elif action == "get" and len(command) > 1:
-            village_name = command[1]
-            data = get_village_data(village_name)
-            if data["population"] > 0:
-                print(f"Data for {village_name}:")
-                print(f"  Population: {data['population']}")
-                print(f"  Resources: {', '.join(data['resources'])}")
+            if action == "list":
+                villages = list_villages()
+                print("Villages:")
+                for village in villages:
+                    print(f"- {village}")
+            elif action == "get":
+                if not arg:
+                    print("Usage: get <village_name>")
+                    continue
+                data = get_village_data(arg)
+                if data["population"] > 0:
+                    print(f"Data for {arg}:")
+                    print(f"  Population: {data['population']}")
+                    print(f"  Resources: {', '.join(data['resources'])}")
+                else:
+                    print(f"Village '{arg}' not found.")
+            elif action == "exit":
+                print("Exiting Villages Project CLI.")
+                break
             else:
-                print(f"Village '{village_name}' not found.")
-        elif action == "exit":
-            print("Exiting Villages Project CLI.")
+                print("Unknown command. Try 'list', 'get <village_name>', or 'exit'.")
+        except (KeyboardInterrupt, EOFError):
+            print("\nExiting Villages Project CLI.")
             break
-        else:
-            print("Unknown command or invalid arguments. Try 'list' or 'get <village_name>'.")
 
 if __name__ == "__main__":
     main()
