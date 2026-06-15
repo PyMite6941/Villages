@@ -352,22 +352,20 @@ Villages/
 
 ## How to Run
 
-### Backend
 ```bash
-cd backend
-python -m venv .venv
-.venv\Scripts\activate     # Windows
-pip install -r requirements.txt
-cp .env.example .env       # Fill in your Supabase & Groq credentials
-uvicorn app.main:app --reload
+# One command — installs deps + starts both servers:
+./run.sh
 ```
 
-### Frontend
+**Prerequisites:** Python 3.10+, Node.js 18+, and `.env` files in both `backend/` and `frontend/`.
+
+### Manual start
 ```bash
-cd frontend
-npm install
-cp .env.example .env       # Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-npm run dev                # Starts on localhost:5173
+# Terminal 1 — Backend
+cd backend && uvicorn app.main:app --reload
+
+# Terminal 2 — Frontend
+cd frontend && npm run dev
 ```
 
 ### Supabase Migration
