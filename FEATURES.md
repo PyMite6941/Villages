@@ -259,6 +259,88 @@
 - **Output:** `{ safe, concerns[], ethical_notes[] }` — if flagged, concerns are surfaced to the user
 - **Design mitigation:** AI suggests, but humans decide. AI acts as a moderator ensuring group education stays grounded in ethical principles. All content moderation is non-blocking — warnings are surfaced alongside results rather than silently dropping content.
 
+### 19. Study Hub — Personal AI Study Space
+
+- **File:** `frontend/src/pages/StudyHub.tsx`, `backend/app/api/routes/ai.py`, `backend/app/services/ai_service.py`
+- **Access:** Nav link "Study Hub" in sidebar, available to all authenticated users
+- **Scope:** 1-on-1 AI tools that exist outside Villages — personal tutoring, essay coaching, planning, college prep
+- **4 tabs (with access gating):**
+
+#### 19a. Study Buddy (Socratic AI Tutor)
+- **Tab:** Available to everyone
+- **How it works:** Pick a subject → chat with an AI that uses the **Socratic method** (never gives direct answers, only probing questions)
+- **Anti-spoonfeeding:** System prompt enforces Socratic dialogue — "respond ONLY with probing questions and hints"
+- **Subject selector:** Dropdown of 24+ subjects (Math, Science, English, History, CS, etc.)
+- **Chat history:** Last 8 messages included as context for coherent multi-turn conversations
+- **API:** `POST /ai/study-buddy` → `generate_socratic_response()`
+
+#### 19b. Essay Coach (Application Critique)
+- **Tab:** Gated — only users with academic level in 6th grade through university
+- **How it works:** Paste an essay → AI analyzes strengths, improvements, and strategic vulnerabilities
+- **Anti-ghostwriting:** System prompt explicitly forbids generating or rewriting any essay content
+- **Fields:** Essay prompt (optional), student context (optional — helps evaluate achievement fairly), essay body
+- **Output:** Strengths ✓, Areas to Improve →, Strategic Vulnerabilities ⚠, Overall Assessment
+- **API:** `POST /ai/essay-coach` → `generate_essay_feedback()`
+- **Minimum length:** 50 characters required before analysis
+
+#### 19c. Study Planner (Multi-Week Timeline)
+- **Tab:** Available to everyone
+- **How it works:** Pick a subject + target + target date + weekly hours → AI generates a week-by-week plan working backwards from the deadline
+- **Fields:** Subject (dropdown or custom), Target/Goal (text, e.g. "AP Biology exam"), Target Date (date picker), hours/week slider (3-40h)
+- **Profile integration:** Uses profile goals, strengths, weaknesses, and academic level to personalize the timeline
+- **Output:** Structured week-by-week view with focus theme, date range, task list, and milestone per week + summary
+- **API:** `POST /ai/study-planner` → `generate_study_planner()`
+- **Different from Study Plan:** Generates a multi-week backward-planned timeline rather than a single-week schedule
+
+#### 19d. College Prep
+- **Tab:** Gated — requires 11th/12th grade or college-prep study tags
+- **Two sub-tabs:**
+
+**College Essay Workshop:** Same essay critique engine as Essay Coach, but tailored for Common App prompts (7 built-in prompts + custom). Shows word count with warning if over 650 words.
+
+**College Fit Advisor:** Chat-based advisor that suggests reach/match/safety schools based on GPA, test scores, interests, and preferences. Starts with a profile form, then opens a conversational interface. API: `POST /ai/college-advisor` → `generate_college_advisor_response()`
+
+### 20. Courses & Lessons
+
+- **File:** `frontend/src/pages/Courses.tsx`, `frontend/src/pages/CourseDetail.tsx`, `backend/app/api/routes/courses.py`
+- **Browse courses:** Grid view with subject/category filters, difficulty badges, teacher info
+- **Course detail:** Lesson list with completion tracking, enrollment button, study tips button
+- **Lesson completion:** Tracks completed lesson IDs per user per course
+- **Teacher verification:** Teacher application → admin verification → verified teacher badge
+- **API endpoints:** `GET/POST /courses`, `GET /courses/:id`, `POST /courses/:id/enroll`, `GET /courses/:id/enrollment`, `POST /courses/:id/lessons/:lid/complete`, `POST /ai/courses/:id/study-tips`
+
+### 21. Study Tracks & Profile Tags
+
+- **File:** `frontend/src/pages/Onboarding.tsx`, `frontend/src/pages/Profile.tsx`
+- **4 study track presets:**
+  - `high_schooler` — Unlocks College Prep tab in Study Hub
+  - `college_student` — General higher education track
+  - `adult_learner` — Adult education, no school-gating features
+  - `test_prep` — Test-focused study tools
+- **Custom ("Other") goals:** Free-form text input + "Add" button — any string is valid (no CHECK constraint on `goals[]`)
+- **Tags stored in:** `profiles.study_tags[]` (text array)
+- **Academic levels:** Full range from 6th Grade through Doctoral Student + adult options (Adult Learner, Professional, Parent, etc.)
+
+### 22. Teacher Verification
+
+- **File:** `frontend/src/pages/Profile.tsx`, `backend/app/api/routes/teacher.py`
+- **Flow:** Teacher applies with degree title, institution, and subject area → stored with `status: 'pending'` → admin (manual) verifies → `is_verified_teacher: true` on profile
+- **Verified teachers:** Get a verified badge on their courses, can create courses
+- **API:** `POST /teacher/apply`, `GET /teacher/verification`
+
+---
+
+### Auth — Magic Link via Backend Proxy
+
+The deployed Supabase project has SITE_URL stuck at `http://localhost:3000` (can't be changed without Supabase dashboard access). The auth flow works around this via a 3-step backend proxy:
+
+1. **`POST /auth/send-magic-link`** calls Supabase admin `generate_link` API (service role key) to create user + one-time token
+2. **Backend calls `GET /auth/v1/verify`** with `follow_redirects=False` — Supabase returns 303 with `Location: http://SITE_URL#access_token=xxx` (real session tokens in the hash)
+3. **Backend strips the Supabase host**, builds `https://villages-eight.vercel.app/auth/callback#access_token=xxx` with the real session tokens
+4. **Frontend Callback.tsx** detects the hash via `supabase.auth.getSession()` → user is logged in
+
+Key files: `backend/app/api/routes/auth.py`, `frontend/src/pages/Login.tsx`, `frontend/src/pages/Callback.tsx`
+
 ---
 
 ## Database Schema (Supabase / PostgreSQL)
@@ -376,10 +458,13 @@ Villages/
 │       │   ├── __init__.py
 │       │   └── routes/
 │       │       ├── __init__.py
+│       │       ├── auth.py          # Magic link via backend proxy
 │       │       ├── users.py         # Profile CRUD
 │       │       ├── villages.py      # Village CRUD, join, AI match, members
 │       │       ├── posts.py         # Post CRUD, upvote, comments
-│       │       └── ai.py            # Elder prompts, challenges, topic explain, learning paths
+│       │       ├── courses.py       # Course CRUD, enrollment, lesson completion
+│       │       ├── teacher.py       # Teacher application + verification
+│       │       └── ai.py            # Elder prompts, challenges, topic explain, learning paths, Study Hub AI
 │       └── services/
 │           ├── __init__.py
 │           └── ai_service.py        # OpenRouter API integration (+ fallback model)
@@ -400,7 +485,7 @@ Villages/
 │       ├── index.css                # Tailwind + custom utility classes
 │       ├── App.tsx                  # Auth gate + routing
 │       ├── types/
-│       │   └── index.ts            # TypeScript interfaces
+│       │   └── index.ts            # TypeScript interfaces (UserProfile, Village, Post, Course, etc.)
 │       ├── lib/
 │       │   ├── supabase.ts         # Supabase client
 │       │   └── api.ts             # Typed HTTP client for all endpoints
@@ -410,12 +495,16 @@ Villages/
 │       │   └── PostCard.tsx        # Post display + comments
 │       └── pages/
 │           ├── Login.tsx            # Magic link login
+│           ├── Callback.tsx         # Auth callback (hash-fragment session)
 │           ├── Home.tsx             # Dashboard (village status + activity)
 │           ├── Villages.tsx         # Browse/search/create villages
 │           ├── VillageDetail.tsx    # Village discussion + members
 │           ├── Forum.tsx            # Global forum
 │           ├── Profile.tsx          # View/edit profile
-│           └── Onboarding.tsx       # 4-step profile setup
+│           ├── Onboarding.tsx       # 4-step profile setup + study tracks
+│           ├── StudyHub.tsx         # Study Buddy, Essay Coach, Study Planner, College Prep
+│           ├── Courses.tsx          # Course catalog with filters
+│           └── CourseDetail.tsx     # Course lessons + enrollment + study tips
 │
 └── supabase/
     └── migrations/
@@ -695,6 +784,11 @@ Create these in your hosting dashboards:
 | 2.4 | ⬜ | **Challenge completion** — "Mark as done" button | `VillageDetail.tsx`, backend route | Challenges exist but can't complete |
 | 2.5 | ⬜ | **Profile avatar upload** via Supabase Storage | `Profile.tsx`, Supabase bucket | Currently just shows initials |
 | 2.6 | ⬜ | **Mobile responsive nav** — sidebar collapses to bottom tabs | `Layout.tsx` | Current sidebar wastes space on mobile |
+| 2.7 | ✅ | **Study Hub** — Study Buddy, Essay Coach, Study Planner, College Prep | `StudyHub.tsx`, `ai.py`, `ai_service.py` | 4 tabs with access gating |
+| 2.8 | ✅ | **Study Planner** — Multi-week timeline toward target date | `StudyHub.tsx`, `ai.py`, `ai_service.py` | Uses `POST /ai/study-planner` |
+| 2.9 | ✅ | **Courses + Lessons** — Course CRUD, enrollment, lesson completion | `Courses.tsx`, `CourseDetail.tsx`, `courses.py` | With teacher verification flow |
+| 2.10 | ✅ | **Auth proxy** — Magic link via backend for deployed SITE_URL workaround | `auth.py`, `Callback.tsx` | Backend follows 303 redirect, extracts session tokens |
+| 2.11 | ✅ | **Study tracks** — high_schooler, college_student, adult_learner, test_prep | `Onboarding.tsx`, `Profile.tsx` | Unlocks gated features in Study Hub |
 
 ### Phase 3 — Quality & Scale (⬜ Claude Code)
 

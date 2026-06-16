@@ -1,6 +1,6 @@
 import time as time_module
 from typing import Optional
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query

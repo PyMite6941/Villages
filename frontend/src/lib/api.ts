@@ -118,6 +118,18 @@ export const api = {
       ),
     studyPlan: (data: { goals: string[]; strengths: string[]; weaknesses: string[]; academic_level: string; weekly_hours: number }) =>
       req<{ plan: string }>('POST', '/ai/study-plan', data),
+    studyPlanner: (data: {
+      goals: string[]
+      strengths: string[]
+      weaknesses: string[]
+      academic_level: string
+      subject: string
+      target: string
+      target_date: string
+      weekly_hours: number
+    }) => req<{ weeks: { week: number; dates: string; focus: string; tasks: string[]; milestone: string }[]; total_weeks: number; summary: string }>(
+      'POST', '/ai/study-planner', data
+    ),
     collegeAdvisor: (data: {
       message: string
       gpa?: string

@@ -374,6 +374,59 @@ async def generate_learning_path(
     return _parse_json(raw, fallback)
 
 
+async def generate_study_planner(
+    goals: list[str],
+    strengths: list[str],
+    weaknesses: list[str],
+    academic_level: str,
+    subject: str,
+    target: str,
+    target_date: str,
+    weekly_hours: int,
+) -> dict:
+    system = (
+        "You are a study planner for a student learning community called Villages. "
+        "Create a comprehensive multi-week study timeline from today until the target date. "
+        "Work backwards from the target date to build week-by-week milestones. "
+        "Prioritize weak areas and distribute topics across the available weeks. "
+        "Be specific and realistic about what can be accomplished each week. "
+        'Respond with JSON only: '
+        '{"weeks": [{"week": 1, "dates": "<date range>", "focus": "<weekly theme>", '
+        '"tasks": ["<task1>", "<task2>", ...], "milestone": "<weekly checkpoint>"}, ...], '
+        '"total_weeks": <number>, "summary": "<2-3 sentence overview of the plan>"}'
+    )
+    messages = [{
+        "role": "user",
+        "content": (
+            f"Create a study plan from now until {target_date} for:\n"
+            f"- Academic level: {academic_level}\n"
+            f"- Subject: {subject}\n"
+            f"- Target/Goal: {target}\n"
+            f"- Goals: {', '.join(goals) if goals else 'general improvement'}\n"
+            f"- Strengths (spend less time): {', '.join(strengths) if strengths else 'not specified'}\n"
+            f"- Needs work (prioritize): {', '.join(weaknesses) if weaknesses else 'not specified'}\n"
+            f"- Available study hours per week: {weekly_hours}h\n\n"
+            f"Generate a week-by-week timeline with milestones and specific tasks for each week. "
+            f"JSON only."
+        ),
+    }]
+    raw = await call_llm(messages, system)
+    fallback = {
+        "weeks": [
+            {
+                "week": 1,
+                "dates": "This week",
+                "focus": "Getting started",
+                "tasks": ["Review the basics", "Set up your study materials"],
+                "milestone": "Begin your study journey",
+            }
+        ],
+        "total_weeks": 1,
+        "summary": "A structured plan to reach your study goal.",
+    }
+    return _parse_json(raw, fallback)
+
+
 async def moderate_topic_content(topic: str, explanation: str) -> dict:
     system = (
         "You are a responsible AI guardrail for an educational community platform. "

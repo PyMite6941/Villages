@@ -50,7 +50,7 @@ const ALL_SUBJECTS = [
 export default function Profile({ session }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ display_name: '', academic_level: '', goals: [] as string[], bio: '' })
+  const [form, setForm] = useState({ display_name: '', academic_level: '', goals: [] as string[], bio: '', interests: [] as string[], learning_style: 'visual', strengths: [] as string[], weaknesses: [] as string[] })
   const [saving, setSaving] = useState(false)
   const [studyTags, setStudyTags] = useState<string[]>([])
   const [savingTags, setSavingTags] = useState(false)
@@ -63,7 +63,7 @@ export default function Profile({ session }: Props) {
   useEffect(() => {
     api.users.getProfile(session.user.id).then((p) => {
       setProfile(p)
-      setForm({ display_name: p.display_name, academic_level: p.academic_level, goals: p.goals, bio: p.bio ?? '' })
+      setForm({ display_name: p.display_name, academic_level: p.academic_level, goals: p.goals, bio: p.bio ?? '', interests: p.interests ?? [], learning_style: p.learning_style ?? 'visual', strengths: p.strengths ?? [], weaknesses: p.weaknesses ?? [] })
       setStudyTags(p.study_tags ?? [])
     })
     api.teacher.getVerification().then((v) => setVerification(v)).catch(() => setVerification(null))
@@ -93,6 +93,8 @@ export default function Profile({ session }: Props) {
     }))
   }
 
+  const LEARNING_STYLES = ['visual', 'auditory', 'reading', 'kinesthetic']
+
   const save = async () => {
     setSaving(true)
     try {
@@ -101,6 +103,10 @@ export default function Profile({ session }: Props) {
         academic_level: form.academic_level,
         goals: form.goals,
         bio: form.bio || undefined,
+        interests: form.interests,
+        learning_style: form.learning_style,
+        strengths: form.strengths,
+        weaknesses: form.weaknesses,
       })
       setProfile(updated)
       setEditing(false)
@@ -206,6 +212,46 @@ export default function Profile({ session }: Props) {
                   >
                     {g}
                   </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Strengths <span className="text-gray-400 font-normal">(what you're good at)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {COMMON_GOALS.map((g) => (
+                  <button key={g} onClick={() => setForm((p) => ({ ...p, strengths: p.strengths.includes(g) ? p.strengths.filter((x) => x !== g) : [...p.strengths, g] }))}
+                    className={`badge cursor-pointer py-1 px-3 text-sm ${form.strengths.includes(g) ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{g}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Weaknesses <span className="text-gray-400 font-normal">(areas you need help with)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {COMMON_GOALS.map((g) => (
+                  <button key={g} onClick={() => setForm((p) => ({ ...p, weaknesses: p.weaknesses.includes(g) ? p.weaknesses.filter((x) => x !== g) : [...p.weaknesses, g] }))}
+                    className={`badge cursor-pointer py-1 px-3 text-sm ${form.weaknesses.includes(g) ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{g}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Interests</label>
+              <div className="flex flex-wrap gap-2">
+                {['Science','Technology','Math','History','Literature','Art','Music','Programming','Language Learning','Career Development','Parenting','Health & Wellness','Finance','Philosophy','Civics'].map((i) => (
+                  <button key={i} onClick={() => setForm((p) => ({ ...p, interests: p.interests.includes(i) ? p.interests.filter((x) => x !== i) : [...p.interests, i] }))}
+                    className={`badge cursor-pointer py-1 px-3 text-sm ${form.interests.includes(i) ? 'bg-village-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{i}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Learning Style</label>
+              <div className="flex gap-2">
+                {LEARNING_STYLES.map((s) => (
+                  <button key={s} onClick={() => setForm((p) => ({ ...p, learning_style: s }))}
+                    className={`badge cursor-pointer py-1 px-3 text-sm capitalize ${form.learning_style === s ? 'bg-village-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{s}</button>
                 ))}
               </div>
             </div>

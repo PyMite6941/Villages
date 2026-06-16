@@ -397,33 +397,56 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
   )
 }
 
-// ── Study Plan ────────────────────────────────────────────────────────────────
+// ── Study Plan (Multi-week timeline planner) ──────────────────────────────────
+
+interface PlannerWeek {
+  week: number
+  dates: string
+  focus: string
+  tasks: string[]
+  milestone: string
+}
 
 function StudyPlan({ profile }: { profile: UserProfile | null }) {
+  const [subject, setSubject] = useState('Mathematics')
+  const [customSubject, setCustomSubject] = useState('')
+  const [target, setTarget] = useState('')
+  const [targetDate, setTargetDate] = useState(
+    new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  )
   const [weeklyHours, setWeeklyHours] = useState(10)
-  const [plan, setPlan] = useState<string | null>(null)
+  const [plan, setPlan] = useState<{ weeks: PlannerWeek[]; total_weeks: number; summary: string } | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const effectiveSubject = customSubject || subject
 
   const generate = async () => {
     if (!profile) {
       toast.error('Could not load your profile — try refreshing')
       return
     }
-    if (profile.goals.length === 0) {
-      toast.error('Add some goals to your profile first so the planner can personalize your schedule')
+    if (!effectiveSubject) {
+      toast.error('Select or type a subject')
+      return
+    }
+    if (!target) {
+      toast.error('Describe your target — e.g. "Final exam", "SAT", "Project deadline"')
       return
     }
     setLoading(true)
     setPlan(null)
     try {
-      const result = await api.ai.studyPlan({
+      const result = await api.ai.studyPlanner({
         goals: profile.goals,
         strengths: profile.strengths,
         weaknesses: profile.weaknesses,
         academic_level: profile.academic_level,
+        subject: effectiveSubject,
+        target,
+        target_date: targetDate,
         weekly_hours: weeklyHours,
       })
-      setPlan(result.plan)
+      setPlan(result)
     } catch {
       toast.error('Study Planner is unavailable right now')
     } finally {
@@ -434,25 +457,22 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="card space-y-5">
       <div>
-        <h2 className="font-semibold text-gray-900 mb-1">Personalized Weekly Study Plan</h2>
+        <h2 className="font-semibold text-gray-900 mb-1">Multi-Week Study Planner</h2>
         <p className="text-sm text-gray-500">
-          Generated from your profile goals, strengths, and areas to improve. Add or update goals
-          in your <a href="/profile" className="text-village-600 underline">profile</a> to get a better plan.
+          Plan from today toward a specific target date — exams, project deadlines,
+          or personal milestones. The AI builds a week-by-week timeline.
         </p>
       </div>
 
       {/* Profile context preview */}
       {profile && (
         <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-sm space-y-1.5">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Planning based on</div>
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Planning based on</div>
           <div className="flex flex-wrap gap-1.5">
             <span className="badge bg-village-100 text-village-700 text-xs">{profile.academic_level}</span>
-            {profile.goals.slice(0, 6).map((g) => (
+            {profile.goals.slice(0, 4).map((g) => (
               <span key={g} className="badge bg-gray-100 text-gray-600 text-xs">{g}</span>
             ))}
-            {profile.goals.length > 6 && (
-              <span className="badge bg-gray-100 text-gray-400 text-xs">+{profile.goals.length - 6} more</span>
-            )}
           </div>
           {profile.weaknesses.length > 0 && (
             <div className="text-xs text-gray-500 mt-1">
@@ -461,6 +481,50 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
           )}
         </div>
       )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Subject</label>
+          <select
+            value={subject}
+            onChange={(e) => { setSubject(e.target.value); setCustomSubject('') }}
+            className="input text-sm"
+          >
+            <option value="">— Custom —</option>
+            {ALL_SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Custom Subject</label>
+          <input
+            value={customSubject}
+            onChange={(e) => { setCustomSubject(e.target.value); setSubject('') }}
+            placeholder="e.g. Organic Chemistry, N5 Kanji"
+            className="input text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Target / Goal</label>
+          <input
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            placeholder="e.g. AP Biology exam, Piano recital"
+            className="input text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Target Date</label>
+          <input
+            type="date"
+            value={targetDate}
+            onChange={(e) => setTargetDate(e.target.value)}
+            className="input text-sm"
+          />
+        </div>
+      </div>
 
       <div>
         <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -476,26 +540,49 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
           className="w-full accent-village-600"
         />
         <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>3h (light)</span>
-          <span>20h (moderate)</span>
-          <span>40h (intensive)</span>
+          <span>3h</span><span>20h</span><span>40h</span>
         </div>
       </div>
 
-      <button onClick={generate} disabled={loading || !profile} className="btn-primary text-sm w-full">
-        {loading ? 'Building your plan...' : '📅 Generate My Weekly Plan →'}
+      <button onClick={generate} disabled={loading || !effectiveSubject || !target} className="btn-primary text-sm w-full">
+        {loading ? 'Building your timeline...' : '📅 Generate Study Timeline →'}
       </button>
 
       {plan && (
-        <div className="border border-amber-100 rounded-xl overflow-hidden">
-          <div className="bg-village-700 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-2">
-            <CalendarDays size={14} /> Your {weeklyHours}h/week Study Plan
+        <div className="space-y-4">
+          <div className="border border-amber-100 rounded-xl overflow-hidden">
+            <div className="bg-village-700 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-2">
+              <CalendarDays size={14} /> Study Timeline — {effectiveSubject}
+            </div>
+            <div className="p-4 bg-amber-50 text-sm text-gray-700 leading-relaxed border-b border-amber-100">
+              {plan.summary}
+            </div>
+            <div className="divide-y divide-amber-100">
+              {plan.weeks.map((w) => (
+                <div key={w.week} className="px-4 py-3 hover:bg-amber-50/50 transition-colors">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-village-700 uppercase tracking-wide">
+                      Week {w.week}
+                    </span>
+                    <span className="text-xs text-gray-400">{w.dates}</span>
+                  </div>
+                  <div className="text-sm font-medium text-gray-900 mb-1">{w.focus}</div>
+                  <ul className="space-y-0.5 mb-2">
+                    {w.tasks.map((t, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600">
+                        <span className="text-village-400 mt-0.5 shrink-0">▸</span>{t}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-100/50 rounded-md px-2 py-1">
+                    <CheckCircle size={11} /> Milestone: {w.milestone}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="p-4 bg-amber-50 text-sm text-gray-700 whitespace-pre-line leading-relaxed font-mono">
-            {plan}
-          </div>
-          <div className="px-4 py-2.5 bg-white border-t border-amber-100 text-xs text-gray-400">
-            Regenerate anytime — adjust your hours slider or update your profile goals first.
+          <div className="text-xs text-gray-400 text-center">
+            Regenerate anytime — adjust your hours, subject, or target date.
           </div>
         </div>
       )}

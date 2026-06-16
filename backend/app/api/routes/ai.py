@@ -17,6 +17,7 @@ from app.services.ai_service import (
     generate_socratic_response,
     generate_study_challenge,
     generate_study_plan,
+    generate_study_planner,
     moderate_topic_content,
 )
 
@@ -262,6 +263,32 @@ async def study_plan(data: StudyPlanRequest, _user_id: str = Depends(get_current
         weekly_hours=data.weekly_hours,
     )
     return {"plan": plan}
+
+
+class StudyPlannerRequest(BaseModel):
+    goals: list[str] = []
+    strengths: list[str] = []
+    weaknesses: list[str] = []
+    academic_level: str = ""
+    subject: str = ""
+    target: str = ""
+    target_date: str = ""
+    weekly_hours: int = 10
+
+
+@router.post("/study-planner")
+async def study_planner(data: StudyPlannerRequest, _user_id: str = Depends(get_current_user)):
+    plan = await generate_study_planner(
+        goals=data.goals,
+        strengths=data.strengths,
+        weaknesses=data.weaknesses,
+        academic_level=data.academic_level,
+        subject=data.subject,
+        target=data.target,
+        target_date=data.target_date,
+        weekly_hours=data.weekly_hours,
+    )
+    return plan
 
 
 class CollegeAdvisorRequest(BaseModel):
