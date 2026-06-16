@@ -55,7 +55,7 @@ async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = 
     redirect = redirect_to or f"{settings.frontend_url}/auth/callback"
 
     async with httpx.AsyncClient() as client:
-        # Try generating a direct magic link first (no email needed, avoids rate limits)
+        # Generate a magic link (creates the user + one-time token)
         link_payload = {
             "type": "magiclink",
             "email": target,
@@ -67,13 +67,17 @@ async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = 
         if link_resp.is_success:
             data = link_resp.json()
             magic_url = data.get("action_link", "") or data.get("url", "")
-            # Override redirect_to in the action link (Supabase uses its SITE_URL
-            # which may be localhost — we need it pointed at the real frontend)
             if magic_url:
+                # Extract token + type from the action link so the frontend
+                # can verify it directly (bypassing Supabase's redirect, which
+                # always uses the configured SITE_URL regardless of what we pass)
                 parsed = urlparse(magic_url)
                 qs = parse_qs(parsed.query)
-                qs["redirect_to"] = [redirect]
-                magic_url = parsed._replace(query=urlencode(qs, doseq=True)).geturl()
+                token = qs.get("token", [""])[0]
+                vtype = qs.get("type", ["signup"])[0]
+                # Build a callback URL the frontend can use with verifyOtp()
+                callback_url = f"{settings.frontend_url}/auth/callback?token={token}&type={vtype}&email={target}"
+                return {"sent": False, "link": callback_url}
             return {"sent": False, "link": magic_url}
 
         # Fallback to sending an email via the /otp endpoint
