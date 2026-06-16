@@ -1,29 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { api } from '../lib/api'
 import toast from 'react-hot-toast'
+
+const SEND_COOLDOWN = 60
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [isNew, setIsNew] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email.trim()) return
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
+  const startCooldown = () => {
+    setCooldown(SEND_COOLDOWN)
+    timerRef.current = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) { clearInterval(timerRef.current!); timerRef.current = null; return 0 }
+        return c - 1
+      })
+    }, 1000)
+  }
+
+  const sendMagicLink = async () => {
     setLoading(true)
     try {
       const { exists } = await api.auth.checkEmail(email)
       setIsNew(!exists)
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })
-      if (error) { toast.error(error.message); setLoading(false); return }
+      if (error) {
+        if (error.message?.toLowerCase().includes('rate limit') || error.message?.toLowerCase().includes('too many')) {
+          toast.error('Please wait a moment before requesting another email.')
+          startCooldown()
+        } else {
+          toast.error(error.message)
+        }
+        setLoading(false)
+        return
+      }
       setSent(true)
+      startCooldown()
     } catch {
-      toast.error('Could not verify email')
+      toast.error('Could not connect. Check your internet and try again.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) return
+    await sendMagicLink()
+  }
+
+  const handleResend = async () => {
+    await sendMagicLink()
   }
 
   return (
@@ -46,7 +82,15 @@ export default function Login() {
                   : "Click the magic link sent to "}
                 <strong>{email}</strong>
               </p>
-              <p className="text-xs text-gray-400 mt-2">No email? Check spam or try again.</p>
+              <p className="text-xs text-gray-400 mt-2">No email? Check spam folder.</p>
+              {cooldown > 0 ? (
+                <p className="text-xs text-gray-400 mt-3">Resend available in {cooldown}s</p>
+              ) : (
+                <button onClick={handleResend} disabled={loading}
+                  className="text-sm text-village-600 hover:underline mt-3">
+                  {loading ? 'Sending...' : 'Resend email'}
+                </button>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,8 +99,8 @@ export default function Login() {
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com" required className="input" />
               </div>
-              <button type="submit" disabled={loading} className="btn-primary w-full">
-                {loading ? 'Checking...' : 'Continue with email'}
+              <button type="submit" disabled={loading || cooldown > 0} className="btn-primary w-full">
+                {loading ? 'Sending...' : cooldown > 0 ? `Wait ${cooldown}s` : 'Continue with email'}
               </button>
             </form>
           )}
