@@ -142,10 +142,10 @@ async def generate_study_challenge(
 
 async def moderate_content(content: str) -> dict:
     system = (
-        "You are a content moderator for a student platform (ages 13-18). "
+        "You are a content moderator for an inclusive learning platform (students and adult learners). "
         'Respond with JSON only: {"safe": true/false, "reason": "..."}'
     )
-    messages = [{"role": "user", "content": f"Is this appropriate for students?\n\n{content}\n\nJSON only."}]
+    messages = [{"role": "user", "content": f"Is this appropriate for all learners?\n\n{content}\n\nJSON only."}]
     raw = await call_llm(messages, system)
     return _parse_json(raw, {"safe": True, "reason": "Could not evaluate"})
 

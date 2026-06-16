@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { api } from '../lib/api'
 import toast from 'react-hot-toast'
@@ -50,24 +49,16 @@ export default function Login() {
               <p className="text-xs text-gray-400 mt-2">No email? Check spam or try again.</p>
             </div>
           ) : (
-            <>
-              <p className="text-sm text-gray-600 mb-4 text-center">
-                Enter your email and we'll check if you're already part of Villages.
-              </p>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com" required className="input" />
-                </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full">
-                  {loading ? 'Checking...' : 'Continue with email'}
-                </button>
-              </form>
-              <p className="text-xs text-center text-gray-500 mt-4">
-                <Link to="/signup" className="text-village-600 hover:underline font-medium">New here? Create an account</Link>
-              </p>
-            </>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com" required className="input" />
+              </div>
+              <button type="submit" disabled={loading} className="btn-primary w-full">
+                {loading ? 'Checking...' : 'Continue with email'}
+              </button>
+            </form>
           )}
         </div>
       </div>

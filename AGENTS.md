@@ -22,7 +22,8 @@ AI-powered **community learning platform** for students **and adult learners**. 
 - CORS updated in `backend/app/main.py` for Vercel domains
 - `supabase/migrations/001_initial_schema.sql` — full DDL + RLS + Realtime ready
 - `supabase/migrations/002_performance_indexes.sql` — 7 indexes for query speed
-- `backend/Dockerfile` — for Koyeb deployment
+- `backend/Dockerfile` — legacy (Koyeb plan); superseded by Vercel serverless, kept for portability
+- `backend/api/index.py` + `backend/vercel.json` — Vercel `@vercel/python` backend deploy (LIVE at villages-api.vercel.app)
 - `run.sh` — script to start both backend + frontend locally
 - `AGENTS.md` — This file — instructions for Claude Code
 - `run.ps1` — Windows PowerShell native launcher (parallel to `run.sh`)
@@ -39,8 +40,8 @@ Verified the whole codebase compiles/builds and fixed 6 real bugs. See
 - **Fixed (high):** `users.py create_profile` was dropping `interests`/`learning_style` → now persisted (AI matching + adult-learner feature were degraded).
 - **Fixed (high):** `posts.py list_posts` and `villages.py get_village_members` used PostgREST `profiles(...)` embeds with no backing FK → would 400 / show "Unknown". Posts now `select("*")`; members now fetch + merge profiles via a second `.in_()` query.
 - **Fixed (high):** `002_performance_indexes.sql` re-added posts/comments to the realtime publication (already in 001) → migration would error & roll back. Removed the duplicate adds.
-- **Fixed (med/low):** `api.ts generateChallenge` now URL-encodes params; `vercel.json` API rewrite + Phase 1 docs reconciled from Render → Koyeb (the actual architecture).
-- **Still pending (human):** live end-to-end test requires a real Supabase project + Vercel/Koyeb deploy (Phase 1 tasks 1.1–1.9).
+- **Fixed (med/low):** `api.ts generateChallenge` now URL-encodes params; `vercel.json` API rewrite reconciled with the deployment architecture.
+- **Deployed (2026-06-15):** frontend → `villages.vercel.app` project (https://villages-eight.vercel.app); backend → Vercel `@vercel/python` (https://villages-api.vercel.app). Live proxy verified (`/api/health` → 200). **Still pending:** full UX walkthrough against a dedicated Supabase project.
 
 ## Key Files
 
@@ -55,7 +56,9 @@ Verified the whole codebase compiles/builds and fixed 6 real bugs. See
 | `backend/app/auth.py` | JWT bearer token validation |
 | `backend/app/database.py` | Supabase admin client singleton |
 | `backend/.env` | Actual keys (gitignored) |
-| `backend/Dockerfile` | Container config for Koyeb deployment |
+| `backend/Dockerfile` | Legacy container config (Koyeb plan) — **not used** by the Vercel deployment |
+| `backend/api/index.py` | Vercel `@vercel/python` entrypoint — re-exports FastAPI `app` |
+| `backend/vercel.json` | Vercel Python build + route config for the backend |
 | `frontend/.env` | Frontend Supabase keys (gitignored) |
 | `frontend/vercel.json` | Vercel deploy + API rewrite config |
 | `run.ps1` | Windows PowerShell launcher (`.\run.ps1`) |
@@ -65,7 +68,9 @@ Verified the whole codebase compiles/builds and fixed 6 real bugs. See
 | `backend/app/auth.py` | JWT bearer token validation |
 | `backend/app/database.py` | Supabase admin client singleton |
 | `backend/.env` | Actual keys (gitignored) |
-| `backend/Dockerfile` | Container config for Koyeb deployment |
+| `backend/Dockerfile` | Legacy container config (Koyeb plan) — **not used** by the Vercel deployment |
+| `backend/api/index.py` | Vercel `@vercel/python` entrypoint — re-exports FastAPI `app` |
+| `backend/vercel.json` | Vercel Python build + route config for the backend |
 | `frontend/.env` | Frontend Supabase keys (gitignored) |
 | `frontend/vercel.json` | Vercel deploy + API rewrite config |
 | `supabase/migrations/001_initial_schema.sql` | Database schema + RLS + Realtime |
@@ -88,21 +93,23 @@ cd frontend && npm run dev
 
 Debug log: `villages.log` in the project root — wiped each run, captures all server output.
 
-## Hosting Architecture (Zero-Cost)
+## Hosting Architecture (LIVE — Vercel, 2026-06-15)
+
+Both frontend and backend run on **Vercel**. The backend was migrated from the
+originally-planned Koyeb/Docker setup to **Vercel Python serverless functions**
+(`@vercel/python`) — single provider, no container/port, no keep-alive cron.
 
 ```
-Users → https://villages.vercel.app
+Users → https://villages-eight.vercel.app   (Vercel project "villages")
                 │
         ┌───────┴───────┐
-        │   Vercel       │  ← Frontend (React/Vite)
-        │  (free tier)   │     Always-on, global CDN, SSL
+        │   Vercel       │  ← Frontend (React/Vite, static build)
+        │  "villages"    │     Always-on, global CDN, SSL
         └───────┬───────┘
-                │  /api/* → https://villages-xxx.koyeb.app
+                │  /api/* → rewrite → https://villages-api.vercel.app
         ┌───────┴───────┐
-        │   Koyeb        │  ← Backend (FastAPI/Python)
-        │  (free tier)   │     1 always-on instance, 512MB RAM
-        │                │     Scales to zero after 1hr idle
-        │                │     → cron-job.org pings every 30min
+        │   Vercel       │  ← Backend (FastAPI on @vercel/python)
+        │ "villages-api" │     Serverless functions, on-demand, no port
         └───────┬───────┘
                 │  SUPABASE_SERVICE_ROLE_KEY
         ┌───────┴───────┐
@@ -110,23 +117,18 @@ Users → https://villages.vercel.app
         │  (free tier)   │     500MB DB, 50k users, Realtime
         └───────────────┘
 
-Keep-alive: cron-job.org (free, no CC) → pings /health every 30 min
-             → Prevents Koyeb scale-to-zero (1hr idle timeout)
-             → Also prevents Supabase 7-day project pause
-             → ~48 pings/day, well within cron-job.org free tier
+No backend keep-alive needed (Vercel functions don't scale to zero).
+Supabase still pauses after 7 days idle — keep it warm with a periodic
+DB-touching request (e.g. GET /villages), NOT /health (doesn't query DB).
 ```
 
-## Why Koyeb Over Render
-
-| Factor | Render | Koyeb ✅ |
-|--------|--------|---------|
-| Free forever? | ✅ 750 hrs/mo (enough) | ✅ 1 free instance, truly forever |
-| Credit card? | ❌ Not required | ❌ Not required |
-| Spin-down | ❌ After 15 min idle | ❌ After 1hr idle (fixable with cron) |
-| Python/FastAPI | ✅ Native | ✅ Buildpacks or Docker |
-| Free DB | ⚠️ 90-day PostgreSQL | ❌ No free DB (we use Supabase) |
-| Git auto-deploy | ✅ | ✅ |
-| Global CDN | ❌ Single region | ❌ Single region (Frankfurt/DC) |
+### Backend deploy specifics (`backend/`)
+- `backend/api/index.py` — adds `backend/` to `sys.path`, re-exports FastAPI `app` for `@vercel/python`.
+- `backend/vercel.json` — `framework: null` + `builds` (`api/index.py` via `@vercel/python`) + `routes` (`/(.*)` → the function).
+- `backend/.vercelignore` — excludes `.env`, `pyproject.toml` (so the builder uses `requirements.txt` with pip, not `uv`), Dockerfile, caches.
+- Env vars pushed via `vercel env add <NAME> production`.
+- **Deployment Protection (ssoProtection) must be OFF** on `villages-api` or the public API + frontend proxy return 401.
+- Redeploy: `cd backend && vercel deploy --prod --yes` (frontend likewise from `frontend/`).
 
 ## Phase 1 — Launch: Step-by-Step Delegation
 
@@ -170,94 +172,59 @@ Run **both** migrations in order in the Supabase SQL Editor:
 
 Verify all 6 tables: `profiles`, `villages`, `village_members`, `posts`, `comments`, `challenges`
 
-### Task 1.4: Deploy Frontend to Vercel (⬜ Claude Code + 👤 Human)
+### Task 1.4: Deploy Frontend to Vercel ✅ (done 2026-06-15)
 
-1. Go to https://vercel.com → **Add New → Project**
-2. Import the `Villages` GitHub repo
-3. Configure:
-   - **Root Directory:** `frontend/`
-   - **Framework:** Vite
-   - **Build:** `npm run build`
-   - **Output:** `dist/`
-4. Add environment variables (from `frontend/.env`):
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-5. Click **Deploy**
-6. After deploy, Vercel URL is `https://villages-xxx.vercel.app`
-7. Tell Claude the URL — Claude updates CORS
+Deployed to Vercel project **`villages`** → https://villages-eight.vercel.app.
 
-### Task 1.5: Deploy Backend to Koyeb (⬜ Claude Code + 👤 Human)
+- Root `frontend/`, framework Vite, build `npm run build`, output `dist/`.
+- Env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+- Redeploy: `cd frontend && vercel deploy --prod --yes`.
 
-1. Go to https://app.koyeb.com → **Create App**
-2. Connect GitHub, select the `Villages` repo
-3. Configure:
-   - **Name:** `villages-api`
-   - **Instance type:** Free (512MB RAM, 0.1 vCPU)
-   - **Region:** Frankfurt or Washington DC
-   - **Builder:** Dockerfile (uses `backend/Dockerfile` automatically)
-   - **Port:** 8080 (matches Dockerfile EXPOSE)
-   **OR** use Buildpacks:
-   - **Root Directory:** `backend/`
-   - **Build Command:** (leave default)
-   - **Run Command:** `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-4. Add environment variables (all from `backend/.env`):
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `SUPABASE_JWT_SECRET`
-   - `OPENROUTER_API_KEY`
-   - `OPENROUTER_MODEL`
-   - `OPENROUTER_MODEL_FALLBACK`
-5. Click **Deploy**
-6. Wait for build + deploy (first deploy takes 2-5 min)
-7. Koyeb URL will be `https://villages-api-<org>.koyeb.app`
-8. Tell Claude the URL
+### Task 1.5: Deploy Backend to Vercel ✅ (done 2026-06-15 — was Koyeb)
 
-### Task 1.6: Update vercel.json with real Koyeb URL (⬜ Claude Code)
+Migrated to **Vercel Python serverless** (`@vercel/python`), project
+**`villages-api`** → https://villages-api.vercel.app.
 
-Update `frontend/vercel.json`:
+1. `backend/api/index.py` re-exports the FastAPI `app` (adds `backend/` to `sys.path`).
+2. `backend/vercel.json`: `framework: null`, `builds` → `api/index.py` via `@vercel/python`, `routes` → `/(.*)` to the function.
+3. `backend/.vercelignore` excludes `.env` and `pyproject.toml` (forces pip + `requirements.txt`, avoids the `uv lock` "no [project] table" error).
+4. Link + env + deploy:
+   ```bash
+   cd backend
+   vercel link --yes --project villages-api
+   # for each var in backend/.env:
+   printf '%s' "$VALUE" | vercel env add <NAME> production
+   vercel deploy --prod --yes
+   ```
+5. **Disable Deployment Protection** (else 401):
+   ```bash
+   curl -X PATCH "https://api.vercel.com/v9/projects/villages-api?teamId=<TEAM>" \
+     -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" \
+     -d '{"ssoProtection":null}'
+   ```
+   Env vars set: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `OPENROUTER_MODEL_FALLBACK`.
 
-```json
-{
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://villages-api-<org>.koyeb.app/$1"
-    }
-  ]
-}
-```
+### Task 1.6: Point frontend proxy at backend ✅ (done 2026-06-15)
 
-Then open a PR to merge — Vercel auto-deploys.
+`frontend/vercel.json` rewrite now → `https://villages-api.vercel.app/$1`.
 
-### Task 1.7: Update CORS in Backend (⬜ Claude Code)
+### Task 1.7: CORS in Backend ✅ (handled)
 
-Update `backend/app/main.py` with the real Vercel URL:
+`backend/app/main.py` already allows `*.vercel.app` via `allow_origin_regex`,
+so production + preview deploys are covered without per-URL edits. Add a custom
+domain to `FRONTEND_ORIGINS` env var if/when one is purchased.
 
-```python
-allow_origins=[
-    "http://localhost:5173",
-    "https://villages-xxx.vercel.app",  # real Vercel URL
-    "https://villages.app",             # optional custom domain
-],
-```
+### Task 1.8: Keep-Alive ✅ (not needed for backend)
 
-Open a PR → merged → Koyeb auto-deploys.
-
-### Task 1.8: Set Up Keep-Alive Cron Job (👤 Human via Claude walkthrough)
-
-1. Go to https://cron-job.org → **Sign up** (free, no credit card)
-2. Create a cron job:
-   - **URL:** `https://villages-api-<org>.koyeb.app/health`
-   - **Schedule:** Every 30 minutes (prevents both Koyeb 1hr scale-to-zero AND Supabase 7-day inactivity pause)
-   - **Save**
-3. Tell Claude when done
+Vercel functions are on-demand and never scale to zero, so no backend cron is
+required. If Supabase ever pauses from 7-day inactivity, schedule a periodic
+**DB-touching** request (e.g. `GET /villages`) — `/health` won't keep it warm.
 
 ### Task 1.9: Verify End-to-End (⬜ Claude Code)
 
 After deployment, verify:
 
-1. Visit `https://villages-xxx.vercel.app` — Login page loads
+1. Visit `https://villages-eight.vercel.app` — Login page loads
 2. Enter email → Magic link sent
 3. Click magic link → Onboarding flow works
 4. Create profile → AI matching works

@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://villages-api-<org>.koyeb.app/$1"
+      "destination": "https://villages-api.vercel.app/$1"
     },
     {
       "source": "/(.*)",

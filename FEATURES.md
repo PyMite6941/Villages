@@ -86,7 +86,7 @@
 
 ### 3. AI Village Matching
 
-- **File:** `frontend/src/pages/Home.tsx:42-52`, `backend/app/api/routes/villages.py:22-39`, `backend/app/services/ai_service.py:34-67`
+- **File:** `frontend/src/pages/Home.tsx:52-62`, `backend/app/api/routes/villages.py:24-43`, `backend/app/services/ai_service.py:60-103`
 - **Trigger:** "AI Match me" button on the Home page when the user has no Village.
 - **Backend flow:**
   1. Fetches the user's profile (goals, strengths, weaknesses, academic_level, interests, learning_style)
@@ -145,35 +145,35 @@
 
 ### 8. AI Village Elder (Discussion Prompts)
 
-- **File:** `frontend/src/pages/VillageDetail.tsx:70-92`, `backend/app/api/routes/ai.py:11-34`, `backend/app/services/ai_service.py:70-84`
+- **File:** `frontend/src/pages/VillageDetail.tsx:85-107`, `backend/app/api/routes/ai.py:20-43`, `backend/app/services/ai_service.py:106-120`
 - **Trigger:** "Ask Village Elder" button
 - **Flow:**
   1. Backend fetches village data (name, focus_area, resources)
-  2. Calls Groq API with an "AI facilitator" prompt
+  2. Calls OpenRouter API with an "AI facilitator" prompt
   3. Creates a new post in the village with `author_id: "village-elder-ai"` and `is_ai_generated: true`
   4. The post appears in real-time in the discussion feed
 - **System prompt:** The model is asked to generate "a short, engaging discussion prompt (2-3 sentences)" — warm, encouraging, academically focused
 
 ### 9. AI Study Challenges
 
-- **File:** `frontend/src/pages/VillageDetail.tsx:94-106`, `backend/app/api/routes/ai.py:37-68`, `backend/app/services/ai_service.py:87-104`
+- **File:** `frontend/src/pages/VillageDetail.tsx:138-150`, `backend/app/api/routes/ai.py:46-77`, `backend/app/services/ai_service.py:123-141`
 - **Trigger:** User types a subject and clicks "Challenge"
 - **Flow:**
   1. Backend fetches village name + member count
-  2. Calls Groq API with a "collaborative challenge" prompt
+  2. Calls OpenRouter API with a "collaborative challenge" prompt
   3. Parses JSON response: `{ title, description, steps[] }`
   4. Inserts into `public.challenges` table
 - **Difficulty levels:** Defaults to "medium", supports easy/medium/hard
 
 ### 10. AI Content Moderation
 
-- **File:** `backend/app/services/ai_service.py:107-114`
+- **File:** `backend/app/services/ai_service.py:143-150`
 - **Applied to:** All posts and comments before insert
 - **Flow:**
-  1. Content is sent to Groq API with a moderation system prompt
+  1. Content is sent to OpenRouter API with a moderation system prompt
   2. Response: `{ safe: boolean, reason: string }`
   3. If `safe === false`, the API returns HTTP 400 with the moderation reason
-- **Prompt:** "You are a content moderator for a student platform (ages 13-18)"
+- **Prompt:** "You are a content moderator for an inclusive learning platform (students and adult learners)"
 
 ### 11. Profile Management
 
@@ -286,7 +286,7 @@
 | `uvicorn[standard]` | 0.30.6 | ASGI server |
 | `supabase` | 2.7.4 | Supabase PostgreSQL client (admin access via service_role_key) |
 | `python-dotenv` | 1.0.1 | Load `.env` file |
-| `httpx` | 0.27.2 | Async HTTP client (for Groq API calls) |
+| `httpx` | 0.27.2 | Async HTTP client (for OpenRouter API calls) |
 | `pydantic` | 2.9.2 | Data validation / settings management |
 | `pydantic-settings` | 2.5.2 | `.env` → `Settings` class binding |
 | `python-jose[cryptography]` | 3.3.0 | JWT token decoding for auth |
@@ -415,7 +415,7 @@ Villages/
 │           ├── VillageDetail.tsx    # Village discussion + members
 │           ├── Forum.tsx            # Global forum
 │           ├── Profile.tsx          # View/edit profile
-│           └── Onboarding.tsx       # 3-step profile setup
+│           └── Onboarding.tsx       # 4-step profile setup
 │
 └── supabase/
     └── migrations/
@@ -492,8 +492,8 @@ Both projects can coexist on the same Supabase instance because they use **diffe
 
 **How to create:** Supabase Dashboard → New Project → Name it `villages` → Choose region → Database password → Create. Then run `supabase/migrations/001_initial_schema.sql` in the SQL Editor.
 
-**⚠️ Free tier gotcha:** Supabase pauses free projects after **1 week of inactivity**. To keep Villages online 24/7, you'll need to either:
-- Use a **cron job** (e.g., GitHub Actions every 3 days, or cron-job.org free tier) to hit the `/health` endpoint and keep the project alive
+**⚠️ Free tier gotcha:** Supabase pauses free projects after **1 week of inactivity**. The Vercel backend itself is on-demand and never sleeps, but it won't keep Supabase warm unless something actually queries the DB. To keep Villages online 24/7, you'll need to either:
+- Use a **cron job** (e.g., GitHub Actions every 3 days, or cron-job.org free tier) to hit an endpoint that **touches the database** (not `/health`, which doesn't query Supabase) — e.g. `GET /villages`
 - Or upgrade to Pro ($25/mo, no pausing) — **not needed until you exceed free limits**
 
 ### AI Provider: Swapped from Groq → OpenRouter ✅
@@ -531,20 +531,30 @@ Configured via:
 
 ## Deployment Plan (24/7 Online Hosting)
 
+> **Status (2026-06-15): LIVE on Vercel.** Both frontend and backend now run on
+> Vercel. The backend was migrated from the originally-planned Koyeb/Docker
+> setup to **Vercel Python serverless functions** (`@vercel/python`), so there
+> is now a single hosting provider and no container/port to manage.
+>
+> - **Frontend:** https://villages-eight.vercel.app (Vercel project `villages`)
+> - **Backend:**  https://villages-api.vercel.app (Vercel project `villages-api`)
+> - Frontend `/api/*` is proxied to the backend via `frontend/vercel.json` rewrite.
+
 ### Architecture Overview
 
 ```
-Users → https://villages.yourdomain.com
+Users → https://villages-eight.vercel.app
                 │
         ┌───────┴───────┐
         │   Vercel       │  ← Frontend (React/Vite, static build)
-        │  (free tier)   │     Always-on, global CDN, SSL
+        │ project:       │     Always-on, global CDN, SSL
+        │ "villages"     │
         └───────┬───────┘
-                │  /api/* → backend
+                │  /api/* → rewrite → villages-api.vercel.app
         ┌───────┴───────┐
-        │   Koyeb        │  ← Backend (FastAPI/Python)
-        │  (free tier)   │     1 always-on instance, 512MB RAM
-        │                │     Auto-deploys from GitHub
+        │   Vercel       │  ← Backend (FastAPI on @vercel/python)
+        │ project:       │     Serverless functions, on-demand, no port
+        │ "villages-api" │     Auto-deploys from GitHub
         └───────┬───────┘
                 │  SUPABASE_SERVICE_ROLE_KEY
         ┌───────┴───────┐
@@ -552,69 +562,67 @@ Users → https://villages.yourdomain.com
         │  (free tier)   │     500MB DB, 50k users, Realtime
         └───────────────┘
 
-Keep-alive: cron-job.org (free, no CC) → pings /health every 30 min
-             → Prevents Koyeb scale-to-zero (1hr idle timeout)
-             → Also prevents Supabase 7-day project pause
+Note: Vercel functions are on-demand (no scale-to-zero downtime), so no
+      backend keep-alive cron is needed. Supabase still pauses after 7 days
+      of total inactivity — a periodic DB-touching request keeps it warm.
 ```
 
-### Vercel (Frontend) + Koyeb (Backend) + Supabase (DB) — **Recommended**
+### Vercel (Frontend) + Vercel (Backend) + Supabase (DB)
 
 | Component | Service | Free Tier | Config |
 |-----------|---------|-----------|--------|
-| **Frontend** (React/Vite) | **Vercel** | 100GB bandwidth, 6000 build mins/mo | Root `frontend/`, framework Vite, build `npm run build`, output `dist/` |
-| **Backend** (FastAPI) | **Koyeb** | 1 free instance, 512MB RAM, 0.1 vCPU. Scales to 0 after 1hr idle (fixed by cron-job) | Use Dockerfile or Buildpacks. Port 8080. Env vars from `backend/.env` |
-| **Database** | **Supabase** | 500MB DB, 2GB bandwidth, 50k users, Realtime | Create new project for Villages (separate from AI-Teacher) |
+| **Frontend** (React/Vite) | **Vercel** (`villages`) | 100GB bandwidth, 6000 build mins/mo | Root `frontend/`, framework Vite, build `npm run build`, output `dist/` |
+| **Backend** (FastAPI) | **Vercel** (`villages-api`) | Hobby: 100GB-hrs functions, 60s max duration | Root `backend/`, `@vercel/python` via `api/index.py` + `vercel.json` builds. Env vars from `backend/.env` |
+| **Database** | **Supabase** | 500MB DB, 2GB bandwidth, 50k users, Realtime | Currently shared with AI-Teacher; create a dedicated Villages project before scaling |
 | **AI** | **OpenRouter** | 28+ free `:free` models, 50 req/day, 20 RPM | `OPENROUTER_API_KEY` already configured |
-| **Keep-alive** | **cron-job.org** | Free tier, unlimited jobs | Ping `/health` every 30 min → prevents both Koyeb sleep + Supabase pause |
 
 #### Step-by-Step
 
 **1. Frontend → Vercel**
 ```bash
-# Vercel Dashboard → Add New → Project
-#   Import: Villages GitHub repo
-#   Root: frontend/
-#   Framework: Vite
-#   Build: npm run build
-#   Output: dist/
+# From frontend/ (already linked to project "villages"):
+vercel deploy --prod --yes
+# Or via Dashboard → Root: frontend/, Framework: Vite, output: dist/
 # Environment variables:
-#   VITE_SUPABASE_URL=<new-supabase-project-url>
-#   VITE_SUPABASE_ANON_KEY=<new-supabase-anon-key>
+#   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 ```
 
-**2. Backend → Koyeb**
+**2. Backend → Vercel (Python serverless)**
 ```bash
-# Koyeb Dashboard → Create App
-#   GitHub repo: Villages
-#   Name: villages-api
-#   Builder: Dockerfile (uses backend/Dockerfile automatically)
-#   Port: 8080
-# Environment variables (from backend/.env):
+# From backend/ (already linked to project "villages-api"):
+vercel deploy --prod --yes
+# Key files:
+#   backend/api/index.py   — exposes FastAPI `app` for @vercel/python
+#   backend/vercel.json    — builds api/index.py, routes /(.*) → it
+#   backend/.vercelignore  — excludes .env, pyproject.toml (uses requirements.txt)
+# Env vars (set via `vercel env add <NAME> production`):
 #   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
 #   SUPABASE_JWT_SECRET, OPENROUTER_API_KEY, OPENROUTER_MODEL,
 #   OPENROUTER_MODEL_FALLBACK
+# IMPORTANT: disable Deployment Protection (ssoProtection) on the backend
+#   project so the public API + frontend proxy are reachable (returns 401 otherwise).
 ```
 
-**3. Update vercel.json with Koyeb URL**
+**3. `frontend/vercel.json` rewrite → backend URL**
 ```json
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://villages-api-<org>.koyeb.app/$1" }
+    { "source": "/api/(.*)", "destination": "https://villages-api.vercel.app/$1" }
   ]
 }
 ```
 
 **4. Run migrations**
 ```sql
--- Run both in Supabase SQL Editor:
+-- Run all in Supabase SQL Editor:
 -- 1. supabase/migrations/001_initial_schema.sql
 -- 2. supabase/migrations/002_performance_indexes.sql
+-- 3. supabase/migrations/003_competition_features.sql
 ```
 
-**5. Set up cron-job.org**
-- URL: `https://villages-api-<org>.koyeb.app/health`
-- Every 30 minutes
-- Prevents Koyeb scale-to-zero + Supabase 7-day pause
+> **Legacy:** `backend/Dockerfile` is retained for portability but is **not used**
+> by the Vercel deployment. The previous Koyeb plan (Docker, port 8080,
+> cron-job.org keep-alive) has been superseded.
 
 ### Environment Variables Checklist
 
@@ -637,7 +645,7 @@ Create these in your hosting dashboards:
 - Buy a domain (e.g. `villages.app`) from Cloudflare, Namecheap, etc.
 - Point DNS to Vercel (CNAME `cname.vercel-dns.com` or use Vercel's nameservers)
 - Vercel handles SSL automatically (Let's Encrypt)
-- Backend gets a subdomain: `api.villages.app` → Koyeb
+- Backend gets a subdomain: `api.villages.app` → Vercel project `villages-api`
 
 ---
 
@@ -670,11 +678,11 @@ Create these in your hosting dashboards:
 | 1.2 | ⬜ | **Update `.env` files with new Supabase project keys** | ⬜ Claude | Replace backend `.env` + frontend `.env` with keys from the new Villages Supabase project |
 | 1.3 | ⬜ | **Get Supabase JWT secret & update backend `.env`** | 👤 **Human** | Supabase Dashboard → Settings → API → JWT Settings → Copy `SUPABASE_JWT_SECRET` |
 | 1.4 | ⬜ | **Run `001_initial_schema.sql`** | 👤 **Human** | Supabase SQL Editor → paste the migration → Run. Creates all 6 tables + RLS + Realtime |
-| 1.5 | ⬜ | **Deploy frontend to Vercel** | 👤 **Human** | Connect GitHub repo → Vite preset → Root `frontend/` → Set env vars from `frontend/.env` → Deploy |
-| 1.6 | ⬜ | **Deploy backend to Koyeb** | 👤 **Human** | Create App → Dockerfile builder (`backend/Dockerfile`, port 8080) → Set env vars from `backend/.env` → Deploy |
-| 1.7 | ⬜ | **Update vercel.json with real Koyeb URL** | ⬜ Claude | After Koyeb deploy, replace `villages-api-<org>.koyeb.app` placeholder in `frontend/vercel.json` |
-| 1.8 | ⬜ | **Set up keep-alive cron job** | 👤 **Human** | Use cron-job.org (free): ping `https://villages-api-<org>.koyeb.app/health` every 30 min to prevent Koyeb scale-to-zero + Supabase project pause |
-| 1.9 | 🟦 | **Verify full flow works end-to-end** | ⬜ Claude | **Static verification done (2026-06-15):** backend imports clean, frontend type-checks + production build passes, all API routes register. **Live end-to-end still pending** a real Supabase project + deploy: sign up → onboarding → create/join village → post → AI match → Village Elder → challenge |
+| 1.5 | ✅ | **Deploy frontend to Vercel** | ⬜ Claude | Deployed to project `villages` → https://villages-eight.vercel.app (`vercel deploy --prod`) |
+| 1.6 | ✅ | **Deploy backend to Vercel** (was Koyeb) | ⬜ Claude | Migrated to `@vercel/python` serverless. Project `villages-api` → https://villages-api.vercel.app. Added `backend/api/index.py`, `backend/vercel.json` (builds), `backend/.vercelignore`; pushed all env vars; disabled Deployment Protection. `/health` → 200 |
+| 1.7 | ✅ | **Update vercel.json with backend URL** | ⬜ Claude | `frontend/vercel.json` rewrite now → `https://villages-api.vercel.app/$1` |
+| 1.8 | ✅ | **Keep-alive cron** | — | Not needed: Vercel functions are on-demand (no scale-to-zero). Only Supabase 7-day pause remains a concern (separate DB-touch ping if it ever idles) |
+| 1.9 | 🟦 | **Verify full flow works end-to-end** | ⬜ Claude | **Done (2026-06-15):** backend imports clean, frontend builds, all routes register; **live proxy verified** — `villages-eight.vercel.app/api/health` → 200 through the rewrite to `villages-api.vercel.app`. **Still pending:** full UX walkthrough (sign up → onboarding → create/join village → post → AI match → Elder → challenge) against a real Supabase project |
 | 1.10 | ⬜ | **Buy domain & point DNS** | 👤 **Human** | Optional: purchase domain → point to Vercel → update CORS in backend |
 
 ### Phase 2 — Feature Completion (⬜ Claude Code)
@@ -696,7 +704,7 @@ Create these in your hosting dashboards:
 | 3.2 | ⬜ | **Backend tests** — pytest + httpx async | `backend/tests/` | Zero test coverage |
 | 3.3 | ⬜ | **Rate limiting** on AI endpoints | `backend/app/api/routes/ai.py` | Prevent API key abuse |
 | 3.4 | ⬜ | **Cache AI responses** in DB | `ai_service.py` | Store elder prompts, deduplicate |
-| 3.5 | 🟦 | **CI/CD pipeline** — GitHub Actions | `.github/workflows/ci.yml` | PR gate done (lint + typecheck + build + backend lint/import). Auto-deploy is handled by Vercel/Koyeb git integration. |
+| 3.5 | 🟦 | **CI/CD pipeline** — GitHub Actions | `.github/workflows/ci.yml` | PR gate done (lint + typecheck + build + backend lint/import). Auto-deploy is handled by Vercel git integration (both frontend and backend projects). |
 | 3.6 | ⬜ | **Error monitoring** — Sentry integration | Backend + Frontend | Catch production errors |
 
 ### Phase 4 — Future Growth (⬜ Claude Code)

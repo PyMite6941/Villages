@@ -101,7 +101,7 @@ start() {
   : > "$LOG_FILE"
 
   log "Starting backend (uvicorn)..."
-  (cd "$BACKEND_DIR" && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 2>&1 | tee -a "$LOG_FILE") &
+  (cd "$BACKEND_DIR" && $PYTHON -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 2>&1 | tee -a "$LOG_FILE") &
   BACKEND_PID=$!
 
   log "Starting frontend (Vite)..."

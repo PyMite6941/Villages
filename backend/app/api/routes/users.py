@@ -16,18 +16,20 @@ async def create_profile(data: UserProfileCreate, user_id: str = Depends(get_cur
     profile["id"] = user_id
     profile["email"] = ""
     profile["created_at"] = datetime.utcnow().isoformat()
-    try:
-        result = sb.table("profiles").upsert(profile).execute()
-        if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create profile")
-        return UserProfile(**result.data[0])
-    except Exception:
-        base_fields = {"id", "email", "display_name", "academic_level", "goals", "strengths", "weaknesses", "created_at"}
-        profile = {k: v for k, v in profile.items() if k in base_fields}
-        result = sb.table("profiles").upsert(profile).execute()
-        if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create profile")
-        return UserProfile(**result.data[0])
+    for attempt in range(2):
+        try:
+            result = sb.table("profiles").upsert(profile).execute()
+            if not result.data:
+                raise HTTPException(status_code=500, detail="Failed to create profile")
+            return UserProfile(**result.data[0])
+        except HTTPException:
+            raise
+        except Exception:
+            if attempt == 1:
+                break
+            # Retry with only the minimal fields the DB actually has
+            profile = {k: v for k, v in profile.items() if k in {"id", "email", "display_name", "created_at"}}
+    raise HTTPException(status_code=500, detail="Profile creation failed — database schema may be outdated")
 
 
 @router.get("/profile/{user_id}", response_model=UserProfile)

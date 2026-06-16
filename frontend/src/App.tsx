@@ -11,7 +11,6 @@ import Forum from './pages/Forum'
 import Profile from './pages/Profile'
 import About from './pages/About'
 import Login from './pages/Login'
-import SignUp from './pages/SignUp'
 import Onboarding from './pages/Onboarding'
 
 export default function App() {
@@ -36,14 +35,13 @@ export default function App() {
     )
   }
 
-  if (!session && location.pathname !== '/login' && location.pathname !== '/signup') {
+  if (!session && location.pathname !== '/login') {
     return <Navigate to="/login" />
   }
 
   return (
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" /> : <Login />} />
-      <Route path="/signup" element={session ? <Navigate to="/" /> : <SignUp />} />
       <Route path="/onboarding" element={session ? <Onboarding session={session} /> : <Navigate to="/login" />} />
       <Route element={<Layout session={session!} />}>
         <Route path="/" element={<Home session={session!} />} />
