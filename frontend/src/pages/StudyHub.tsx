@@ -9,6 +9,16 @@ interface Props { session: Session }
 
 type Tab = 'buddy' | 'essay' | 'plan' | 'college'
 
+const SCHOOL_LEVELS = new Set([
+  '6th Grade', '7th Grade', '8th Grade',
+  '9th Grade', '10th Grade', '11th Grade', '12th Grade',
+  'College Freshman', 'College Sophomore', 'College Junior', 'College Senior',
+  'Graduate Student', 'Doctoral Student',
+  'Law School', 'Medical School', 'Trade School', 'Vocational Program',
+])
+
+const COLLEGE_PREP_LEVELS = new Set(['11th Grade', '12th Grade'])
+
 const ALL_SUBJECTS = [
   'Mathematics', 'Science', 'English', 'History', 'Computer Science', 'Languages',
   'Social Studies', 'Test Prep', 'Physics', 'Chemistry', 'Biology', 'Economics',
@@ -27,14 +37,18 @@ export default function StudyHub({ session }: Props) {
     api.users.getProfile(session.user.id).then(setProfile).catch(() => null)
   }, [session.user.id])
 
-  const isHighSchooler = profile?.study_tags?.includes('high_schooler') ?? false
+  const isInSchool = profile ? SCHOOL_LEVELS.has(profile.academic_level) : false
+  const isCollegePrep = profile
+    ? COLLEGE_PREP_LEVELS.has(profile.academic_level) || profile.study_tags?.some(t => t.toLowerCase().includes('college') || t.toLowerCase().includes('university') || t === 'high_schooler')
+    : false
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode; desc: string; locked?: boolean }[] = [
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; desc: string; lockReason?: string }[] = [
     { id: 'buddy',   label: 'Study Buddy',  icon: <Brain size={15} />,         desc: 'Socratic AI tutor' },
-    { id: 'essay',   label: 'Essay Coach',  icon: <PenLine size={15} />,       desc: 'Application critique' },
+    { id: 'essay',   label: 'Essay Coach',  icon: <PenLine size={15} />,       desc: 'Application critique',
+      lockReason: isInSchool ? undefined : 'Available for students (Grade 6–University)' },
     { id: 'plan',    label: 'Study Plan',   icon: <CalendarDays size={15} />,  desc: 'Weekly schedule' },
-    { id: 'college', label: 'College Prep', icon: <GraduationCap size={15} />, desc: 'HS track',
-      locked: !isHighSchooler },
+    { id: 'college', label: 'College Prep', icon: <GraduationCap size={15} />, desc: 'College advisor + essay',
+      lockReason: isCollegePrep ? undefined : 'Enable "High Schooler" in your profile or set grade to 11/12' },
   ]
 
   return (
@@ -67,13 +81,15 @@ export default function StudyHub({ session }: Props) {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 p-1 bg-amber-50 rounded-xl border border-amber-100 flex-wrap">
-        {tabs.map(({ id, label, icon, desc, locked }) => (
+        {tabs.map(({ id, label, icon, desc, lockReason }) => {
+          const isLocked = !!lockReason
+          return (
           <button
             key={id}
-            onClick={() => !locked && setTab(id)}
-            title={locked ? 'Enable the "High Schooler" track in your profile to unlock this' : undefined}
+            onClick={() => !isLocked && setTab(id)}
+            title={lockReason}
             className={`flex-1 min-w-[6rem] flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative ${
-              locked
+              isLocked
                 ? 'text-gray-300 cursor-not-allowed'
                 : tab === id
                 ? 'bg-white shadow-sm text-village-700 border border-amber-100'
@@ -82,16 +98,17 @@ export default function StudyHub({ session }: Props) {
           >
             <span className="flex items-center gap-1.5">{icon}{label}</span>
             <span className="text-xs font-normal opacity-60 hidden sm:block">
-              {locked ? '🔒 High Schooler track' : desc}
+              {lockReason ? `🔒 ${lockReason}` : desc}
             </span>
           </button>
-        ))}
+          )
+        })}
       </div>
 
       {tab === 'buddy'   && <StudyBuddy />}
-      {tab === 'essay'   && <EssayCoach profile={profile} />}
+      {tab === 'essay'   && !tabs.find(t => t.id === 'essay')?.lockReason && <EssayCoach profile={profile} />}
       {tab === 'plan'    && <StudyPlan  profile={profile} />}
-      {tab === 'college' && isHighSchooler && <CollegePrep profile={profile} />}
+      {tab === 'college' && !tabs.find(t => t.id === 'college')?.lockReason && <CollegePrep profile={profile} />}
     </div>
   )
 }

@@ -24,4 +24,10 @@ class Settings(BaseSettings):
         extra = [o.strip() for o in self.frontend_origins.split(",") if o.strip()]
         return base + extra
 
+    @property
+    def frontend_url(self) -> str:
+        """Production frontend URL for magic-link redirects, falls back to localhost."""
+        extra = [o.strip() for o in self.frontend_origins.split(",") if o.strip()]
+        return extra[0] if extra else "http://localhost:5173"
+
 settings = Settings()

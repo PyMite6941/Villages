@@ -51,7 +51,7 @@ async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = 
         "Content-Type": "application/json",
     }
 
-    redirect = redirect_to or f"{settings.cors_origins[0]}/auth/callback"
+    redirect = redirect_to or f"{settings.frontend_url}/auth/callback"
 
     async with httpx.AsyncClient() as client:
         # Try sending the email first via the /otp endpoint
