@@ -43,7 +43,6 @@ async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = 
 
     _last_send[target] = now
 
-    sb = get_supabase()
     sb_url = settings.supabase_url.rstrip("/")
 
     headers = {
