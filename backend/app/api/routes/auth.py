@@ -55,7 +55,7 @@ async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = 
     redirect = redirect_to or f"{settings.frontend_url}/auth/callback"
 
     async with httpx.AsyncClient() as client:
-        # Generate a magic link (creates the user + one-time token)
+        # Step 1: Generate a magic link (creates user + one-time token)
         link_payload = {
             "type": "magiclink",
             "email": target,
@@ -68,19 +68,27 @@ async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = 
             data = link_resp.json()
             magic_url = data.get("action_link", "") or data.get("url", "")
             if magic_url:
-                # Extract token + type from the action link so the frontend
-                # can verify it directly (bypassing Supabase's redirect, which
-                # always uses the configured SITE_URL regardless of what we pass)
                 parsed = urlparse(magic_url)
                 qs = parse_qs(parsed.query)
                 token = qs.get("token", [""])[0]
                 vtype = qs.get("type", ["signup"])[0]
-                # Build a callback URL the frontend can use with verifyOtp()
-                callback_url = f"{settings.frontend_url}/auth/callback?token={token}&type={vtype}&email={target}"
-                return {"sent": False, "link": callback_url}
+
+                # Step 2: Verify the token ourselves by calling GET /verify
+                # (which returns a 303 with the auth tokens in the Location hash)
+                verify_url = f"{sb_url}/auth/v1/verify?token={token}&type={vtype}&redirect_to={redirect}"
+                vresp = await client.get(verify_url, follow_redirects=False)
+                location = vresp.headers.get("location", "")
+                if location and "#" in location:
+                    # Extract the hash fragment (access_token, refresh_token, etc.)
+                    fragment = location.split("#", 1)[1]
+                    # Build a callback URL for our frontend with the real tokens
+                    callback_url = f"{settings.frontend_url}/auth/callback#{fragment}"
+                    return {"sent": False, "link": callback_url}
+                # Fallback: return the generated token directly
+                return {"sent": False, "link": magic_url}
             return {"sent": False, "link": magic_url}
 
-        # Fallback to sending an email via the /otp endpoint
+        # Step 3: Fallback to sending an email via the /otp endpoint
         otp_payload = {
             "email": target,
             "create_user": True,
