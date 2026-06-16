@@ -725,7 +725,7 @@ Create these in your hosting dashboards:
 | Backend | `SUPABASE_JWT_SECRET` | Supabase Dashboard → Settings → API → JWT Settings |
 | Backend | `OPENROUTER_API_KEY` | Already in `AI-Teacher/.env.local` |
 | Backend | `OPENROUTER_MODEL` | `meta-llama/llama-3.3-70b-instruct:free` (primary) |
-| Backend | `OPENROUTER_MODEL_FALLBACK` | `google/gemini-2.0-flash-exp:free` (fallback on 429) |
+| Backend | `OPENROUTER_MODEL_FALLBACK` | `google/gemma-4-31b-it:free` (fallback on 429) |
 | Frontend | `VITE_SUPABASE_URL` | Same as backend `SUPABASE_URL` |
 | Frontend | `VITE_SUPABASE_ANON_KEY` | Same as backend `SUPABASE_ANON_KEY` |
 

@@ -17,7 +17,7 @@ async def call_llm(messages: list[dict], system: Optional[str] = None) -> str:
             return await _call_model(model, messages, system)
         except httpx.HTTPStatusError as e:
             last_error = e
-            if e.response.status_code == 429:
+            if attempt < len(models) - 1:
                 continue
             raise
         except Exception as e:
@@ -43,7 +43,7 @@ async def _call_model(model: str, messages: list[dict], system: Optional[str] = 
         "temperature": 0.7,
         "max_tokens": 1024,
     }
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=55.0) as client:
         resp = await client.post(OPENROUTER_API_URL, json=payload, headers=headers)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
