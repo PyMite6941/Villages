@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
 import { api } from '../lib/api'
 import toast from 'react-hot-toast'
-
-const SEND_COOLDOWN = 60
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [state, setState] = useState<'form' | 'sent' | 'link'>('form')
   const [isNew, setIsNew] = useState(false)
+  const [magicLink, setMagicLink] = useState('')
   const [cooldown, setCooldown] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -17,8 +15,8 @@ export default function Login() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
 
-  const startCooldown = () => {
-    setCooldown(SEND_COOLDOWN)
+  const startCooldown = (seconds: number) => {
+    setCooldown(seconds)
     timerRef.current = setInterval(() => {
       setCooldown((c) => {
         if (c <= 1) { clearInterval(timerRef.current!); timerRef.current = null; return 0 }
@@ -32,21 +30,24 @@ export default function Login() {
     try {
       const { exists } = await api.auth.checkEmail(email)
       setIsNew(!exists)
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })
-      if (error) {
-        if (error.message?.toLowerCase().includes('rate limit') || error.message?.toLowerCase().includes('too many')) {
-          toast.error('Please wait a moment before requesting another email.')
-          startCooldown()
-        } else {
-          toast.error(error.message)
-        }
-        setLoading(false)
-        return
+      const result = await api.auth.sendMagicLink(email)
+      if (result.link) {
+        setMagicLink(result.link)
+        setState('link')
+      } else {
+        setState('sent')
+        startCooldown(55)
       }
-      setSent(true)
-      startCooldown()
-    } catch {
-      toast.error('Could not connect. Check your internet and try again.')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Could not connect'
+      if (msg.toLowerCase().includes('wait')) {
+        toast.error(msg)
+        const match = msg.match(/(\d+)s/)
+        if (match) startCooldown(parseInt(match[1]) + 1)
+        else startCooldown(55)
+      } else {
+        toast.error(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -55,10 +56,6 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
-    await sendMagicLink()
-  }
-
-  const handleResend = async () => {
     await sendMagicLink()
   }
 
@@ -72,7 +69,7 @@ export default function Login() {
         </div>
 
         <div className="card">
-          {sent ? (
+          {state === 'sent' && (
             <div className="text-center py-4">
               <span className="text-4xl">📬</span>
               <h2 className="font-semibold text-gray-900 mt-3 mb-1">Check your inbox</h2>
@@ -86,13 +83,33 @@ export default function Login() {
               {cooldown > 0 ? (
                 <p className="text-xs text-gray-400 mt-3">Resend available in {cooldown}s</p>
               ) : (
-                <button onClick={handleResend} disabled={loading}
+                <button onClick={sendMagicLink} disabled={loading}
                   className="text-sm text-village-600 hover:underline mt-3">
                   {loading ? 'Sending...' : 'Resend email'}
                 </button>
               )}
             </div>
-          ) : (
+          )}
+
+          {state === 'link' && (
+            <div className="text-center py-4">
+              <span className="text-4xl">🔗</span>
+              <h2 className="font-semibold text-gray-900 mt-3 mb-1">Email rate limit reached</h2>
+              <p className="text-sm text-gray-600 mb-3">
+                Click the link below to log in directly (no email needed):
+              </p>
+              <a href={magicLink} className="btn-primary inline-block text-sm break-all">
+                Click to log in
+              </a>
+              <p className="text-xs text-gray-400 mt-4">
+                Or copy this link into your browser:
+              </p>
+              <input readOnly value={magicLink} className="input text-xs mt-1"
+                onClick={(e) => { (e.target as HTMLInputElement).select(); navigator.clipboard?.writeText(magicLink); toast.success('Link copied') }} />
+            </div>
+          )}
+
+          {state === 'form' && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>

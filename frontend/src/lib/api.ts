@@ -28,6 +28,10 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 export const api = {
   auth: {
     checkEmail: (email: string) => req<{ exists: boolean }>('GET', `/auth/check-email?email=${encodeURIComponent(email)}`),
+    sendMagicLink: (email: string) => {
+      const params = new URLSearchParams({ email })
+      return req<{ sent: boolean; link: string | null }>('POST', `/auth/send-magic-link?${params}`)
+    },
   },
   users: {
     createProfile: (data: Partial<UserProfile>) => req<UserProfile>('POST', '/users/profile', data),
