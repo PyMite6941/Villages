@@ -94,9 +94,9 @@ export default function Login() {
           {state === 'link' && (
             <div className="text-center py-4">
               <span className="text-4xl">🔗</span>
-              <h2 className="font-semibold text-gray-900 mt-3 mb-1">Email rate limit reached</h2>
+              <h2 className="font-semibold text-gray-900 mt-3 mb-1">Click to log in</h2>
               <p className="text-sm text-gray-600 mb-3">
-                Click the link below to log in directly (no email needed):
+                No email needed — click the link below to log in instantly:
               </p>
               <a href={magicLink} className="btn-primary inline-block text-sm break-all">
                 Click to log in

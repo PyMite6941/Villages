@@ -1,5 +1,6 @@
 import time as time_module
 from typing import Optional
+from urllib.parse import urlencode, urlparse, parse_qs
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query
@@ -54,35 +55,42 @@ async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = 
     redirect = redirect_to or f"{settings.frontend_url}/auth/callback"
 
     async with httpx.AsyncClient() as client:
-        # Try sending the email first via the /otp endpoint
+        # Try generating a direct magic link first (no email needed, avoids rate limits)
+        link_payload = {
+            "type": "magiclink",
+            "email": target,
+            "redirect_to": redirect,
+        }
+        link_resp = await client.post(
+            f"{sb_url}/auth/v1/admin/generate_link", json=link_payload, headers=headers
+        )
+        if link_resp.is_success:
+            data = link_resp.json()
+            magic_url = data.get("action_link", "") or data.get("url", "")
+            # Override redirect_to in the action link (Supabase uses its SITE_URL
+            # which may be localhost — we need it pointed at the real frontend)
+            if magic_url:
+                parsed = urlparse(magic_url)
+                qs = parse_qs(parsed.query)
+                qs["redirect_to"] = [redirect]
+                magic_url = parsed._replace(query=urlencode(qs, doseq=True)).geturl()
+            return {"sent": False, "link": magic_url}
+
+        # Fallback to sending an email via the /otp endpoint
         otp_payload = {
             "email": target,
             "create_user": True,
             "data": {"email_redirect_to": redirect},
         }
         otp_resp = await client.post(f"{sb_url}/auth/v1/otp", json=otp_payload, headers=headers)
-
         if otp_resp.is_success:
             return {"sent": True, "link": None}
 
-        # If rate limited, fall back to generating a direct link (no email)
+        # Both methods failed
         if otp_resp.status_code == 429 or "rate" in otp_resp.text.lower():
-            link_payload = {
-                "type": "magiclink",
-                "email": target,
-                "redirect_to": redirect,
-            }
-            link_resp = await client.post(
-                f"{sb_url}/auth/v1/admin/generate_link", json=link_payload, headers=headers
-            )
-            if link_resp.is_success:
-                data = link_resp.json()
-                magic_url = data.get("url", "")
-                return {"sent": False, "link": magic_url}
-
             raise HTTPException(
-                status_code=502,
-                detail="Could not generate login link. Try again later.",
+                status_code=429,
+                detail="Email rate limit reached. Try again later.",
             )
 
         raise HTTPException(status_code=502, detail="Email service unavailable. Try again later.")
