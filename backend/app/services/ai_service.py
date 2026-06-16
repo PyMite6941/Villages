@@ -166,6 +166,53 @@ async def generate_course_study_tips(
     return await call_llm(messages, system)
 
 
+async def generate_lesson_quiz(
+    course_title: str,
+    lesson_title: str,
+    lesson_content: str,
+    difficulty: str = "beginner",
+    num_questions: int = 4,
+) -> dict:
+    system = (
+        "You are an expert tutor creating practice questions for a lesson. "
+        f"Write {num_questions} multiple-choice questions that check genuine understanding "
+        "(not just recall) of the lesson material. Each question has exactly 4 options, one correct. "
+        "Vary difficulty appropriately and write a short explanation of why the answer is correct. "
+        "Base questions ONLY on the supplied lesson content — do not invent facts beyond it. "
+        'Respond with JSON only: {"questions": [{"question": "...", '
+        '"options": ["A", "B", "C", "D"], "correct_index": 0, "explanation": "..."}]}'
+    )
+    # Cap content sent to the model to keep token use sane.
+    snippet = lesson_content[:4000]
+    messages = [{
+        "role": "user",
+        "content": (
+            f"Course: {course_title}\n"
+            f"Lesson: {lesson_title}\n"
+            f"Difficulty: {difficulty}\n\n"
+            f"Lesson content:\n{snippet}\n\n"
+            f"Generate {num_questions} multiple-choice practice questions. JSON only."
+        ),
+    }]
+    raw = await call_llm(messages, system)
+    fallback = {
+        "questions": [
+            {
+                "question": f"What is the main focus of \"{lesson_title}\"?",
+                "options": [
+                    "The core concepts covered in this lesson",
+                    "An unrelated topic",
+                    "Something not in the lesson",
+                    "None of the above",
+                ],
+                "correct_index": 0,
+                "explanation": "Review the lesson content above and try the practice again.",
+            }
+        ]
+    }
+    return _parse_json(raw, fallback)
+
+
 async def generate_socratic_response(
     subject: str,
     message: str,

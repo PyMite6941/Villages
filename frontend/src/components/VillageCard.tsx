@@ -17,7 +17,10 @@ export default function VillageCard({ village, onJoin, currentVillageId }: Props
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="font-semibold text-gray-900">{village.name}</h3>
-          <span className="badge bg-village-100 text-village-700 mt-1">{village.focus_area}</span>
+          <div className="flex gap-1.5 mt-1">
+            <span className="badge bg-village-100 text-village-700">{village.focus_area}</span>
+            {village.is_private && <span className="badge bg-purple-100 text-purple-700">🔒 Private</span>}
+          </div>
         </div>
         <div className="flex items-center gap-1 text-sm text-gray-500">
           <Users size={12} className="text-gray-400" />

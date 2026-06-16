@@ -1,6 +1,6 @@
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import { Home, Users, MessageSquare, User, LogOut, Lightbulb, Info, BookOpen, Brain } from 'lucide-react'
+import { Home, Users, MessageSquare, User, LogOut, Lightbulb, Info, BookOpen, Brain, Settings as SettingsIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface Props {
@@ -18,6 +18,7 @@ const communityNav = [
 const personalNav = [
   { to: '/study-hub', label: 'Study Hub', icon: Brain },
   { to: '/profile', label: 'Profile', icon: User },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
   { to: '/about', label: 'About', icon: Info },
 ]
 
@@ -27,8 +28,8 @@ export default function Layout({ session }: Props) {
   const linkClass = (to: string) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
       pathname === to || (to !== '/' && pathname.startsWith(to))
-        ? 'bg-village-100 text-village-700'
-        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+        ? 'bg-village-100 text-village-700 dark:bg-village-900/40 dark:text-village-300'
+        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
     }`
 
   return (
@@ -53,7 +54,7 @@ export default function Layout({ session }: Props) {
 
       <div className="flex flex-1">
         {/* Sidebar nav */}
-        <nav className="w-16 sm:w-48 bg-white border-r border-amber-100 flex flex-col py-4 px-2 shrink-0">
+        <nav className="w-16 sm:w-48 bg-white border-r border-amber-100 flex flex-col py-4 px-2 shrink-0 dark:bg-gray-950 dark:border-gray-800">
           {/* Community section */}
           <div className="hidden sm:block px-3 mb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
             Community
@@ -68,10 +69,10 @@ export default function Layout({ session }: Props) {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-amber-100 mx-2 mb-3" />
+          <div className="border-t border-amber-100 mx-2 mb-3 dark:border-gray-800" />
 
           {/* Personal section */}
-          <div className="hidden sm:block px-3 mb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+          <div className="hidden sm:block px-3 mb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest dark:text-gray-500">
             Personal
           </div>
           <div className="flex flex-col gap-1">

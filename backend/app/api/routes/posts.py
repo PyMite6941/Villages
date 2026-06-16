@@ -12,7 +12,7 @@ from app.services.ai_service import moderate_content
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-@router.get("/")
+@router.get("")
 async def list_posts(village_id: Optional[str] = None, limit: int = 20, offset: int = 0):
     sb = get_supabase()
     # NOTE: posts.author_id is a free-text column (allows the synthetic
@@ -31,7 +31,7 @@ async def list_posts(village_id: Optional[str] = None, limit: int = 20, offset: 
     return query.execute().data
 
 
-@router.post("/", response_model=Post)
+@router.post("", response_model=Post)
 async def create_post(data: PostCreate, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
     mod = await moderate_content(data.content)

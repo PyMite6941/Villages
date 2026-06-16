@@ -23,11 +23,13 @@ class TeacherVerification(BaseModel):
 class CourseCreate(BaseModel):
     title: str
     description: str
-    category: str  # 'school' | 'hobby'
+    category: str  # domain key: 'math' | 'science' | 'tech' | ...
     subject: str
     difficulty: str = "beginner"
     estimated_hours: int = 1
     thumbnail_emoji: str = "📚"
+    source: Optional[str] = None  # content attribution, e.g. "College Board AP"
+    is_private: bool = False
 
 
 class Course(BaseModel):
@@ -44,6 +46,9 @@ class Course(BaseModel):
     thumbnail_emoji: str
     enrollment_count: int
     is_published: bool
+    source: Optional[str] = None
+    is_private: bool = False
+    invite_code: Optional[str] = None
     created_at: Optional[datetime] = None
 
 
@@ -52,6 +57,7 @@ class LessonCreate(BaseModel):
     content: str
     order_index: int = 0
     duration_minutes: int = 15
+    video_url: Optional[str] = None  # embeddable video (YouTube / Khan Academy)
 
 
 class Lesson(BaseModel):
@@ -61,6 +67,7 @@ class Lesson(BaseModel):
     content: str
     order_index: int
     duration_minutes: int
+    video_url: Optional[str] = None
     created_at: Optional[datetime] = None
 
 
@@ -85,5 +92,30 @@ class CourseWithLessons(BaseModel):
     thumbnail_emoji: str
     enrollment_count: int
     is_published: bool
+    source: Optional[str] = None
+    is_private: bool = False
+    invite_code: Optional[str] = None
     created_at: Optional[datetime] = None
     lessons: List[Lesson] = []
+    office_hours: List["OfficeHour"] = []
+
+
+class OfficeHour(BaseModel):
+    id: str
+    course_id: str
+    day_of_week: int
+    start_time: str
+    end_time: str
+    location: str = ""
+    created_at: Optional[datetime] = None
+
+
+class OfficeHourCreate(BaseModel):
+    day_of_week: int
+    start_time: str
+    end_time: str
+    location: str = ""
+
+
+class JoinByCode(BaseModel):
+    code: str

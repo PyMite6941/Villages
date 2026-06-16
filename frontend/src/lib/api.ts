@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { UserProfile, Village, Post, Comment, Course, CourseWithLessons, EnrollmentStatus, CourseCreate, LessonCreate, Lesson, TeacherVerification } from '../types'
+import type { UserProfile, Village, Post, Comment, Course, CourseWithLessons, EnrollmentStatus, CourseCreate, LessonCreate, Lesson, TeacherVerification, QuizQuestion, OfficeHour } from '../types'
 
 const BASE = '/api'
 
@@ -39,10 +39,17 @@ export const api = {
     updateProfile: (data: Partial<UserProfile>) => req<UserProfile>('PATCH', '/users/profile', data),
   },
   villages: {
-    list: (focusArea?: string) => req<Village[]>('GET', `/villages${focusArea ? `?focus_area=${focusArea}` : ''}`),
+    list: (focusArea?: string, search?: string) => {
+      const params = new URLSearchParams()
+      if (focusArea) params.set('focus_area', focusArea)
+      if (search) params.set('search', search)
+      const qs = params.toString()
+      return req<Village[]>('GET', `/villages${qs ? `?${qs}` : ''}`)
+    },
     get: (id: string) => req<Village>('GET', `/villages/${id}`),
     create: (data: Partial<Village>) => req<Village>('POST', '/villages', data),
     join: (id: string) => req<{ message: string }>('POST', `/villages/${id}/join`),
+    joinByCode: (code: string) => req<{ message: string; village_id: string }>('POST', '/villages/join-by-code', { code }),
     aiMatch: () => req<{ recommended_village_id: string; reasoning: string }>('POST', '/villages/match'),
     getMembers: (id: string) => req<unknown[]>('GET', `/villages/${id}/members`),
   },
@@ -66,11 +73,18 @@ export const api = {
     get: (id: string) => req<CourseWithLessons>('GET', `/courses/${id}`),
     create: (data: CourseCreate) => req<Course>('POST', '/courses', data),
     enroll: (id: string) => req<EnrollmentStatus>('POST', `/courses/${id}/enroll`),
+    joinByCode: (code: string) => req<{ enrolled: boolean; course_id: string; message: string }>('POST', '/courses/join-by-code', { code }),
     getEnrollment: (id: string) => req<EnrollmentStatus>('GET', `/courses/${id}/enrollment`),
     completeLesson: (courseId: string, lessonId: string) =>
       req<{ completed_lesson_ids: string[] }>('POST', `/courses/${courseId}/lessons/${lessonId}/complete`),
     addLesson: (courseId: string, data: LessonCreate) =>
       req<Lesson>('POST', `/courses/${courseId}/lessons`, data),
+    // Office hours
+    listOfficeHours: (courseId: string) => req<OfficeHour[]>('GET', `/courses/${courseId}/office-hours`),
+    addOfficeHour: (courseId: string, data: { day_of_week: number; start_time: string; end_time: string; location?: string }) =>
+      req<OfficeHour>('POST', `/courses/${courseId}/office-hours`, data),
+    deleteOfficeHour: (courseId: string, ohId: string) =>
+      req<{ deleted: boolean }>('DELETE', `/courses/${courseId}/office-hours/${ohId}`),
   },
   teacher: {
     apply: (data: { degree_title: string; institution: string; subject_area: string }) =>
@@ -110,6 +124,8 @@ export const api = {
       req<unknown[]>('GET', `/ai/village/${villageId}/learning-paths`),
     courseStudyTips: (courseId: string) =>
       req<{ tips: string }>('POST', `/ai/courses/${courseId}/study-tips`),
+    lessonQuiz: (courseId: string, lessonId: string) =>
+      req<{ questions: QuizQuestion[] }>('POST', `/ai/courses/${courseId}/lessons/${lessonId}/quiz`),
     studyBuddy: (subject: string, message: string, history: { role: string; content: string }[]) =>
       req<{ response: string }>('POST', '/ai/study-buddy', { subject, message, history }),
     essayCoach: (essay: string, essay_prompt: string, student_context: string) =>

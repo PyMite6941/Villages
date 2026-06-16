@@ -37,3 +37,6 @@ Thumbs.db
 
 # Local run markers (created by run.sh / run.ps1)
 .deps-installed
+
+# Vercel env pulls
+.env.vercel-*

@@ -12,7 +12,7 @@ AI-powered student learning community platform. Study cohorts ("Villages"), stru
 | Styling | Tailwind CSS with a custom `village-*` color palette |
 | Backend | Python FastAPI |
 | Database | Supabase (PostgreSQL + Realtime + Auth) |
-| AI | Groq API (fast LLM inference via `llama-3` models) |
+| AI | OpenRouter (`:free` models — Llama 3.3 70B primary, Gemma 4 31B fallback) |
 
 ---
 
@@ -71,7 +71,8 @@ village-700 → #a74916  (header background, dark text)
 ### UserProfile
 ```typescript
 { id, email, display_name, academic_level, goals[], strengths[], weaknesses[],
-  is_verified_teacher, teacher_subjects[], bio, village_id, avatar_url }
+  interests[], learning_style, study_tags[], is_verified_teacher,
+  teacher_subjects[], bio, village_id, avatar_url }
 ```
 
 ### Village (study cohort)
@@ -135,6 +136,9 @@ village-700 → #a74916  (header background, dark text)
 - `GET  /posts/:id/comments`
 - `POST /posts/:id/comments`
 
+**Auth**
+- `POST /auth/send-magic-link` — backend-proxied magic link (bypasses SITE_URL restriction)
+
 **AI**
 - `POST /ai/village-elder/:village_id/prompt` — generate discussion post
 - `POST /ai/village-elder/:village_id/challenge` — generate collaborative challenge
@@ -142,6 +146,9 @@ village-700 → #a74916  (header background, dark text)
 - `POST /ai/study-buddy` — Socratic AI tutor (body: `{subject, message, history[]}`)
 - `POST /ai/essay-coach` — structured essay critique, anti-ghostwriting (body: `{essay, essay_prompt?, student_context?}`)
 - `POST /ai/study-plan` — personalized weekly schedule (body: `{goals[], strengths[], weaknesses[], academic_level, weekly_hours}`)
+- `POST /ai/study-planner` — multi-week timeline toward target date (body: `{subject, target, target_date, weekly_hours}`)
+- `POST /ai/gpa-planner` — course-level grade calculator with target GPA (body: `{courses[], current_gpa, target_gpa, total_credits, favorite_course?}`)
+- `POST /ai/college-advisor` — college fit suggestions (body: `{message, gpa, test_scores, interests[], preferences, history[]}`)
 
 ---
 
@@ -154,9 +161,10 @@ village-700 → #a74916  (header background, dark text)
 /courses        → Knowledge Grove — school & hobby courses
 /courses/:id    → Course detail (lessons, progress, AI study tips)
 /forum          → Global forum
-/study-hub      → Study Hub — Socratic Study Buddy, Essay Coach, Study Planner
+/study-hub      → Study Hub — Study Buddy, Essay Coach, Study Planner, GPA Planner, College Prep
+/settings       → Theme (dark/light/system), reduce animations
 /profile        → User profile + Village Scholar (verified teacher) application
-/onboarding     → New user setup (3-step wizard)
+/onboarding     → New user setup (4-step wizard + study tracks)
 ```
 
 ---
@@ -278,11 +286,18 @@ Appears as a 4th tab in Study Hub when `high_schooler` tag is active. Contains t
 
 ---
 
-## AI Integration (Groq)
+## AI Integration (OpenRouter)
 
-All AI calls go through `backend/app/services/ai_service.py` → `call_groq()`.
+All AI calls go through `backend/app/services/ai_service.py` → `call_llm()` (with fallback retry).
 
-Functions:
+### Model strategy
+- **Primary:** `meta-llama/llama-3.3-70b-instruct:free` (configured via `OPENROUTER_MODEL`)
+- **Fallback:** `google/gemma-4-31b-it:free` (configured via `OPENROUTER_MODEL_FALLBACK`)
+- On **any** HTTP error (429/402/403/502), retries with fallback model
+- 55s httpx timeout (Vercel Hobby plan has 60s function limit)
+- 50 req/day free tier, 20 req/min rate limit
+
+### AI Functions
 - `generate_village_match_reasoning()` — match user to best village
 - `generate_discussion_prompt()` — Village Elder forum posts
 - `generate_study_challenge()` — collaborative group challenges
@@ -290,10 +305,10 @@ Functions:
 - `generate_socratic_response()` — Socratic Study Buddy (never gives direct answers)
 - `generate_essay_feedback()` — Essay Coach critique (anti-ghostwriting enforced in system prompt)
 - `generate_study_plan()` — personalized weekly schedule
+- `generate_study_planner()` — multi-week timeline toward target date
+- `generate_gpa_plan()` — course-level GPA calculator with target grading
 - `generate_college_advisor_response()` — college fit suggestions (reach/match/safety)
 - `moderate_content()` — safety check for student platform
-
-Model configured via `settings.groq_model` in `app/config.py`.
 
 ---
 
@@ -302,10 +317,13 @@ Model configured via `settings.groq_model` in `app/config.py`.
 **Backend** (`.env`):
 ```
 SUPABASE_URL=
-SUPABASE_SERVICE_KEY=
-GROQ_API_KEY=
-GROQ_MODEL=llama-3.3-70b-versatile
-SECRET_KEY=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_JWT_SECRET=
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free
+OPENROUTER_MODEL_FALLBACK=google/gemma-4-31b-it:free
+FRONTEND_ORIGINS=http://localhost:5173,https://villages-eight.vercel.app
 ```
 
 **Frontend** (`.env`):

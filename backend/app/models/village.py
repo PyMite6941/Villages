@@ -13,6 +13,8 @@ class Village(BaseModel):
     max_members: int = 10
     member_count: int = 0
     is_active: bool = True
+    is_private: bool = False
+    invite_code: Optional[str] = None
     created_by: str
     created_at: Optional[datetime] = None
 
@@ -22,6 +24,7 @@ class VillageCreate(BaseModel):
     focus_area: str
     resources: list[str]
     max_members: int = 10
+    is_private: bool = False
 
 class VillageMember(BaseModel):
     user_id: str

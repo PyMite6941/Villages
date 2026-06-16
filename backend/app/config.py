@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     openrouter_api_key: str = ""
     openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
-    openrouter_model_fallback: str = "google/gemini-2.0-flash-exp:free"
+    openrouter_model_fallback: str = "google/gemma-4-31b-it:free"
 
     # Comma-separated list of allowed CORS origins for the deployed frontend,
     # e.g. "https://villages-abc.vercel.app,https://villages.app".

@@ -15,6 +15,7 @@ from app.services.ai_service import (
     generate_essay_feedback,
     generate_gpa_plan,
     generate_learning_path,
+    generate_lesson_quiz,
     generate_socratic_response,
     generate_study_challenge,
     generate_study_plan,
@@ -216,6 +217,26 @@ async def course_study_tips(course_id: str, _user_id: str = Depends(get_current_
         lesson_count=len(lessons_res.data),
     )
     return {"tips": tips}
+
+
+@router.post("/courses/{course_id}/lessons/{lesson_id}/quiz")
+async def lesson_quiz(course_id: str, lesson_id: str, _user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    course_res = sb.table("courses").select("title, difficulty").eq("id", course_id).execute()
+    if not course_res.data:
+        raise HTTPException(status_code=404, detail="Course not found")
+    lesson_res = sb.table("lessons").select("title, content").eq("id", lesson_id).eq("course_id", course_id).execute()
+    if not lesson_res.data:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    c = course_res.data[0]
+    lesson = lesson_res.data[0]
+    quiz = await generate_lesson_quiz(
+        course_title=c["title"],
+        lesson_title=lesson["title"],
+        lesson_content=lesson["content"],
+        difficulty=c.get("difficulty", "beginner"),
+    )
+    return quiz
 
 
 # ── Study Hub ──────────────────────────────────────────────────────────────────

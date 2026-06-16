@@ -39,6 +39,8 @@ export interface Village {
   max_members: number
   member_count: number
   is_active: boolean
+  is_private: boolean
+  invite_code?: string
   created_by: string
   created_at?: string
 }
@@ -91,7 +93,7 @@ export interface Course {
   id: string
   title: string
   description: string
-  category: 'school' | 'hobby'
+  category: string
   subject: string
   teacher_id?: string
   teacher_name: string
@@ -101,6 +103,19 @@ export interface Course {
   thumbnail_emoji: string
   enrollment_count: number
   is_published: boolean
+  source?: string
+  is_private: boolean
+  invite_code?: string
+  created_at?: string
+}
+
+export interface OfficeHour {
+  id: string
+  course_id: string
+  day_of_week: number
+  start_time: string
+  end_time: string
+  location: string
   created_at?: string
 }
 
@@ -111,11 +126,13 @@ export interface Lesson {
   content: string
   order_index: number
   duration_minutes: number
+  video_url?: string
   created_at?: string
 }
 
 export interface CourseWithLessons extends Course {
   lessons: Lesson[]
+  office_hours?: OfficeHour[]
 }
 
 export interface EnrollmentStatus {
@@ -129,11 +146,13 @@ export interface EnrollmentStatus {
 export interface CourseCreate {
   title: string
   description: string
-  category: 'school' | 'hobby'
+  category: string
   subject: string
   difficulty: string
   estimated_hours: number
   thumbnail_emoji: string
+  source?: string
+  is_private?: boolean
 }
 
 export interface LessonCreate {
@@ -141,4 +160,12 @@ export interface LessonCreate {
   content: string
   order_index: number
   duration_minutes: number
+  video_url?: string
+}
+
+export interface QuizQuestion {
+  question: string
+  options: string[]
+  correct_index: number
+  explanation: string
 }

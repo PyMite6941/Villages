@@ -12,13 +12,30 @@ from app.services.ai_service import generate_village_match_reasoning
 router = APIRouter(prefix="/villages", tags=["villages"])
 
 
-@router.get("/", response_model=list[Village])
-async def list_villages(focus_area: Optional[str] = None):
+@router.get("", response_model=list[Village])
+async def list_villages(focus_area: Optional[str] = None, search: Optional[str] = None, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
     query = sb.table("villages").select("*").eq("is_active", True)
     if focus_area:
         query = query.eq("focus_area", focus_area)
-    return [Village(**v) for v in query.execute().data]
+    result = query.execute().data
+
+    villages = []
+    for v in result:
+        if not v.get("is_private"):
+            villages.append(Village(**v))
+        else:
+            # Check if user is a member of this private village
+            member_check = sb.table("village_members").select("user_id").eq("user_id", user_id).eq("village_id", v["id"]).execute()
+            if member_check.data:
+                villages.append(Village(**v))
+
+    # Filter by search term if provided
+    if search:
+        s = search.lower()
+        villages = [v for v in villages if s in v.name.lower() or s in v.focus_area.lower()]
+
+    return villages
 
 
 @router.post("/match")
@@ -43,10 +60,15 @@ async def ai_match_village(user_id: str = Depends(get_current_user)):
     return {"recommended_village_id": match.get("village_id"), "reasoning": match.get("reasoning")}
 
 
-@router.post("/", response_model=Village)
+@router.post("", response_model=Village)
 async def create_village(data: VillageCreate, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
     village_id = str(uuid.uuid4())
+
+    invite_code = None
+    if data.is_private:
+        invite_code = str(uuid.uuid4())[:8].upper()
+
     village = {
         "id": village_id,
         "name": data.name,
@@ -56,6 +78,8 @@ async def create_village(data: VillageCreate, user_id: str = Depends(get_current
         "max_members": data.max_members,
         "member_count": 1,
         "is_active": True,
+        "is_private": data.is_private,
+        "invite_code": invite_code,
         "created_by": user_id,
         "created_at": datetime.utcnow().isoformat(),
     }
@@ -73,12 +97,20 @@ async def create_village(data: VillageCreate, user_id: str = Depends(get_current
 
 
 @router.get("/{village_id}", response_model=Village)
-async def get_village(village_id: str):
+async def get_village(village_id: str, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
     result = sb.table("villages").select("*").eq("id", village_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Village not found")
-    return Village(**result.data[0])
+    village = result.data[0]
+
+    # Check access for private villages
+    if village.get("is_private"):
+        member_check = sb.table("village_members").select("user_id").eq("user_id", user_id).eq("village_id", village_id).execute()
+        if not member_check.data and village.get("created_by") != user_id:
+            raise HTTPException(status_code=403, detail="This is a private village")
+
+    return Village(**village)
 
 
 @router.post("/{village_id}/join")
@@ -88,6 +120,10 @@ async def join_village(village_id: str, user_id: str = Depends(get_current_user)
     if not village_result.data:
         raise HTTPException(status_code=404, detail="Village not found")
     village = village_result.data[0]
+
+    if village.get("is_private"):
+        raise HTTPException(status_code=400, detail="This village requires an invite code to join")
+
     if village["member_count"] >= village["max_members"]:
         raise HTTPException(status_code=400, detail="Village is full")
     existing = sb.table("village_members").select("user_id").eq("user_id", user_id).eq("village_id", village_id).execute()
@@ -104,12 +140,35 @@ async def join_village(village_id: str, user_id: str = Depends(get_current_user)
     return {"message": f"Successfully joined village '{village['name']}'"}
 
 
+@router.post("/join-by-code")
+async def join_village_by_code(data: dict, user_id: str = Depends(get_current_user)):
+    code = data.get("code", "")
+    sb = get_supabase()
+    village_res = sb.table("villages").select("*").eq("invite_code", code.upper()).execute()
+    if not village_res.data:
+        raise HTTPException(status_code=404, detail="Invalid invite code")
+    village = village_res.data[0]
+
+    if village["member_count"] >= village["max_members"]:
+        raise HTTPException(status_code=400, detail="Village is full")
+    existing = sb.table("village_members").select("user_id").eq("user_id", user_id).eq("village_id", village["id"]).execute()
+    if existing.data:
+        return {"message": f"Already a member of '{village['name']}'", "village_id": village["id"]}
+    sb.table("village_members").insert({
+        "user_id": user_id,
+        "village_id": village["id"],
+        "role": "member",
+        "joined_at": datetime.utcnow().isoformat(),
+    }).execute()
+    sb.table("villages").update({"member_count": village["member_count"] + 1}).eq("id", village["id"]).execute()
+    sb.table("profiles").update({"village_id": village["id"]}).eq("id", user_id).execute()
+    return {"message": f"Joined '{village['name']}'!", "village_id": village["id"]}
+
+
 @router.get("/{village_id}/members")
 async def get_village_members(village_id: str):
     sb = get_supabase()
     members = sb.table("village_members").select("*").eq("village_id", village_id).execute().data
-    # village_members.user_id and profiles.id both reference auth.users but have
-    # no direct FK between them, so PostgREST can't embed profiles. Fetch + merge.
     user_ids = [m["user_id"] for m in members]
     profiles_by_id: dict = {}
     if user_ids:

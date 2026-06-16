@@ -503,6 +503,7 @@ Villages/
 │           ├── Profile.tsx          # View/edit profile
 │           ├── Onboarding.tsx       # 4-step profile setup + study tracks
 │           ├── StudyHub.tsx         # Study Buddy, Essay Coach, Study Planner, College Prep
+│           ├── Settings.tsx         # Theme (dark/light/system), reduce motion, performance
 │           ├── Courses.tsx          # Course catalog with filters
 │           └── CourseDetail.tsx     # Course lessons + enrollment + study tips
 │
@@ -789,6 +790,7 @@ Create these in your hosting dashboards:
 | 2.9 | ✅ | **Courses + Lessons** — Course CRUD, enrollment, lesson completion | `Courses.tsx`, `CourseDetail.tsx`, `courses.py` | With teacher verification flow |
 | 2.10 | ✅ | **Auth proxy** — Magic link via backend for deployed SITE_URL workaround | `auth.py`, `Callback.tsx` | Backend follows 303 redirect, extracts session tokens |
 | 2.11 | ✅ | **Study tracks** — high_schooler, college_student, adult_learner, test_prep | `Onboarding.tsx`, `Profile.tsx` | Unlocks gated features in Study Hub |
+| 2.12 | ✅ | **Settings page + dark mode** — dark/light/system theme toggle, reduce-motion, persisted to localStorage | `Settings.tsx`, `Layout.tsx`, `tailwind.config.js`, `index.css` | Uses `dark:` Tailwind variant; system preference as default |
 
 ### Phase 3 — Quality & Scale (⬜ Claude Code)
 
@@ -812,3 +814,31 @@ Create these in your hosting dashboards:
 | 4.5 | ⬜ | Video/voice chat (Daily.co, LiveKit) | Real-time study rooms |
 | 4.6 | ⬜ | Admin dashboard | Moderation |
 | 4.7 | ⬜ | Mobile app (React Native / Expo) | Broader reach |
+
+---
+
+## 🐞 Known Bugs / Needs Fixing
+
+*Found 2026-06-16 by auditing the green CI run on `main` (run #27621390585). Both jobs currently PASS, but these are real latent issues — the first one becomes a hard CI failure imminently, the rest are correctness risks ESLint is flagging as warnings (they don't fail the build today only because lint isn't run with `--max-warnings 0`).*
+
+### 🔴 BUG-1 — CI will break: GitHub Actions Node.js 20 deprecation (URGENT)
+- **Where:** `.github/workflows/ci.yml` — uses `actions/checkout@v4`, `actions/setup-node@v4`, `actions/setup-python@v5`. All three run on the Node.js 20 runtime.
+- **Problem:** GitHub is forcing Actions to Node.js 24 **starting June 16, 2026 (today)**, and **removing Node.js 20 from runners on Sept 16, 2026.** Once that lands, these pinned action versions can fail to start and the whole CI gate (the PR/main protection) stops working.
+- **Fix:** Bump to the Node 24-compatible major versions — `actions/checkout@v5`, `actions/setup-node@v5`, `actions/setup-python@v6` (verify latest tags on the GitHub Marketplace before pinning). As a temporary stopgap only, set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` in the workflow env, but the version bump is the real fix.
+- **Severity:** High — silent infrastructure breakage; you'd lose CI coverage right when you'd want it.
+
+### 🟠 BUG-2 — React `useEffect` missing-dependency warnings (stale-closure correctness risk)
+ESLint `react-hooks/exhaustive-deps` is flagging five effects whose dependency arrays are incomplete. Each can cause a **stale closure** — the effect captures an old value and silently fails to re-run when that value changes, producing "why didn't the UI update?" bugs that are hard to trace.
+
+| File:Line | Missing dependency | Likely symptom / what to fix |
+|---|---|---|
+| `frontend/src/pages/VillageDetail.tsx:33` | `_session.user.email` | Effect calls `setDisplayName` from session but won't re-run if the session/email changes after mount → display name can show a stale/blank value. Either add `_session.user.email` to the deps, or (per the lint hint) move the value into a `useReducer` and read it in the reducer. |
+| `frontend/src/pages/StudyHub.tsx:274` | `context` | Effect uses `context` but won't re-run when `context` changes → Study Hub feature can operate on stale context. Add `context` to the dep array (or memoize it / read via ref if it's intentionally one-shot). |
+| `frontend/src/pages/StudyHub.tsx:924` | `context` | Same pattern as above, second effect. Same fix. |
+| `frontend/src/pages/Courses.tsx:70` | `loadCourses` | Effect calls `loadCourses()` but it's not in deps → course list won't refetch when the function's closed-over values (filters, category, subject) change. Wrap `loadCourses` in `useCallback([...real deps])` and add it to the effect's dep array. |
+| `frontend/src/pages/Courses.tsx:74` | `loadCourses` | Same `loadCourses` issue, second effect. The single `useCallback` fix resolves both. |
+
+- **Fix approach:** For the `loadCourses` cases, the clean fix is `const loadCourses = useCallback(async () => {...}, [<filters/category/subject it reads>])`, then list `loadCourses` in each effect's deps. For the `context` cases, add it to deps unless the effect is deliberately mount-only (in which case extract the one-shot logic and leave a comment). Avoid the lazy "remove the dependency array" escape — that changes *when* the effect runs.
+- **Severity:** Medium — not crashing, but exactly the class of bug that produces intermittent stale-UI reports.
+
+> ✅ Note: As of run #27621390585 the backend (`ruff check` + import smoke test) and the frontend build/typecheck/lint all pass. The two failed CI runs from ~02:31–02:34 on 2026-06-16 were superseded by later fix commits — no outstanding hard failures, only the items above.

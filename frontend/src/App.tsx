@@ -16,11 +16,21 @@ import Callback from './pages/Callback'
 import Courses from './pages/Courses'
 import CourseDetail from './pages/CourseDetail'
 import StudyHub from './pages/StudyHub'
+import Settings from './pages/Settings'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const location = useLocation()
+
+  useEffect(() => {
+    const stored = localStorage.getItem('village-dark-mode')
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -58,6 +68,7 @@ export default function App() {
         <Route path="/courses/:id" element={<CourseDetail session={session!} />} />
         <Route path="/study-hub" element={<StudyHub session={session!} />} />
         <Route path="/profile" element={<Profile session={session!} />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/about" element={<About />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
