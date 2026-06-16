@@ -3,10 +3,9 @@ from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
 import httpx
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 
 from app.config import settings
-from app.database import get_supabase
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -15,24 +14,22 @@ _last_send: dict[str, float] = {}
 SEND_COOLDOWN = 55
 
 
-@router.get("/check-email")
-async def check_email(email: str = Query(...)):
-    sb = get_supabase()
-    target = email.strip().lower()
-    per_page = 1000
-    for page in range(1, 51):
-        users = sb.auth.admin.list_users(page=page, per_page=per_page)
-        if not users:
-            break
-        if any((u.email or "").lower() == target for u in users):
-            return {"exists": True}
-        if len(users) < per_page:
-            break
-    return {"exists": False}
-
-
 @router.post("/send-magic-link")
-async def send_magic_link(email: str = Query(...), redirect_to: Optional[str] = None):
+async def send_magic_link(
+    email: str = Query(...),
+    redirect_to: Optional[str] = None,
+    x_admin_secret: Optional[str] = Header(default=None),
+):
+    # SECURITY: this endpoint mints a usable session for an ARBITRARY email, so it
+    # is admin-only. Normal user login does NOT use it — login goes through the
+    # standard client-side Supabase OTP, which emails the user a one-time link.
+    # Disabled unless a server secret is configured, and the secret is required on
+    # every call. (The /auth/check-email enumeration endpoint was removed.)
+    if not settings.magic_link_admin_secret:
+        raise HTTPException(status_code=404, detail="Not found")
+    if x_admin_secret != settings.magic_link_admin_secret:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     target = email.strip().lower()
 
     # Server-side cooldown to prevent hitting Supabase email rate limits

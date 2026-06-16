@@ -15,8 +15,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    # Match Vercel production + preview deploys (https://<project>-<hash>.vercel.app)
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    # Match ONLY this project's Vercel production + preview deploys
+    # (e.g. villages-eight.vercel.app, villages-<hash>.vercel.app) — not any *.vercel.app.
+    allow_origin_regex=r"https://villages[\w-]*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

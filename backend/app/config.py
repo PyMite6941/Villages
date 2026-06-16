@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     # Vercel preview deploys (*.vercel.app) are matched separately via regex.
     frontend_origins: str = ""
 
+    # Secret required to call the admin-only /auth/send-magic-link endpoint.
+    # If empty, the endpoint is disabled entirely (safe default).
+    magic_link_admin_secret: str = ""
+
     class Config:
         env_file = ".env"
 

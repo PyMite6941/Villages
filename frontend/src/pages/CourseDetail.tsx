@@ -15,16 +15,16 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced: 'bg-rose-100 text-rose-700',
 }
 
-// Convert common video URLs into an embeddable iframe src.
+// Convert a video URL into an embeddable iframe src.
+// SECURITY: only YouTube and Vimeo are allowed. Arbitrary URLs are rejected so a
+// course creator can't embed a phishing/clickjacking page in the lesson view.
 function toEmbedUrl(url: string): string | null {
   const u = url.trim()
   if (!u) return null
   const yt = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/)
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}`
+  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}`
   const vimeo = u.match(/vimeo\.com\/(\d+)/)
   if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`
-  // Already an embed/iframe-friendly URL
-  if (/\/embed\/|player\.|\.mp4($|\?)/.test(u)) return u
   return null
 }
 
@@ -432,6 +432,8 @@ export default function CourseDetail({ session }: Props) {
                             src={toEmbedUrl(lesson.video_url)!}
                             title={lesson.title}
                             className="w-full h-full"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                           />

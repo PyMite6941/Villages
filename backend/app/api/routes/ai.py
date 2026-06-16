@@ -1,4 +1,6 @@
+import time as _time
 import uuid
+from collections import deque
 from datetime import datetime
 from typing import Optional
 
@@ -23,7 +25,27 @@ from app.services.ai_service import (
     moderate_topic_content,
 )
 
-router = APIRouter(prefix="/ai", tags=["ai"])
+# ── Per-user rate limit for AI endpoints (cost-abuse protection) ───────────────
+# In-memory sliding window. Note: serverless instances are ephemeral, so this is a
+# best-effort first layer; a Supabase/Redis-backed limit would be stricter.
+_AI_CALLS: dict[str, deque] = {}
+_AI_WINDOW = 60.0  # seconds
+_AI_MAX = 30       # max AI calls per user per window
+
+
+async def ai_rate_limit(user_id: str = Depends(get_current_user)) -> str:
+    now = _time.time()
+    dq = _AI_CALLS.setdefault(user_id, deque())
+    while dq and now - dq[0] > _AI_WINDOW:
+        dq.popleft()
+    if len(dq) >= _AI_MAX:
+        raise HTTPException(status_code=429, detail="Too many AI requests — please wait a minute.")
+    dq.append(now)
+    return user_id
+
+
+# Router-level dependency: every /ai route is authenticated AND rate-limited.
+router = APIRouter(prefix="/ai", tags=["ai"], dependencies=[Depends(ai_rate_limit)])
 
 
 # ── Village Elder ──────────────────────────────────────────────────────────────
