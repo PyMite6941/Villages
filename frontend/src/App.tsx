@@ -12,6 +12,7 @@ import Profile from './pages/Profile'
 import About from './pages/About'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
+import Callback from './pages/Callback'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -35,13 +36,14 @@ export default function App() {
     )
   }
 
-  if (!session && location.pathname !== '/login') {
+  if (!session && location.pathname !== '/login' && location.pathname !== '/auth/callback') {
     return <Navigate to="/login" />
   }
 
   return (
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" /> : <Login />} />
+      <Route path="/auth/callback" element={<Callback />} />
       <Route path="/onboarding" element={session ? <Onboarding session={session} /> : <Navigate to="/login" />} />
       <Route element={<Layout session={session!} />}>
         <Route path="/" element={<Home session={session!} />} />

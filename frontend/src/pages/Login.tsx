@@ -16,7 +16,7 @@ export default function Login() {
     try {
       const { exists } = await api.auth.checkEmail(email)
       setIsNew(!exists)
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })
       if (error) { toast.error(error.message); setLoading(false); return }
       setSent(true)
     } catch {
