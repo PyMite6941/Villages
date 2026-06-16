@@ -130,6 +130,21 @@ export const api = {
     }) => req<{ weeks: { week: number; dates: string; focus: string; tasks: string[]; milestone: string }[]; total_weeks: number; summary: string }>(
       'POST', '/ai/study-planner', data
     ),
+    gpaPlanner: (data: {
+      courses: { name: string; current_grade: string; credits: number; is_favorite: boolean }[]
+      target_gpa: number
+      current_gpa?: number | null
+      academic_level: string
+      weekly_hours: number
+    }) => req<{
+      feasible: boolean
+      current_gpa: number | null
+      target_gpa: number
+      adjusted_target: number | null
+      courses: { name: string; current_grade: string; target_grade: string; credits: number; is_favorite: boolean; study_focus: string[] }[]
+      weekly_plan: string
+      recommendation: string
+    }>('POST', '/ai/gpa-planner', data),
     collegeAdvisor: (data: {
       message: string
       gpa?: string

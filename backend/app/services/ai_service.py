@@ -427,6 +427,72 @@ async def generate_study_planner(
     return _parse_json(raw, fallback)
 
 
+async def generate_gpa_plan(
+    courses: list[dict],
+    target_gpa: float,
+    current_gpa: float | None,
+    academic_level: str,
+    weekly_hours: int,
+) -> dict:
+    course_lines = "\n".join(
+        f"- {c['name']} | Current: {c.get('current_grade', 'not started')} | Credits: {c.get('credits', 1)} | {'❤️ Favorite' if c.get('is_favorite') else ''}"
+        for c in courses
+    )
+    system = (
+        "You are a high school GPA planning advisor. "
+        "Analyze a student's current courses and calculate what grades they need "
+        "to reach their target GPA. Consider that favorite courses are already "
+        "strong areas where the student excels — use them as anchors. "
+        "Provide specific per-course grade targets and actionable study focus areas. "
+        "Be realistic — if the target is unattainable, suggest an adjusted target. "
+        "Standard GPA scale: A=4.0, A-=3.7, B+=3.3, B=3.0, B-=2.7, C+=2.3, C=2.0, D=1.0, F=0.0. "
+        'Respond with JSON only: '
+        '{"feasible": true/false, '
+        '"current_gpa": <number or null>, '
+        '"target_gpa": <number>, '
+        '"adjusted_target": <number or null>, '
+        '"courses": [{"name": "<course>", "current_grade": "<grade>", '
+        '"target_grade": "<grade>", "credits": <number>, '
+        '"is_favorite": true/false, '
+        '"study_focus": ["<focus area 1>", "<focus area 2>", ...]}], '
+        '"weekly_plan": "<2-3 sentence weekly schedule>", '
+        '"recommendation": "<key insight>"}'
+    )
+    messages = [{
+        "role": "user",
+        "content": (
+            f"Student level: {academic_level}\n"
+            f"Target GPA: {target_gpa}\n"
+            f"Current overall GPA: {current_gpa if current_gpa else 'not provided (calculate from courses)'}\n"
+            f"Weekly study hours available: {weekly_hours}h\n\n"
+            f"Courses:\n{course_lines}\n\n"
+            f"Calculate the target grade needed in each course and provide study focus areas. "
+            f"Prioritize favorite courses as strengths. JSON only."
+        ),
+    }]
+    raw = await call_llm(messages, system)
+    fallback = {
+        "feasible": True,
+        "current_gpa": current_gpa,
+        "target_gpa": target_gpa,
+        "adjusted_target": None,
+        "courses": [
+            {
+                "name": c.get("name", "Course"),
+                "current_grade": c.get("current_grade", ""),
+                "target_grade": "B",
+                "credits": c.get("credits", 1),
+                "is_favorite": c.get("is_favorite", False),
+                "study_focus": ["Review course materials", "Practice problems weekly"],
+            }
+            for c in courses
+        ],
+        "weekly_plan": "Focus on your weakest areas first, then reinforce favorite subjects.",
+        "recommendation": "Consistent weekly effort is key to reaching your GPA goal.",
+    }
+    return _parse_json(raw, fallback)
+
+
 async def moderate_topic_content(topic: str, explanation: str) -> dict:
     system = (
         "You are a responsible AI guardrail for an educational community platform. "

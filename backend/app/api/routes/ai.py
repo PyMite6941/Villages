@@ -13,6 +13,7 @@ from app.services.ai_service import (
     generate_course_study_tips,
     generate_discussion_prompt,
     generate_essay_feedback,
+    generate_gpa_plan,
     generate_learning_path,
     generate_socratic_response,
     generate_study_challenge,
@@ -286,6 +287,33 @@ async def study_planner(data: StudyPlannerRequest, _user_id: str = Depends(get_c
         subject=data.subject,
         target=data.target,
         target_date=data.target_date,
+        weekly_hours=data.weekly_hours,
+    )
+    return plan
+
+
+class GpaCourse(BaseModel):
+    name: str
+    current_grade: str = ""
+    credits: float = 1.0
+    is_favorite: bool = False
+
+
+class GpaPlannerRequest(BaseModel):
+    courses: list[GpaCourse] = []
+    target_gpa: float = 3.0
+    current_gpa: float | None = None
+    academic_level: str = ""
+    weekly_hours: int = 10
+
+
+@router.post("/gpa-planner")
+async def gpa_planner(data: GpaPlannerRequest, _user_id: str = Depends(get_current_user)):
+    plan = await generate_gpa_plan(
+        courses=[c.model_dump() for c in data.courses],
+        target_gpa=data.target_gpa,
+        current_gpa=data.current_gpa,
+        academic_level=data.academic_level,
         weekly_hours=data.weekly_hours,
     )
     return plan

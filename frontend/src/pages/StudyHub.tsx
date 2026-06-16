@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Brain, PenLine, CalendarDays, Send, RotateCcw, AlertCircle, CheckCircle, ChevronDown, GraduationCap } from 'lucide-react'
+import { Brain, PenLine, CalendarDays, Send, RotateCcw, AlertCircle, CheckCircle, ChevronDown, GraduationCap, Calculator, Plus, X } from 'lucide-react'
 import { api } from '../lib/api'
 import type { UserProfile } from '../types'
 import toast from 'react-hot-toast'
 
 interface Props { session: Session }
 
-type Tab = 'buddy' | 'essay' | 'plan' | 'college'
+type Tab = 'buddy' | 'essay' | 'plan' | 'gpa' | 'college'
 
 const SCHOOL_LEVELS = new Set([
   '6th Grade', '7th Grade', '8th Grade',
@@ -47,6 +47,8 @@ export default function StudyHub({ session }: Props) {
     { id: 'essay',   label: 'Essay Coach',  icon: <PenLine size={15} />,       desc: 'Application critique',
       lockReason: isInSchool ? undefined : 'Available for students (Grade 6–University)' },
     { id: 'plan',    label: 'Study Plan',   icon: <CalendarDays size={15} />,  desc: 'Weekly schedule' },
+    { id: 'gpa',     label: 'GPA Planner',  icon: <Calculator size={15} />,    desc: 'Target grade calculator',
+      lockReason: isInSchool ? undefined : 'Available for students (Grade 6–University)' },
     { id: 'college', label: 'College Prep', icon: <GraduationCap size={15} />, desc: 'College advisor + essay',
       lockReason: isCollegePrep ? undefined : 'Enable "High Schooler" in your profile or set grade to 11/12' },
   ]
@@ -108,6 +110,7 @@ export default function StudyHub({ session }: Props) {
       {tab === 'buddy'   && <StudyBuddy />}
       {tab === 'essay'   && !tabs.find(t => t.id === 'essay')?.lockReason && <EssayCoach profile={profile} />}
       {tab === 'plan'    && <StudyPlan  profile={profile} />}
+      {tab === 'gpa'     && !tabs.find(t => t.id === 'gpa')?.lockReason && <GpaPlanner profile={profile} />}
       {tab === 'college' && !tabs.find(t => t.id === 'college')?.lockReason && <CollegePrep profile={profile} />}
     </div>
   )
@@ -583,6 +586,268 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
           </div>
           <div className="text-xs text-gray-400 text-center">
             Regenerate anytime — adjust your hours, subject, or target date.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── GPA Planner ───────────────────────────────────────────────────────────────
+
+const GRADES = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F']
+
+interface GpaCourseInput { name: string; current_grade: string; credits: number; is_favorite: boolean }
+
+const DEFAULT_COURSES: GpaCourseInput[] = [
+  { name: '', current_grade: '', credits: 1, is_favorite: false },
+]
+
+function GpaPlanner({ profile }: { profile: UserProfile | null }) {
+  const [courses, setCourses] = useState<GpaCourseInput[]>(DEFAULT_COURSES)
+  const [targetGpa, setTargetGpa] = useState('3.5')
+  const [currentGpa, setCurrentGpa] = useState('')
+  const [weeklyHours, setWeeklyHours] = useState(10)
+  const [plan, setPlan] = useState<{
+    feasible: boolean
+    current_gpa: number | null
+    target_gpa: number
+    adjusted_target: number | null
+    courses: { name: string; current_grade: string; target_grade: string; credits: number; is_favorite: boolean; study_focus: string[] }[]
+    weekly_plan: string
+    recommendation: string
+  } | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const updateCourse = (i: number, field: keyof GpaCourseInput, value: string | number | boolean) => {
+    setCourses((prev) => prev.map((c, j) => (j === i ? { ...c, [field]: value } : c)))
+  }
+
+  const addCourse = () => {
+    setCourses((prev) => [...prev, { name: '', current_grade: '', credits: 1, is_favorite: false }])
+  }
+
+  const removeCourse = (i: number) => {
+    setCourses((prev) => prev.filter((_, j) => j !== i))
+  }
+
+  const generate = async () => {
+    const filled = courses.filter((c) => c.name.trim())
+    if (filled.length === 0) {
+      toast.error('Add at least one course')
+      return
+    }
+    if (!targetGpa || parseFloat(targetGpa) <= 0) {
+      toast.error('Enter a valid target GPA')
+      return
+    }
+    setLoading(true)
+    setPlan(null)
+    try {
+      const result = await api.ai.gpaPlanner({
+        courses: filled.map((c) => ({ ...c, credits: c.credits || 1 })),
+        target_gpa: parseFloat(targetGpa),
+        current_gpa: currentGpa ? parseFloat(currentGpa) : null,
+        academic_level: profile?.academic_level || '',
+        weekly_hours: weeklyHours,
+      })
+      setPlan(result)
+    } catch {
+      toast.error('GPA Planner is unavailable right now')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="card space-y-5">
+      <div>
+        <h2 className="font-semibold text-gray-900 mb-1">GPA Goal Planner</h2>
+        <p className="text-sm text-gray-500">
+          Add your current courses and set a target GPA. The AI calculates what grades you need
+          in each class and creates a study plan tailored to your favorites.
+        </p>
+      </div>
+
+      {/* Current & Target GPA */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Target GPA</label>
+          <input
+            value={targetGpa}
+            onChange={(e) => setTargetGpa(e.target.value)}
+            placeholder="e.g. 3.5"
+            className="input text-sm"
+            type="number"
+            min={0}
+            max={4}
+            step={0.1}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Current GPA <span className="text-gray-400">(optional)</span></label>
+          <input
+            value={currentGpa}
+            onChange={(e) => setCurrentGpa(e.target.value)}
+            placeholder="e.g. 3.0"
+            className="input text-sm"
+            type="number"
+            min={0}
+            max={4}
+            step={0.1}
+          />
+        </div>
+      </div>
+
+      {/* Course list */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs font-medium text-gray-700">Your Courses</label>
+          <button onClick={addCourse} className="btn-secondary text-xs flex items-center gap-1 py-1 px-2">
+            <Plus size={12} /> Add course
+          </button>
+        </div>
+        <div className="space-y-2">
+          {courses.map((c, i) => (
+            <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-gray-100">
+              <input
+                value={c.name}
+                onChange={(e) => updateCourse(i, 'name', e.target.value)}
+                placeholder="Course name"
+                className="input text-xs flex-1 min-w-0"
+              />
+              <select
+                value={c.current_grade}
+                onChange={(e) => updateCourse(i, 'current_grade', e.target.value)}
+                className="input text-xs w-20"
+              >
+                <option value="">Grade</option>
+                {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+              <input
+                value={c.credits}
+                onChange={(e) => updateCourse(i, 'credits', Math.max(0.5, parseFloat(e.target.value) || 1))}
+                className="input text-xs w-14 text-center"
+                type="number"
+                min={0.5}
+                max={5}
+                step={0.5}
+                title="Credits"
+              />
+              <button
+                onClick={() => updateCourse(i, 'is_favorite', !c.is_favorite)}
+                className={`text-xs px-1.5 py-1 rounded-md transition-colors ${c.is_favorite ? 'bg-rose-100 text-rose-600' : 'text-gray-400 hover:text-gray-600'}`}
+                title={c.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
+              >
+                {c.is_favorite ? '❤️' : '♡'}
+              </button>
+              {courses.length > 1 && (
+                <button onClick={() => removeCourse(i)} className="text-gray-300 hover:text-red-400 transition-colors">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Hours slider */}
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-2 block">
+          Available study hours per week: <strong className="text-village-700">{weeklyHours}h</strong>
+        </label>
+        <input
+          type="range"
+          min={3}
+          max={40}
+          step={1}
+          value={weeklyHours}
+          onChange={(e) => setWeeklyHours(Number(e.target.value))}
+          className="w-full accent-village-600"
+        />
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <span>3h</span><span>20h</span><span>40h</span>
+        </div>
+      </div>
+
+      <button onClick={generate} disabled={loading || courses.every((c) => !c.name.trim())} className="btn-primary text-sm w-full">
+        {loading ? 'Calculating...' : '📊 Calculate GPA Plan →'}
+      </button>
+
+      {/* Output */}
+      {plan && (
+        <div className="space-y-4">
+          <div className="border border-amber-100 rounded-xl overflow-hidden">
+            <div className={`px-4 py-2.5 text-sm font-medium flex items-center gap-2 ${plan.feasible ? 'bg-village-700 text-white' : 'bg-rose-600 text-white'}`}>
+              <Calculator size={14} />
+              {plan.feasible ? 'Your GPA Plan' : 'Target may not be feasible'}
+              {plan.adjusted_target && (
+                <span className="text-xs font-normal ml-2 opacity-80">Adjusted target: {plan.adjusted_target}</span>
+              )}
+            </div>
+
+            {/* GPA summary */}
+            <div className="grid grid-cols-3 gap-3 p-4 bg-amber-50 border-b border-amber-100">
+              <div className="text-center">
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Current</div>
+                <div className="text-xl font-bold text-gray-900">{plan.current_gpa?.toFixed(2) ?? '—'}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Target</div>
+                <div className="text-xl font-bold text-village-700">{plan.target_gpa.toFixed(2)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Gap</div>
+                <div className={`text-xl font-bold ${plan.current_gpa ? (plan.current_gpa >= plan.target_gpa ? 'text-emerald-600' : 'text-rose-500') : 'text-gray-400'}`}>
+                  {plan.current_gpa ? (plan.target_gpa - plan.current_gpa >= 0 ? `+${(plan.target_gpa - plan.current_gpa).toFixed(2)}` : (plan.target_gpa - plan.current_gpa).toFixed(2)) : '—'}
+                </div>
+              </div>
+            </div>
+
+            {/* Per-course breakdown */}
+            <div className="divide-y divide-amber-100">
+              {plan.courses.map((c, i) => (
+                <div key={i} className="px-4 py-3 hover:bg-amber-50/50 transition-colors">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                      {c.is_favorite && <span className="text-xs">❤️</span>}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-400">Now:</span>
+                      <span className="font-medium">{c.current_grade || '—'}</span>
+                      <span className="text-gray-300">→</span>
+                      <span className="font-bold text-village-700">{c.target_grade}</span>
+                    </div>
+                  </div>
+                  {c.study_focus.length > 0 && (
+                    <ul className="space-y-0.5 mt-1">
+                      {c.study_focus.map((f, j) => (
+                        <li key={j} className="flex items-start gap-1.5 text-xs text-gray-600">
+                          <span className="text-village-400 mt-0.5 shrink-0">▸</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recommendation */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="text-xs font-semibold text-amber-800 mb-1 uppercase tracking-wide">Recommendation</div>
+            <p className="text-sm text-gray-700 leading-relaxed">{plan.recommendation}</p>
+          </div>
+
+          {/* Weekly plan */}
+          <div className="bg-village-50 border border-village-100 rounded-lg p-4">
+            <div className="text-xs font-semibold text-village-800 mb-1 uppercase tracking-wide">Weekly Study Plan</div>
+            <p className="text-sm text-gray-700 leading-relaxed">{plan.weekly_plan}</p>
+          </div>
+
+          <div className="text-xs text-gray-400 text-center">
+            Adjust your courses, grades, or target and regenerate anytime.
           </div>
         </div>
       )}
