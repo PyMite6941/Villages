@@ -268,6 +268,47 @@ After launch, work through the FEATURES.md master checklist:
 
 ---
 
+## Session 2026-06-15/16 — Feature Branch Merge + Auth Fix
+
+### Changes Made
+
+- **Merged `village-studying-features` branch into `main`** (resolve conflicts in 8 files):
+  - `frontend/src/pages/StudyHub.tsx` — New Study Hub component with 4 tabs (Study Buddy, Essay Coach, Study Plan, College Prep)
+  - `frontend/src/pages/Courses.tsx` + `CourseDetail.tsx` — Course browsing, lesson completion tracking
+  - `frontend/src/pages/Onboarding.tsx` + `Profile.tsx` — Study tracks (high_schooler, college_student, etc.), teacher verification
+  - `frontend/src/components/Layout.tsx` — Nav links for Study Hub, Courses; `LogOut` icon fix
+  - `backend/app/api/routes/ai.py` — New endpoints: `/study-buddy`, `/essay-coach`, `/study-plan`, `/college-advisor`
+  - `backend/app/api/routes/courses.py` — Course CRUD + enrollment + lesson completion
+  - `backend/app/api/routes/teacher.py` — Teacher application + verification
+  - `backend/app/services/ai_service.py` — `generate_socratic_response`, `generate_essay_feedback`, `generate_study_plan`, `generate_college_advisor_response`
+  - `backend/app/models/user.py` — Added `study_tags`, `teacher_subjects`, `bio`, `is_verified_teacher`
+
+- **Fixed 429s from old `call_groq()` calls** during conflict resolution — replaced with `call_llm()` in merged code paths
+
+- **Study Hub access gating** (`frontend/src/pages/StudyHub.tsx`):
+  - Essay Coach: gated to `SCHOOL_LEVELS` (6th Grade through University levels)
+  - College Prep tab: gated to 11th/12th grade or college-prep study tags
+  - Locked tabs show 🔒 with tooltip explaining how to unlock
+
+### Auth — Complete Rebuild of Magic Link Flow
+
+The deployed Supabase project had SITE_URL set to `http://localhost:3000` (can't be changed without Supabase dashboard access). Standard magic link flow always redirects there. Overcame this with a 3-step backend proxy:
+
+1. **`POST /auth/send-magic-link`** calls Supabase admin `generate_link` API (service role key) to create user + one-time token
+2. **Backend calls `GET /auth/v1/verify`** with `follow_redirects=False` — Supabase returns 303 with `Location: http://SITE_URL#access_token=xxx` (real session tokens in the hash)
+3. **Backend strips the Supabase host**, builds `https://villages-eight.vercel.app/auth/callback#access_token=xxx` with the real session tokens
+4. **Frontend Callback.tsx** detects the hash via `supabase.auth.getSession()` → user is logged in
+
+Key files: `backend/app/api/routes/auth.py` (refactored), `frontend/src/pages/Callback.tsx` (reverted to hash-fragment flow)
+
+### Deployments
+
+- Both frontend (`villages-eight.vercel.app`) and backend (`villages-api.vercel.app`) redeployed to Vercel with all new routes + fixed auth
+- Added `FRONTEND_ORIGINS` env var to backend Vercel project (`https://villages-eight.vercel.app`)
+- Fixed Vercel frontend project `rootDirectory` setting (was `frontend`, causing double-path on deploy)
+
+---
+
 ## OpenRouter Free Tier Limits
 
 - 50 requests/day (no credit card needed)
