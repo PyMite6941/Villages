@@ -3,19 +3,27 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from app.auth import get_current_user
 from app.database import get_supabase
 from app.services.ai_service import (
     explain_topic,
+    generate_college_advisor_response,
+    generate_course_study_tips,
     generate_discussion_prompt,
+    generate_essay_feedback,
     generate_learning_path,
+    generate_socratic_response,
     generate_study_challenge,
+    generate_study_plan,
     moderate_topic_content,
 )
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
+
+# ── Village Elder ──────────────────────────────────────────────────────────────
 
 @router.post("/village-elder/{village_id}/prompt")
 async def village_elder_prompt(village_id: str, _user_id: str = Depends(get_current_user)):
@@ -188,3 +196,91 @@ async def list_learning_paths(village_id: str, _user_id: str = Depends(get_curre
     sb = get_supabase()
     result = sb.table("learning_paths").select("*").eq("village_id", village_id).order("created_at", desc=True).execute()
     return result.data
+
+
+@router.post("/courses/{course_id}/study-tips")
+async def course_study_tips(course_id: str, _user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    course_res = sb.table("courses").select("*").eq("id", course_id).execute()
+    if not course_res.data:
+        raise HTTPException(status_code=404, detail="Course not found")
+    c = course_res.data[0]
+    lessons_res = sb.table("lessons").select("id").eq("course_id", course_id).execute()
+    tips = await generate_course_study_tips(
+        course_title=c["title"],
+        subject=c["subject"],
+        category=c["category"],
+        difficulty=c["difficulty"],
+        lesson_count=len(lessons_res.data),
+    )
+    return {"tips": tips}
+
+
+# ── Study Hub ──────────────────────────────────────────────────────────────────
+
+class StudyBuddyRequest(BaseModel):
+    subject: str
+    message: str
+    history: list[dict] = []
+
+
+class EssayCoachRequest(BaseModel):
+    essay: str
+    essay_prompt: str = ""
+    student_context: str = ""
+
+
+class StudyPlanRequest(BaseModel):
+    goals: list[str]
+    strengths: list[str]
+    weaknesses: list[str]
+    academic_level: str
+    weekly_hours: int = 10
+
+
+@router.post("/study-buddy")
+async def study_buddy(data: StudyBuddyRequest, _user_id: str = Depends(get_current_user)):
+    response = await generate_socratic_response(data.subject, data.message, data.history)
+    return {"response": response}
+
+
+@router.post("/essay-coach")
+async def essay_coach(data: EssayCoachRequest, _user_id: str = Depends(get_current_user)):
+    if len(data.essay.strip()) < 50:
+        raise HTTPException(status_code=400, detail="Essay must be at least 50 characters")
+    feedback = await generate_essay_feedback(data.essay, data.essay_prompt, data.student_context)
+    return feedback
+
+
+@router.post("/study-plan")
+async def study_plan(data: StudyPlanRequest, _user_id: str = Depends(get_current_user)):
+    plan = await generate_study_plan(
+        goals=data.goals,
+        strengths=data.strengths,
+        weaknesses=data.weaknesses,
+        academic_level=data.academic_level,
+        weekly_hours=data.weekly_hours,
+    )
+    return {"plan": plan}
+
+
+class CollegeAdvisorRequest(BaseModel):
+    message: str
+    gpa: str = ""
+    test_scores: str = ""
+    interests: list[str] = []
+    preferences: str = ""
+    history: list[dict] = []
+
+
+@router.post("/college-advisor")
+async def college_advisor(data: CollegeAdvisorRequest, _user_id: str = Depends(get_current_user)):
+    response = await generate_college_advisor_response(
+        message=data.message,
+        gpa=data.gpa,
+        test_scores=data.test_scores,
+        interests=data.interests,
+        preferences=data.preferences,
+        history=data.history,
+    )
+    return {"response": response}

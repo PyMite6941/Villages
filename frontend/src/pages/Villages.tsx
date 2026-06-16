@@ -71,7 +71,7 @@ export default function Villages() {
           <p className="text-sm text-gray-500 mt-0.5">Find your study community</p>
         </div>
         <button onClick={() => setShowCreate(!showCreate)} className="btn-primary flex items-center gap-2">
-          <Plus size={16} /> New Village
+          <Plus size={14} /> New Village
         </button>
       </div>
 

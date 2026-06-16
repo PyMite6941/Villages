@@ -140,6 +140,145 @@ async def generate_study_challenge(
     return _parse_json(raw, {"title": "Study Challenge", "description": raw, "steps": []})
 
 
+async def generate_course_study_tips(
+    course_title: str,
+    subject: str,
+    category: str,
+    difficulty: str,
+    lesson_count: int,
+) -> str:
+    system = (
+        "You are the Village Elder — a wise AI guide in a learning community called Villages. "
+        "Generate 4-5 practical, encouraging study tips for a student taking a course. "
+        "Be warm and specific to the subject matter. Keep each tip to 1-2 sentences."
+    )
+    messages = [{
+        "role": "user",
+        "content": (
+            f"Course: {course_title}\n"
+            f"Subject: {subject}\n"
+            f"Category: {'academic' if category == 'school' else 'hobby'}\n"
+            f"Difficulty: {difficulty}\n"
+            f"Number of lessons: {lesson_count}\n\n"
+            f"What study tips would help a student succeed in this course?"
+        ),
+    }]
+    return await call_llm(messages, system)
+
+
+async def generate_socratic_response(
+    subject: str,
+    message: str,
+    history: list[dict],
+) -> str:
+    system = (
+        "You are a Socratic Study Buddy in a student community called Villages. "
+        "Your single rule: NEVER give direct answers or explanations. "
+        "Instead, respond ONLY with probing questions and hints that guide the student "
+        "to discover the answer themselves. 2-3 sentences max. "
+        "Be warm and encouraging, like a patient Socratic tutor. "
+        "If the student is on the right track, affirm it and push deeper with another question."
+    )
+    trimmed_history = history[-8:] if len(history) > 8 else history
+    messages = [
+        *[{"role": m["role"], "content": m["content"]} for m in trimmed_history],
+        {"role": "user", "content": f"[Subject: {subject}]\n\n{message}"},
+    ]
+    return await call_llm(messages, system)
+
+
+async def generate_essay_feedback(
+    essay: str,
+    essay_prompt: str,
+    student_context: str,
+) -> dict:
+    system = (
+        "You are an objective college admissions coach. "
+        "CRITICAL RULE: You MUST NOT write, rewrite, or generate any essay content for the student. "
+        "Your ONLY job is to critique and analyze the existing text. "
+        "Identify concrete strengths, specific improvements needed, and strategic vulnerabilities. "
+        "Respond with JSON only: "
+        '{"strengths": ["..."], "improvements": ["..."], "vulnerabilities": ["..."], "overall": "2-3 sentence summary"}'
+    )
+    parts = ["Critique this college essay.\n"]
+    if essay_prompt:
+        parts.append(f"[ESSAY PROMPT]\n{essay_prompt}\n")
+    if student_context:
+        parts.append(f"[STUDENT CONTEXT — use to evaluate achievement in context]\n{student_context}\n")
+    parts.append(f"[ESSAY]\n{essay}\n\nJSON only.")
+    messages = [{"role": "user", "content": "\n".join(parts)}]
+    raw = await call_llm(messages, system)
+    return _parse_json(raw, {
+        "strengths": [],
+        "improvements": [],
+        "vulnerabilities": [],
+        "overall": raw,
+    })
+
+
+async def generate_study_plan(
+    goals: list[str],
+    strengths: list[str],
+    weaknesses: list[str],
+    academic_level: str,
+    weekly_hours: int,
+) -> str:
+    system = (
+        "You are a study planner for a student learning community called Villages. "
+        "Create a realistic, specific day-by-day weekly schedule. "
+        "Prioritize weak areas and exam goals. Be concrete about time blocks and tasks."
+    )
+    messages = [{
+        "role": "user",
+        "content": (
+            f"Create a weekly study plan for this student:\n"
+            f"- Academic level: {academic_level}\n"
+            f"- Goals: {', '.join(goals) if goals else 'general improvement'}\n"
+            f"- Strengths (spend less time): {', '.join(strengths) if strengths else 'not specified'}\n"
+            f"- Needs work (prioritize): {', '.join(weaknesses) if weaknesses else 'not specified'}\n"
+            f"- Available study hours per week: {weekly_hours}h\n\n"
+            f"Give a clear Mon–Sun schedule with subject and time for each block."
+        ),
+    }]
+    return await call_llm(messages, system)
+
+
+async def generate_college_advisor_response(
+    message: str,
+    gpa: str,
+    test_scores: str,
+    interests: list[str],
+    preferences: str,
+    history: list[dict],
+) -> str:
+    system = (
+        "You are a college admissions advisor inside a student community called Villages. "
+        "Help high school students find schools that fit their profile, interests, and goals. "
+        "When suggesting schools, always provide a range: 1-2 reach, 2-3 match, 1-2 safety schools. "
+        "Be realistic, specific, and encouraging. Name actual schools. "
+        "If you need more information, ask focused clarifying questions. "
+        "Keep responses under 350 words. "
+        "NEVER generate application essay content — only advise on school selection and the application process."
+    )
+    context_parts = []
+    if gpa:
+        context_parts.append(f"GPA: {gpa}")
+    if test_scores:
+        context_parts.append(f"Test scores: {test_scores}")
+    if interests:
+        context_parts.append(f"Interests/intended major: {', '.join(interests)}")
+    if preferences:
+        context_parts.append(f"Preferences: {preferences}")
+    context = "\n".join(context_parts)
+    trimmed_history = history[-8:] if len(history) > 8 else history
+    first_message = f"[Student Profile]\n{context}\n\n{message}" if (context and not trimmed_history) else message
+    messages = [
+        *[{"role": m["role"], "content": m["content"]} for m in trimmed_history],
+        {"role": "user", "content": first_message},
+    ]
+    return await call_llm(messages, system)
+
+
 async def moderate_content(content: str) -> dict:
     system = (
         "You are a content moderator for an inclusive learning platform (students and adult learners). "

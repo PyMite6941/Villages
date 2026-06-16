@@ -72,11 +72,11 @@ export default function PostCard({ post, showComments = false }: Props) {
 
       <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
         <button onClick={handleUpvote} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-village-600 transition-colors">
-          <ThumbsUp size={15} />
+          <ThumbsUp size={14} />
           <span>{upvotes}</span>
         </button>
         <button onClick={loadComments} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-village-600 transition-colors">
-          <MessageSquare size={15} />
+          <MessageSquare size={14} />
           <span>{loadingComments ? '...' : 'Comments'}</span>
         </button>
       </div>

@@ -65,7 +65,7 @@ export default function Forum({ session: _session }: Props) {
         </div>
         {live && (
           <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
-            <Wifi size={12} /> Live
+            <Wifi size={12} className="text-green-500" /> Live
           </span>
         )}
       </div>

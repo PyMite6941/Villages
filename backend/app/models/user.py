@@ -8,14 +8,18 @@ class UserProfile(BaseModel):
     id: str
     email: str
     display_name: str
-    academic_level: str  # e.g. "Grade 10", "SAT Prep", "Adult Learner", "Professional"
-    goals: list[str]     # e.g. ["SAT Math", "College Apps", "Career Change"]
+    academic_level: str
+    goals: list[str]
     strengths: list[str]
     weaknesses: list[str]
     interests: list[str] = []       # broad topics of curiosity
     learning_style: str = "visual"  # visual, auditory, reading, kinesthetic
     village_id: Optional[str] = None
     avatar_url: Optional[str] = None
+    is_verified_teacher: Optional[bool] = False
+    teacher_subjects: Optional[list[str]] = []
+    bio: Optional[str] = None
+    study_tags: Optional[list[str]] = []
     created_at: Optional[datetime] = None
 
 class UserProfileCreate(BaseModel):
@@ -35,3 +39,5 @@ class UserProfileUpdate(BaseModel):
     weaknesses: Optional[list[str]] = None
     interests: Optional[list[str]] = None
     learning_style: Optional[str] = None
+    bio: Optional[str] = None
+    study_tags: Optional[list[str]] = None

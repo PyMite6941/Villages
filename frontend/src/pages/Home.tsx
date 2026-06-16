@@ -98,7 +98,7 @@ export default function Home({ session }: Props) {
           </div>
           <p className="text-sm text-gray-600 mb-1">{village.description}</p>
           <div className="flex items-center gap-3 text-sm text-gray-500">
-            <span className="flex items-center gap-1"><Users size={13} />{village.member_count} members</span>
+            <span className="flex items-center gap-1"><Users size={12} className="text-gray-400" />{village.member_count} members</span>
             <span className="badge bg-village-100 text-village-700">{village.focus_area}</span>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function Home({ session }: Props) {
           <h2 className="font-semibold mt-3 mb-1">You're not in a Village yet</h2>
           <p className="text-sm text-gray-500 mb-4">Let our AI find the perfect study cohort for you</p>
           <button onClick={handleAIMatch} disabled={matching} className="btn-primary mx-auto">
-            <Sparkles size={16} className="inline mr-1.5" />
+            <Sparkles size={14} className="inline mr-1.5" />
             {matching ? 'Finding your village...' : 'AI Match me'}
           </button>
           {matchResult && (
