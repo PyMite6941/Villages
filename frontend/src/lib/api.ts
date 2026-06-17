@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { UserProfile, Village, Post, Comment, Course, CourseWithLessons, EnrollmentStatus, CourseCreate, LessonCreate, Lesson, TeacherVerification, QuizQuestion, OfficeHour } from '../types'
+import type { UserProfile, Village, Post, Comment, Course, CourseWithLessons, EnrollmentStatus, CourseCreate, LessonCreate, Lesson, TeacherVerification, QuizQuestion, OfficeHour, Challenge } from '../types'
 
 const BASE = '/api'
 
@@ -45,6 +45,9 @@ export const api = {
     joinByCode: (code: string) => req<{ message: string; village_id: string }>('POST', '/villages/join-by-code', { code }),
     aiMatch: () => req<{ recommended_village_id: string; reasoning: string }>('POST', '/villages/match'),
     getMembers: (id: string) => req<unknown[]>('GET', `/villages/${id}/members`),
+    listChallenges: (id: string) => req<Challenge[]>('GET', `/villages/${id}/challenges`),
+    completeChallenge: (villageId: string, challengeId: string) =>
+      req<{ completed_by: string[]; completed: boolean }>('POST', `/villages/${villageId}/challenges/${challengeId}/complete`),
   },
   posts: {
     list: (villageId?: string, offset = 0) =>

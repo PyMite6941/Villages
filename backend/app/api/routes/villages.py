@@ -194,3 +194,31 @@ async def get_village_members(village_id: str):
     for m in members:
         m["profiles"] = profiles_by_id.get(m["user_id"])
     return members
+
+
+@router.get("/{village_id}/challenges")
+async def list_challenges(village_id: str, _user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    result = (
+        sb.table("challenges")
+        .select("*")
+        .eq("village_id", village_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return result.data
+
+
+@router.post("/{village_id}/challenges/{challenge_id}/complete")
+async def complete_challenge(
+    village_id: str, challenge_id: str, user_id: str = Depends(get_current_user)
+):
+    sb = get_supabase()
+    res = sb.table("challenges").select("completed_by").eq("id", challenge_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    completed = res.data[0].get("completed_by") or []
+    if user_id not in completed:
+        completed = completed + [user_id]
+        sb.table("challenges").update({"completed_by": completed}).eq("id", challenge_id).execute()
+    return {"completed_by": completed, "completed": True}

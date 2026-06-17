@@ -102,6 +102,7 @@ export default function Courses({ session }: Props) {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<CourseCreate>(emptyForm())
   const [templateLessons, setTemplateLessons] = useState<TemplateLesson[]>([])
@@ -265,6 +266,16 @@ export default function Courses({ session }: Props) {
         ))}
       </div>
 
+      {/* Search */}
+      <div className="mb-4">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search courses by title or subject..."
+          className="input"
+        />
+      </div>
+
       {/* Subject filters */}
       <div className="flex flex-wrap gap-2 mb-6">
         <button
@@ -302,7 +313,12 @@ export default function Courses({ session }: Props) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {courses.map((course) => (
+          {courses
+            .filter((course) => {
+              const q = search.trim().toLowerCase()
+              return !q || course.title.toLowerCase().includes(q) || course.subject.toLowerCase().includes(q)
+            })
+            .map((course) => (
             <CourseCard
               key={course.id}
               course={course}
