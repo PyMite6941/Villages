@@ -84,7 +84,7 @@ begin
     create policy "Public villages visible to all, private to members" on public.villages for select using (
       is_private = false
       or
-      exists (select 1 from public.village_members vm where vm.village_id = villages.id and vm.user_id = auth.uid())
+      exists (select 1 from public.village_members vm where vm.village_id = villages.id and vm.user_id = auth.uid()::text)
     );
   end if;
 
