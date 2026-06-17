@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
 import type { UserProfile, Village, Post } from '../types'
 import PostCard from '../components/PostCard'
+import SpeakButton from '../components/SpeakButton'
 import { Sparkles, Users, ArrowRight, Lightbulb, CheckSquare, ListChecks } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -162,7 +163,10 @@ export default function Home({ session }: Props) {
         {topicResult && (
           <div className="mt-4 space-y-4 border-t border-amber-100 pt-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Plain language summary</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-medium text-gray-700">Plain language summary</p>
+                <SpeakButton text={topicResult.plain_language} />
+              </div>
               <div className="p-3 bg-amber-50 rounded-lg text-sm text-gray-700">
                 {topicResult.plain_language}
               </div>

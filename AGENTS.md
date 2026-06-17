@@ -1,5 +1,9 @@
 # Villages — Agent Instructions
 
+> **Docs map:** `BUGS.md` (issues/audit — ⚠️ run migrations before demo, `GET /courses`
+> is 500 until then) · `FEATURE_ROADMAP.md` (proposed/shipped features) ·
+> `supabase/migrations/README.md` (DB setup order).
+
 ## Project Overview
 
 AI-powered **community learning platform** for students **and adult learners**. Users form study cohorts ("Villages"), get AI-matched, discuss in forums, take collaborative challenges, interact with the "Village Elder" AI, and use the **Topic Explorer** to turn confusing information into plain language + checklists + next steps.

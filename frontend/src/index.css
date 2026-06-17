@@ -1,3 +1,7 @@
+/* Atkinson Hyperlegible — a free, high-legibility typeface designed for low-vision
+   and dyslexic readers (Braille Institute). Used only in "readable font" mode. */
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +10,30 @@ html.reduce-motion * {
   transition-duration: 0s !important;
   animation-duration: 0s !important;
   animation-delay: 0s !important;
+}
+
+/* Accessibility: dyslexia-friendly reading mode — legible font + generous spacing.
+   (Letter/word/line spacing is an evidence-based aid on its own.) */
+html.readable-font body,
+html.readable-font input,
+html.readable-font textarea,
+html.readable-font button,
+html.readable-font select {
+  font-family: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif !important;
+  letter-spacing: 0.02em;
+  word-spacing: 0.08em;
+}
+html.readable-font p,
+html.readable-font li {
+  line-height: 1.8 !important;
+}
+
+/* Accessibility: high-contrast mode. */
+html.high-contrast .card {
+  @apply border-2 border-gray-700 dark:border-gray-200;
+}
+html.high-contrast a {
+  text-decoration: underline;
 }
 
 @layer base {

@@ -4,7 +4,6 @@ import { supabase } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import Layout from './components/Layout'
 import Home from './pages/Home'
-import Study from './pages/Study'
 import Villages from './pages/Villages'
 import VillageDetail from './pages/VillageDetail'
 import Forum from './pages/Forum'
@@ -60,7 +59,8 @@ export default function App() {
       <Route path="/onboarding" element={session ? <Onboarding session={session} /> : <Navigate to="/login" />} />
       <Route element={<Layout session={session!} />}>
         <Route path="/" element={<Home session={session!} />} />
-        <Route path="/study" element={<Study session={session!} />} />
+        {/* /study deprecated → consolidated into /study-hub */}
+        <Route path="/study" element={<Navigate to="/study-hub" replace />} />
         <Route path="/villages" element={<Villages />} />
         <Route path="/villages/:id" element={<VillageDetail session={session!} />} />
         <Route path="/forum" element={<Forum session={session!} />} />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Moon, Sun, Monitor, Gauge, Eye, ArrowLeft } from 'lucide-react'
+import { Moon, Sun, Monitor, Gauge, Eye, ArrowLeft, Accessibility, Type, Contrast } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import SpeakButton from '../components/SpeakButton'
 
 type Theme = 'dark' | 'light' | 'system'
 
@@ -10,6 +11,12 @@ export default function Settings() {
   })
   const [reduceAnimations, setReduceAnimations] = useState(() => {
     return localStorage.getItem('village-reduce-animations') === 'true'
+  })
+  const [readableFont, setReadableFont] = useState(() => {
+    return localStorage.getItem('village-readable-font') === 'true'
+  })
+  const [highContrast, setHighContrast] = useState(() => {
+    return localStorage.getItem('village-high-contrast') === 'true'
   })
 
   const applyTheme = (t: Theme) => {
@@ -35,6 +42,16 @@ export default function Settings() {
     localStorage.setItem('village-reduce-animations', String(reduceAnimations))
     document.documentElement.classList.toggle('reduce-motion', reduceAnimations)
   }, [reduceAnimations])
+
+  useEffect(() => {
+    localStorage.setItem('village-readable-font', String(readableFont))
+    document.documentElement.classList.toggle('readable-font', readableFont)
+  }, [readableFont])
+
+  useEffect(() => {
+    localStorage.setItem('village-high-contrast', String(highContrast))
+    document.documentElement.classList.toggle('high-contrast', highContrast)
+  }, [highContrast])
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -105,6 +122,67 @@ export default function Settings() {
               }`} />
             </div>
           </label>
+        </div>
+      </div>
+
+      {/* Accessibility */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-4">
+          <Accessibility size={16} className="text-village-600" />
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Accessibility</h2>
+        </div>
+
+        <div className="space-y-4">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-start gap-3">
+              <Type size={16} className="text-gray-400 mt-0.5 shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Readable font (dyslexia-friendly)</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">High-legibility font + extra letter/line spacing</div>
+              </div>
+            </div>
+            <div
+              onClick={() => setReadableFont(!readableFont)}
+              className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer shrink-0 ${
+                readableFont ? 'bg-village-600' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                readableFont ? 'translate-x-5' : 'translate-x-0.5'
+              }`} />
+            </div>
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-start gap-3">
+              <Contrast size={16} className="text-gray-400 mt-0.5 shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">High contrast</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Stronger borders and underlined links</div>
+              </div>
+            </div>
+            <div
+              onClick={() => setHighContrast(!highContrast)}
+              className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer shrink-0 ${
+                highContrast ? 'bg-village-600' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                highContrast ? 'translate-x-5' : 'translate-x-0.5'
+              }`} />
+            </div>
+          </label>
+
+          <div className="flex items-center justify-between border-t border-amber-50 dark:border-gray-800 pt-3">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Text-to-speech — AI content has a <span className="font-medium">Listen</span> button.
+            </div>
+            <SpeakButton
+              text="Hi! Text to speech is enabled. The Village Elder and topic explanations can be read aloud."
+              label="Test audio"
+              className="shrink-0"
+            />
+          </div>
         </div>
       </div>
 

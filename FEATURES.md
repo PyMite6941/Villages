@@ -1,5 +1,11 @@
 # Villages — AI-Powered Community Learning Platform
 
+> **Docs map:** `BUGS.md` = known issues & audit log (⚠️ **run migrations before any
+> demo** — `GET /courses` is 500 until then). `FEATURE_ROADMAP.md` = proposed/shipped
+> features. `supabase/migrations/README.md` = how to run the DB migrations.
+> **Accessibility (UDL) shipped 2026-06-16:** dyslexia-friendly font, high-contrast,
+> and text-to-speech on AI content.
+
 ## Overview
 
 **Villages** is a community learning platform where **students and adult learners** form small study cohorts ("Villages") powered by AI facilitation. Users create profiles, get AI-matched to a Village, participate in discussion forums, take on collaborative challenges, and interact with the "Village Elder" AI.

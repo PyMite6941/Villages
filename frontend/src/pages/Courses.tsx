@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { BookOpen, Plus, X, Users, Clock, Sparkles, BadgeCheck } from 'lucide-react'
 import { api } from '../lib/api'
@@ -122,16 +122,7 @@ export default function Courses({ session }: Props) {
     api.users.getProfile(session.user.id).then(setProfile).catch(() => null)
   }, [session.user.id])
 
-  useEffect(() => {
-    setSelectedSubject(null)
-    loadCourses()
-  }, [activeTab])
-
-  useEffect(() => {
-    loadCourses()
-  }, [selectedSubject])
-
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     setLoading(true)
     try {
       const data = await api.courses.list(activeTab, selectedSubject ?? undefined)
@@ -141,7 +132,16 @@ export default function Courses({ session }: Props) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab, selectedSubject])
+
+  useEffect(() => {
+    loadCourses()
+  }, [loadCourses])
+
+  // Reset the subject filter when switching category tabs.
+  useEffect(() => {
+    setSelectedSubject(null)
+  }, [activeTab])
 
   const handleEnroll = async (courseId: string) => {
     setEnrollingId(courseId)
