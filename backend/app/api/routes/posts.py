@@ -86,7 +86,9 @@ async def add_comment(post_id: str, data: CommentCreate, user_id: str = Depends(
     sb = get_supabase()
     # Look up the post's village to respect its ai_moderation flag
     post = sb.table("posts").select("village_id").eq("id", post_id).limit(1).execute()
-    village_id = post.data[0].get("village_id") if post.data else None
+    if not post.data:
+        raise HTTPException(status_code=404, detail="Post not found")
+    village_id = post.data[0].get("village_id")
     if await _should_moderate(sb, village_id):
         mod = await moderate_content(data.content)
         if not mod.get("safe", True):
