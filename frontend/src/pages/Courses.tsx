@@ -249,12 +249,12 @@ export default function Courses({ session }: Props) {
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-1 mb-5 border-b border-amber-100 dark:border-gray-800 overflow-x-auto">
+      <div className="flex flex-wrap gap-x-1 gap-y-1.5 mb-5 border-b border-amber-100 dark:border-gray-800 pb-1.5">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.key}
             onClick={() => onTabChange(cat.key)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap shrink-0 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${
               activeTab === cat.key
                 ? 'border-village-600 text-village-700 dark:text-village-300'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'

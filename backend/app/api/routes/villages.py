@@ -146,7 +146,12 @@ async def join_village(village_id: str, user_id: str = Depends(get_current_user)
         "role": "member",
         "joined_at": datetime.utcnow().isoformat(),
     }).execute()
-    sb.table("villages").update({"member_count": village["member_count"] + 1}).eq("id", village_id).execute()
+    new_count = village["member_count"] + 1
+    updates = {"member_count": new_count}
+    if new_count >= 100 and village.get("is_private"):
+        updates["is_private"] = False
+        updates["invite_code"] = None
+    sb.table("villages").update(updates).eq("id", village_id).execute()
     sb.table("profiles").update({"village_id": village_id}).eq("id", user_id).execute()
     return {"message": f"Successfully joined village '{village['name']}'"}
 
@@ -175,7 +180,12 @@ async def join_village_by_code(data: dict, user_id: str = Depends(get_current_us
         "role": "member",
         "joined_at": datetime.utcnow().isoformat(),
     }).execute()
-    sb.table("villages").update({"member_count": village["member_count"] + 1}).eq("id", village["id"]).execute()
+    new_count = village["member_count"] + 1
+    updates = {"member_count": new_count}
+    if new_count >= 100 and village.get("is_private"):
+        updates["is_private"] = False
+        updates["invite_code"] = None
+    sb.table("villages").update(updates).eq("id", village["id"]).execute()
     sb.table("profiles").update({"village_id": village["id"]}).eq("id", user_id).execute()
     return {"message": f"Joined '{village['name']}'!", "village_id": village["id"]}
 
