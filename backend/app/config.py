@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # If empty, the endpoint is disabled entirely (safe default).
     magic_link_admin_secret: str = ""
 
+    # Daily.co API key for per-village voice channels. If empty, voice is disabled.
+    daily_api_key: str = ""
+
     class Config:
         env_file = ".env"
 

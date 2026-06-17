@@ -2,14 +2,18 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth import get_current_user
+from app.config import settings
 from app.database import get_supabase
 from app.models.village import Village, VillageCreate
 from app.services.ai_service import generate_village_match_reasoning
 
 router = APIRouter(prefix="/villages", tags=["villages"])
+
+DAILY_API = "https://api.daily.co/v1"
 
 
 @router.get("", response_model=list[Village])
@@ -222,3 +226,36 @@ async def complete_challenge(
         completed = completed + [user_id]
         sb.table("challenges").update({"completed_by": completed}).eq("id", challenge_id).execute()
     return {"completed_by": completed, "completed": True}
+
+
+@router.post("/{village_id}/voice")
+async def village_voice_room(village_id: str, user_id: str = Depends(get_current_user)):
+    """Get-or-create a Daily.co voice room for this village. Members only."""
+    sb = get_supabase()
+    v = sb.table("villages").select("id").eq("id", village_id).execute()
+    if not v.data:
+        raise HTTPException(status_code=404, detail="Village not found")
+    member = (
+        sb.table("village_members").select("user_id")
+        .eq("village_id", village_id).eq("user_id", user_id).execute()
+    )
+    if not member.data:
+        raise HTTPException(status_code=403, detail="Join the village to use its voice channel")
+    if not settings.daily_api_key:
+        raise HTTPException(status_code=503, detail="Voice channels are not configured")
+
+    room_name = f"village-{village_id}"
+    headers = {"Authorization": f"Bearer {settings.daily_api_key}", "Content-Type": "application/json"}
+    async with httpx.AsyncClient(timeout=20) as client:
+        existing = await client.get(f"{DAILY_API}/rooms/{room_name}", headers=headers)
+        if existing.status_code == 200:
+            return {"url": existing.json()["url"]}
+        created = await client.post(
+            f"{DAILY_API}/rooms", headers=headers,
+            json={"name": room_name, "properties": {
+                "start_video_off": True, "enable_screenshare": False, "enable_chat": False,
+            }},
+        )
+        if created.status_code in (200, 201):
+            return {"url": created.json()["url"]}
+        raise HTTPException(status_code=502, detail="Could not create voice room")

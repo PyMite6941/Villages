@@ -48,6 +48,7 @@ export const api = {
     listChallenges: (id: string) => req<Challenge[]>('GET', `/villages/${id}/challenges`),
     completeChallenge: (villageId: string, challengeId: string) =>
       req<{ completed_by: string[]; completed: boolean }>('POST', `/villages/${villageId}/challenges/${challengeId}/complete`),
+    voiceRoom: (id: string) => req<{ url: string }>('POST', `/villages/${id}/voice`),
   },
   posts: {
     list: (villageId?: string, offset = 0) =>

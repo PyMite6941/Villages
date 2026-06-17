@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import type { Village, Post, Challenge } from '../types'
 import PostCard from '../components/PostCard'
 import VillageChat from '../components/VillageChat'
+import VillageVoice from '../components/VillageVoice'
 import { Sparkles, Zap, Users, BookOpen, Send, Wifi, MessageCircle, Trophy, CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -186,6 +187,9 @@ export default function VillageDetail({ session: _session }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Village Fire — live voice channel */}
+      {id && <VillageVoice villageId={id} />}
 
       {/* Collaborative challenges */}
       {challenges.length > 0 && (
