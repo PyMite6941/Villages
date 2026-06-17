@@ -242,8 +242,8 @@ async def complete_challenge(
 
 async def _require_chief(village_id: str, user_id: str, sb):
     """Raise 403 if the user is not a chief of this village."""
-    member = sb.table("village_members").select("role").eq("village_id", village_id).eq("user_id", user_id).maybe_single().execute()
-    if not member.data or member.data.get("role") != "chief":
+    member = sb.table("village_members").select("role").eq("village_id", village_id).eq("user_id", user_id).limit(1).execute()
+    if not member.data or member.data[0].get("role") != "chief":
         raise HTTPException(status_code=403, detail="Only the village chief can perform this action")
 
 
@@ -270,7 +270,7 @@ async def mute_member(village_id: str, target_id: str, user_id: str = Depends(ge
     await _require_chief(village_id, user_id, sb)
     if target_id == user_id:
         raise HTTPException(status_code=400, detail="You cannot mute yourself")
-    member = sb.table("village_members").select("user_id").eq("village_id", village_id).eq("user_id", target_id).maybe_single().execute()
+    member = sb.table("village_members").select("user_id").eq("village_id", village_id).eq("user_id", target_id).limit(1).execute()
     if not member.data:
         raise HTTPException(status_code=404, detail="Member not found in this village")
     from datetime import timedelta
@@ -295,17 +295,17 @@ async def kick_member(village_id: str, target_id: str, user_id: str = Depends(ge
     await _require_chief(village_id, user_id, sb)
     if target_id == user_id:
         raise HTTPException(status_code=400, detail="You cannot kick yourself")
-    member = sb.table("village_members").select("user_id, role").eq("village_id", village_id).eq("user_id", target_id).maybe_single().execute()
+    member = sb.table("village_members").select("user_id, role").eq("village_id", village_id).eq("user_id", target_id).limit(1).execute()
     if not member.data:
         raise HTTPException(status_code=404, detail="Member not found")
-    if member.data.get("role") == "chief":
+    if member.data[0].get("role") == "chief":
         raise HTTPException(status_code=400, detail="Cannot kick another chief")
     # Remove membership
     sb.table("village_members").delete().eq("village_id", village_id).eq("user_id", target_id).execute()
     # Decrement member count
-    v = sb.table("villages").select("member_count").eq("id", village_id).maybe_single().execute()
-    if v.data and v.data["member_count"] > 0:
-        sb.table("villages").update({"member_count": v.data["member_count"] - 1}).eq("id", village_id).execute()
+    v = sb.table("villages").select("member_count").eq("id", village_id).limit(1).execute()
+    if v.data and v.data[0]["member_count"] > 0:
+        sb.table("villages").update({"member_count": v.data[0]["member_count"] - 1}).eq("id", village_id).execute()
     # Clear village_id on profile if it matches
     sb.table("profiles").update({"village_id": None}).eq("id", target_id).eq("village_id", village_id).execute()
     return {"kicked": True}
@@ -325,9 +325,9 @@ async def ban_user(village_id: str, data: dict, user_id: str = Depends(get_curre
         raise HTTPException(status_code=400, detail="You cannot ban yourself")
     # Remove from members if present
     sb.table("village_members").delete().eq("village_id", village_id).eq("user_id", target_id).execute()
-    v = sb.table("villages").select("member_count").eq("id", village_id).maybe_single().execute()
-    if v.data and v.data["member_count"] > 0:
-        sb.table("villages").update({"member_count": v.data["member_count"] - 1}).eq("id", village_id).execute()
+    v = sb.table("villages").select("member_count").eq("id", village_id).limit(1).execute()
+    if v.data and v.data[0]["member_count"] > 0:
+        sb.table("villages").update({"member_count": v.data[0]["member_count"] - 1}).eq("id", village_id).execute()
     sb.table("profiles").update({"village_id": None}).eq("id", target_id).eq("village_id", village_id).execute()
     # Insert ban
     sb.table("village_bans").insert({

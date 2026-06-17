@@ -275,8 +275,8 @@ _COLLEGE_PREP_LEVELS = frozenset({"11th Grade", "12th Grade"})
 
 async def _require_school_level(user_id: str, sb):
     """Raise 403 if the user's academic_level is not a recognised school level."""
-    prof = sb.table("profiles").select("academic_level").eq("id", user_id).maybe_single().execute()
-    level = (prof.data or {}).get("academic_level", "")
+    prof = sb.table("profiles").select("academic_level").eq("id", user_id).limit(1).execute()
+    level = (prof.data[0] if prof.data else {}).get("academic_level", "")
     if level not in _SCHOOL_LEVELS:
         raise HTTPException(
             status_code=403,
@@ -286,8 +286,8 @@ async def _require_school_level(user_id: str, sb):
 
 async def _require_college_prep(user_id: str, sb):
     """Raise 403 unless user is 11th/12th grade or has college-prep study_tags."""
-    prof = sb.table("profiles").select("academic_level, study_tags").eq("id", user_id).maybe_single().execute()
-    data = prof.data or {}
+    prof = sb.table("profiles").select("academic_level, study_tags").eq("id", user_id).limit(1).execute()
+    data = prof.data[0] if prof.data else {}
     level = data.get("academic_level", "")
     tags = data.get("study_tags") or []
     if level not in _COLLEGE_PREP_LEVELS and not any(

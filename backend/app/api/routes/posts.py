@@ -35,8 +35,8 @@ async def _should_moderate(sb, village_id: str | None) -> bool:
     """Check whether AI moderation should run for this village."""
     if not village_id:
         return True
-    v = sb.table("villages").select("ai_moderation").eq("id", village_id).maybe_single().execute()
-    return v.data.get("ai_moderation", True) if v.data else True
+    v = sb.table("villages").select("ai_moderation").eq("id", village_id).limit(1).execute()
+    return v.data[0].get("ai_moderation", True) if v.data else True
 
 
 @router.post("", response_model=Post)
@@ -85,8 +85,8 @@ async def get_comments(post_id: str):
 async def add_comment(post_id: str, data: CommentCreate, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
     # Look up the post's village to respect its ai_moderation flag
-    post = sb.table("posts").select("village_id").eq("id", post_id).maybe_single().execute()
-    village_id = post.data.get("village_id") if post.data else None
+    post = sb.table("posts").select("village_id").eq("id", post_id).limit(1).execute()
+    village_id = post.data[0].get("village_id") if post.data else None
     if await _should_moderate(sb, village_id):
         mod = await moderate_content(data.content)
         if not mod.get("safe", True):
