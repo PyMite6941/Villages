@@ -60,11 +60,11 @@ export default function Forum({ session: _session }: Props) {
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Global Forum</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Open discussion for all Villages students</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Global Forum</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Open discussion for all Villages students</p>
         </div>
         {live && (
-          <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+          <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2.5 py-1 rounded-full">
             <Wifi size={12} className="text-green-500" /> Live
           </span>
         )}
@@ -80,9 +80,9 @@ export default function Forum({ session: _session }: Props) {
       </div>
 
       {loading ? (
-        <p className="text-center text-gray-500 py-12">Loading...</p>
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">Loading...</p>
       ) : posts.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">No posts yet. Be the first!</p>
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">No posts yet. Be the first!</p>
       ) : (
         <div className="space-y-4">
           {posts.map((p) => <PostCard key={p.id} post={p} />)}

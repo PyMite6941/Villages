@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { api } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [state, setState] = useState<'form' | 'sent' | 'link'>('form')
-  const [isNew, setIsNew] = useState(false)
-  const [magicLink, setMagicLink] = useState('')
+  const [sent, setSent] = useState(false)
   const [cooldown, setCooldown] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -25,29 +23,26 @@ export default function Login() {
     }, 1000)
   }
 
+  // Standard, secure Supabase magic-link: emails the user a one-time link.
+  // The link lands on /auth/callback, which establishes the session.
   const sendMagicLink = async () => {
     setLoading(true)
     try {
-      const { exists } = await api.auth.checkEmail(email)
-      setIsNew(!exists)
-      const result = await api.auth.sendMagicLink(email)
-      if (result.link) {
-        setMagicLink(result.link)
-        setState('link')
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          shouldCreateUser: true,
+        },
+      })
+      if (error) {
+        toast.error(error.message)
       } else {
-        setState('sent')
+        setSent(true)
         startCooldown(55)
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Could not connect'
-      if (msg.toLowerCase().includes('wait')) {
-        toast.error(msg)
-        const match = msg.match(/(\d+)s/)
-        if (match) startCooldown(parseInt(match[1]) + 1)
-        else startCooldown(55)
-      } else {
-        toast.error(msg)
-      }
+      toast.error(e instanceof Error ? e.message : 'Could not connect')
     } finally {
       setLoading(false)
     }
@@ -69,17 +64,14 @@ export default function Login() {
         </div>
 
         <div className="card">
-          {state === 'sent' && (
+          {sent ? (
             <div className="text-center py-4">
               <span className="text-4xl">📬</span>
               <h2 className="font-semibold text-gray-900 mt-3 mb-1">Check your inbox</h2>
               <p className="text-sm text-gray-600">
-                {isNew
-                  ? "We're creating your account. Click the magic link sent to "
-                  : "Click the magic link sent to "}
-                <strong>{email}</strong>
+                We sent a magic sign-in link to <strong>{email}</strong>. Click it to log in.
               </p>
-              <p className="text-xs text-gray-400 mt-2">No email? Check spam folder.</p>
+              <p className="text-xs text-gray-400 mt-2">No email? Check your spam folder.</p>
               {cooldown > 0 ? (
                 <p className="text-xs text-gray-400 mt-3">Resend available in {cooldown}s</p>
               ) : (
@@ -89,27 +81,7 @@ export default function Login() {
                 </button>
               )}
             </div>
-          )}
-
-          {state === 'link' && (
-            <div className="text-center py-4">
-              <span className="text-4xl">🔗</span>
-              <h2 className="font-semibold text-gray-900 mt-3 mb-1">Click to log in</h2>
-              <p className="text-sm text-gray-600 mb-3">
-                No email needed — click the link below to log in instantly:
-              </p>
-              <a href={magicLink} className="btn-primary inline-block text-sm break-all">
-                Click to log in
-              </a>
-              <p className="text-xs text-gray-400 mt-4">
-                Or copy this link into your browser:
-              </p>
-              <input readOnly value={magicLink} className="input text-xs mt-1"
-                onClick={(e) => { (e.target as HTMLInputElement).select(); navigator.clipboard?.writeText(magicLink); toast.success('Link copied') }} />
-            </div>
-          )}
-
-          {state === 'form' && (
+          ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
@@ -119,6 +91,9 @@ export default function Login() {
               <button type="submit" disabled={loading || cooldown > 0} className="btn-primary w-full">
                 {loading ? 'Sending...' : cooldown > 0 ? `Wait ${cooldown}s` : 'Continue with email'}
               </button>
+              <p className="text-xs text-center text-gray-400">
+                We'll email you a one-time login link — no password needed.
+              </p>
             </form>
           )}
         </div>

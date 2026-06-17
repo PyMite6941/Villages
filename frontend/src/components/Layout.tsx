@@ -56,7 +56,7 @@ export default function Layout({ session }: Props) {
         {/* Sidebar nav */}
         <nav className="w-16 sm:w-48 bg-white border-r border-amber-100 flex flex-col py-4 px-2 shrink-0 dark:bg-gray-950 dark:border-gray-800">
           {/* Community section */}
-          <div className="hidden sm:block px-3 mb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+          <div className="hidden sm:block px-3 mb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest dark:text-gray-500">
             Community
           </div>
           <div className="flex flex-col gap-1 mb-3">

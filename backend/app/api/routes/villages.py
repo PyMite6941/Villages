@@ -113,6 +113,9 @@ async def get_village(village_id: str, user_id: str = Depends(get_current_user))
     return Village(**village)
 
 
+_MAX_VILLAGES_PER_USER = 10
+
+
 @router.post("/{village_id}/join")
 async def join_village(village_id: str, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
@@ -123,6 +126,10 @@ async def join_village(village_id: str, user_id: str = Depends(get_current_user)
 
     if village.get("is_private"):
         raise HTTPException(status_code=400, detail="This village requires an invite code to join")
+
+    user_memberships = sb.table("village_members").select("village_id", count="exact").eq("user_id", user_id).execute()
+    if user_memberships.count and user_memberships.count >= _MAX_VILLAGES_PER_USER:
+        raise HTTPException(status_code=400, detail=f"You can join at most {_MAX_VILLAGES_PER_USER} villages")
 
     if village["member_count"] >= village["max_members"]:
         raise HTTPException(status_code=400, detail="Village is full")
@@ -148,6 +155,10 @@ async def join_village_by_code(data: dict, user_id: str = Depends(get_current_us
     if not village_res.data:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     village = village_res.data[0]
+
+    user_memberships = sb.table("village_members").select("village_id", count="exact").eq("user_id", user_id).execute()
+    if user_memberships.count and user_memberships.count >= _MAX_VILLAGES_PER_USER:
+        raise HTTPException(status_code=400, detail=f"You can join at most {_MAX_VILLAGES_PER_USER} villages")
 
     if village["member_count"] >= village["max_members"]:
         raise HTTPException(status_code=400, detail="Village is full")
