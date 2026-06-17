@@ -356,7 +356,29 @@
   - Layout, PostCard, VillageCard, VillageChat, Forum, Settings
 - **Estimated total:** ~400+ `dark:` variant additions across the codebase
 
-### 24. Village Voice Channel ("Village Fire")
+### 24. Village Moderation & Chief Controls
+
+- **File:** `frontend/src/pages/VillageDetail.tsx`, `backend/app/api/routes/villages.py`, `frontend/src/lib/api.ts`, `supabase/migrations/008_village_moderation.sql`
+- **Chief (creator) controls:**
+  - **Settings tab** (visible only to chief) — change `max_members` cap, toggle AI auto-moderation on/off
+  - **Mute member** — 24-hour mute (`muted_until` on `village_members`), auto-expires
+  - **Unmute member** — clears `muted_until`
+  - **Kick member** — removes from village, decrements `member_count`, clears `village_id` on profile
+  - **Ban user** — inserts into `village_bans` table, prevents re-join, also kicks
+  - **Lift ban** — removes from `village_bans`
+- **Banned users list** — shown in chief Settings tab with lift-ban button
+- **AI auto-moderation** — toggle on villages (default on); when on, every post/comment is checked by `moderate_content()` before saving
+- **Migration:** `008_village_moderation.sql` adds `muted_until`, `village_bans` table, `ai_moderation` boolean on `villages`
+
+### 25. Help & FAQ Page
+
+- **File:** `frontend/src/pages/Help.tsx`
+- **8 sections** covering all platform features: Villages & Groups, Village Elder (AI), Study Hub, Courses, Discussion & Chat, Moderation & Safety, Voice & Accessibility, Account & Profile
+- **Accordion UI** — click a question to reveal the answer, grouped by topic
+- **Nav link:** "Help" icon in sidebar (`Layout.tsx`), route `/help`
+- **Designed for discoverability** — answers common user questions about gating, mute/ban, AI tools, accessibility
+
+### 26. Village Voice Channel ("Village Fire")
 
 - **File:** `frontend/src/components/VillageVoice.tsx`, `backend/app/config.py`, `backend/app/api/routes/villages.py`
 - **How it works:** Backend get-or-creates a Daily.co room for each village (audio-first, members only). Frontend mounts Daily's prebuilt iframe into the VillageDetail page.
@@ -365,7 +387,7 @@
 - **Dependency:** `@daily-co/daily-js` added to package.json
 - **Purpose:** Real-time synchronous study sessions — voice coordination for group learning, replacing the need for text-only async discussion
 
-### 25. Challenge Completion
+### 27. Challenge Completion
 
 - **File:** `frontend/src/pages/VillageDetail.tsx`, `backend/app/api/routes/villages.py`
 - **Previously:** Challenges were generated but never shown or completable
@@ -375,7 +397,7 @@
   - VillageDetail displays challenges with "Mark complete" button and completion count (e.g. "2/5 done")
 - **API:** `api.villages.listChallenges(id)`, `api.villages.completeChallenge(id, cid)`
 
-### 26. Course Search
+### 28. Course Search
 
 - **File:** `frontend/src/pages/Courses.tsx`
 - **Client-side filtering:** Text input filters courses by title or subject match
@@ -401,8 +423,9 @@ Key files: `backend/app/api/routes/auth.py`, `frontend/src/pages/Login.tsx`, `fr
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
 | `profiles` | User profiles (students + adults) | `id` (FK auth.users), `display_name`, `academic_level`, `goals[]`, `strengths[]`, `weaknesses[]`, `interests[]`, `learning_style`, `village_id`, `study_tags[]`, `bio`, `is_verified_teacher`, `teacher_subjects[]` |
-| `villages` | Study cohorts | `name`, `description`, `focus_area`, `resources[]`, `max_members`, `member_count`, `created_by`, `is_private`, `invite_code`, `voice_room_url` |
-| `village_members` | Many-to-many | `user_id`, `village_id`, `role` (member/chief), `joined_at` |
+| `villages` | Study cohorts | `name`, `description`, `focus_area`, `resources[]`, `max_members`, `member_count`, `created_by`, `is_private`, `invite_code`, `ai_moderation` (default true), `voice_room_url` |
+| `village_members` | Many-to-many | `user_id`, `village_id`, `role` (member/chief), `muted_until` (nullable timestamptz), `joined_at` |
+| `village_bans` | Permanent user bans per village | `village_id`, `user_id`, `banned_by`, `reason`, `created_at` |
 | `posts` | Discussions | `content`, `author_id`, `author_name`, `village_id` (nullable=global), `is_ai_generated`, `upvotes`, `created_at` |
 | `comments` | Post comments | `post_id`, `content`, `author_id`, `author_name`, `is_ai_generated`, `created_at` |
 | `challenges` | Collaborative challenges | `village_id`, `title`, `description`, `subject`, `difficulty`, `completed_by[]` |
@@ -427,6 +450,7 @@ Key files: `backend/app/api/routes/auth.py`, `frontend/src/pages/Login.tsx`, `fr
 | 005 | `005_shared_courses_chat_setup.sql` | Shared courses/chat configuration |
 | 006 | `006_private_courses_office_hours.sql` | Private courses, invite codes, office hours |
 | 007 | `007_security_rls_lockdown.sql` | Security RLS policy hardening |
+| 008 | `008_village_moderation.sql` | `muted_until` on members, `village_bans` table, `ai_moderation` toggle on villages |
 
 ---
 
@@ -532,7 +556,7 @@ Villages/
 │       │       ├── __init__.py
 │       │       ├── auth.py          # Magic link via backend proxy
 │       │       ├── users.py         # Profile CRUD
-│       │       ├── villages.py      # Village CRUD, join, AI match, members
+│       │       ├── villages.py      # Village CRUD, join, AI match, members, moderation (settings/mute/kick/ban)
 │       │       ├── posts.py         # Post CRUD, upvote, comments
 │       │       ├── courses.py       # Course CRUD, enrollment, lesson completion
 │       │       ├── teacher.py       # Teacher application + verification
@@ -581,7 +605,8 @@ Villages/
 │           ├── Settings.tsx         # Theme, accessibility, TTS settings
 │           ├── Courses.tsx          # Course catalog with search + filters
 │           ├── CourseDetail.tsx     # Course lessons + enrollment + study tips
-│           ├── Study.tsx            # Legacy study page
+│           ├── Study.tsx            # Topic Explorer (plain language explanations)
+│           ├── Help.tsx             # FAQ / help page (8 sections)
 │           └── About.tsx            # About page
 │
 └── supabase/
@@ -595,6 +620,7 @@ Villages/
         ├── 005_shared_courses_chat_setup.sql # Shared courses/chat config
         ├── 006_private_courses_office_hours.sql  # Private courses, office hours
         ├── 007_security_rls_lockdown.sql     # RLS hardening
+        ├── 008_village_moderation.sql        # muted_until + village_bans + ai_moderation toggle
         └── README.md                         # Migration notes
 ```
 
@@ -792,6 +818,8 @@ vercel deploy --prod --yes
 -- 1. supabase/migrations/001_initial_schema.sql
 -- 2. supabase/migrations/002_performance_indexes.sql
 -- 3. supabase/migrations/003_competition_features.sql
+-- ... (003b, 004, 005, 006, 007 in order)
+-- 8. supabase/migrations/008_village_moderation.sql
 ```
 
 > **Legacy:** `backend/Dockerfile` is retained for portability but is **not used**
@@ -883,6 +911,9 @@ Create these in your hosting dashboards:
 | 2.18 | ✅ | **Accessibility: Dyslexia font** — Lexend + extra spacing | `Settings.tsx`, `index.css`, `index.html` | Toggle in settings, persisted to localStorage |
 | 2.19 | ✅ | **Course search** — client-side title/subject filter | `Courses.tsx` | Real-time text search |
 | 2.20 | ✅ | **CI fix** — Node.js 24 compatibility | `.github/workflows/ci.yml` | `ACTIONS_FORCE_NODE24` env var |
+| 2.21 | ✅ | **Village moderation** — chief settings, mute/kick/ban, ban list, AI mod toggle | `villages.py`, `VillageDetail.tsx`, `api.ts`, `008_village_moderation.sql` | RLS-backed bans table, 24h mute with auto-expiry |
+| 2.22 | ✅ | **Help & FAQ page** — 8-section accordion covering all features | `Help.tsx`, `Layout.tsx`, `App.tsx` | Nav link, route `/help` |
+| 2.23 | ✅ | **Study.tsx dark mode coverage** — full `dark:` class coverage for Topic Explorer page | `Study.tsx` | Fixed invisible header in dark mode, all cards/text now have dark variants |
 
 ### Phase 3 — Quality & Scale (⬜ Claude Code)
 
@@ -912,6 +943,12 @@ Create these in your hosting dashboards:
 
 ## 🐞 Known Bugs / Fixed Bugs
 
+### ✅ Resolved — 2026-06-18 Session
+
+| # | Severity | Issue | Fix |
+|---|----------|-------|-----|
+| BUG-7 | **Medium (dark mode)** | `Study.tsx` Topic Explorer page — header `text-gray-900` had no `dark:` variant, making it invisible on dark background. Same issue across all result cards, subtitles, and empty state text. | Added `dark:text-gray-100` to header, `dark:text-gray-400/300` to all text elements, `dark:bg-gray-800/60` to card backgrounds, `dark:border-amber-800/50` to borders — 20+ class additions across the page. |
+
 ### ✅ Resolved — 2026-06-17 Session
 
 | # | Severity | Issue | Fix |
@@ -927,5 +964,11 @@ Create these in your hosting dashboards:
 - `tsc --noEmit` — **0 errors, 0 warnings**
 - `npm run build` — **clean build** (chunk size warning is pre-existing, not an error)
 - `ruff check .` — all **pre-existing style hints** (400+ findings are docstrings, type syntax, line length — not bugs)
-- Backend import smoke test — **all 50+ routes register**
+- Backend import smoke test — **58 routes register** (was 50+, new: settings/mute/unmute/kick/ban/lift-ban)
 - ESLint (`npm run lint`) — **0 errors, 0 warnings**
+
+### Build Status (as of 2026-06-18)
+- `tsc --noEmit` — **0 errors, 0 warnings**
+- `npm run build` — **clean production build**
+- Backend import smoke test — **58 routes register** (villages router + ai + posts + users + courses + teacher + auth)
+- Vercel deploy (frontend + backend) — **both live**
