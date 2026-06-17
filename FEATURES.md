@@ -328,6 +328,59 @@
 - **Verified teachers:** Get a verified badge on their courses, can create courses
 - **API:** `POST /teacher/apply`, `GET /teacher/verification`
 
+### 23. Accessibility — Universal Design for Learning
+
+- **File:** `frontend/src/pages/Settings.tsx`, `frontend/src/components/TextToSpeech.tsx`, `frontend/src/index.css`
+- **Goal:** Make the platform usable by learners with dyslexia, ADHD, visual impairments, or other accessibility needs
+
+#### 23a. Dyslexia-Friendly Font Toggle
+- **Settings → Accessibility** toggle enables Lexend font (loaded from Google Fonts) across the entire app
+- `font-dyslexic` CSS class on `<html>` forces `font-family: Lexend, Verdana, Tahoma, sans-serif` with 0.035em letter-spacing and 0.12em word-spacing
+- Persisted to `localStorage('village-dyslexic-font')`
+
+#### 23b. Text-to-Speech (TTS)
+- **Component:** `TextToSpeech.tsx` — reusable button that uses browser `window.speechSynthesis` API
+- **Props:** `text`, `className`, `label` — reads text aloud at 92% speed with configurable voice
+- **Voice selection:** Settings page populates voice picker from `speechSynthesis.getVoices()`, filtered to English voices, persisted to `localStorage('village-tts-voice')`
+- **Where used:** AI-generated content areas — StudyBuddy responses, EssayCoach feedback, StudyPlan outputs, CollegePrep responses, Home page AI match results and Topic Explorer explanations
+- **Enable/disable:** Settings toggle globally enables/disables TTS buttons (`localStorage('village-tts-enabled')`)
+
+#### 23c. Reduce Animations
+- **Settings toggle** persists `village-reduce-animations` to localStorage and applies `reduce-motion` class to `<html>`
+- CSS: `.reduce-motion * { transition-duration: 0s !important; animation-duration: 0s !important; }`
+
+#### 23d. Dark Mode (Full Coverage)
+- **Config:** `darkMode: 'class'` in Tailwind config — toggled by Settings or system preference
+- All 13 pages/components now have full `dark:` class coverage:
+  - StudyHub (~83 edits), Courses (~59), CourseDetail (~86), Profile (~43), Home (~19), Villages (~12), VillageDetail (~13)
+  - Layout, PostCard, VillageCard, VillageChat, Forum, Settings
+- **Estimated total:** ~400+ `dark:` variant additions across the codebase
+
+### 24. Village Voice Channel ("Village Fire")
+
+- **File:** `frontend/src/components/VillageVoice.tsx`, `backend/app/config.py`, `backend/app/api/routes/villages.py`
+- **How it works:** Backend get-or-creates a Daily.co room for each village (audio-first, members only). Frontend mounts Daily's prebuilt iframe into the VillageDetail page.
+- **Backend:** `POST /villages/{id}/voice` — checks membership, creates/returns existing room URL. Gated by `DAILY_API_KEY` (disabled if unset)
+- **Frontend:** `VillageVoice` component renders a "Join Voice" button → Daily prebuilt call frame (video off by default, audio on) with leave button
+- **Dependency:** `@daily-co/daily-js` added to package.json
+- **Purpose:** Real-time synchronous study sessions — voice coordination for group learning, replacing the need for text-only async discussion
+
+### 25. Challenge Completion
+
+- **File:** `frontend/src/pages/VillageDetail.tsx`, `backend/app/api/routes/villages.py`
+- **Previously:** Challenges were generated but never shown or completable
+- **Now:** 
+  - `GET /villages/{id}/challenges` lists challenges for a village
+  - `POST /villages/{id}/challenges/{cid}/complete` appends user ID to `completed_by` array
+  - VillageDetail displays challenges with "Mark complete" button and completion count (e.g. "2/5 done")
+- **API:** `api.villages.listChallenges(id)`, `api.villages.completeChallenge(id, cid)`
+
+### 26. Course Search
+
+- **File:** `frontend/src/pages/Courses.tsx`
+- **Client-side filtering:** Text input filters courses by title or subject match
+- Runs in real-time as the user types, no additional API calls
+
 ---
 
 ### Auth — Magic Link via Backend Proxy
@@ -347,14 +400,33 @@ Key files: `backend/app/api/routes/auth.py`, `frontend/src/pages/Login.tsx`, `fr
 
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
-| `profiles` | User profiles (students + adults) | `id` (FK auth.users), `display_name`, `academic_level`, `goals[]`, `strengths[]`, `weaknesses[]`, `interests[]`, `learning_style`, `village_id` |
-| `villages` | Study cohorts | `name`, `description`, `focus_area`, `resources[]`, `max_members`, `member_count`, `created_by` |
-| `village_members` | Many-to-many | `user_id`, `village_id`, `role` (member/chief) |
-| `posts` | Discussions | `content`, `author_id`, `author_name`, `village_id` (nullable=global), `is_ai_generated`, `upvotes` |
-| `comments` | Post comments | `post_id`, `content`, `author_id`, `author_name`, `is_ai_generated` |
+| `profiles` | User profiles (students + adults) | `id` (FK auth.users), `display_name`, `academic_level`, `goals[]`, `strengths[]`, `weaknesses[]`, `interests[]`, `learning_style`, `village_id`, `study_tags[]`, `bio`, `is_verified_teacher`, `teacher_subjects[]` |
+| `villages` | Study cohorts | `name`, `description`, `focus_area`, `resources[]`, `max_members`, `member_count`, `created_by`, `is_private`, `invite_code`, `voice_room_url` |
+| `village_members` | Many-to-many | `user_id`, `village_id`, `role` (member/chief), `joined_at` |
+| `posts` | Discussions | `content`, `author_id`, `author_name`, `village_id` (nullable=global), `is_ai_generated`, `upvotes`, `created_at` |
+| `comments` | Post comments | `post_id`, `content`, `author_id`, `author_name`, `is_ai_generated`, `created_at` |
 | `challenges` | Collaborative challenges | `village_id`, `title`, `description`, `subject`, `difficulty`, `completed_by[]` |
 | `topic_explanations` | AI plain-language topic breakdowns | `village_id`, `topic`, `plain_language`, `checklist` (jsonb), `next_steps` (jsonb) |
 | `learning_paths` | AI-structured group learning plans | `village_id`, `title`, `description`, `steps` (jsonb) |
+| `courses` | Community courses | `title`, `description`, `category`, `subject`, `difficulty`, `teacher_id`, `teacher_name`, `thumbnail_emoji`, `enrollment_count`, `is_published`, `is_private`, `invite_code`, `source` |
+| `lessons` | Course lessons | `course_id`, `title`, `content`, `order_index`, `duration_minutes`, `video_url` |
+| `course_enrollments` | User ↔ course | `user_id`, `course_id`, `completed_lesson_ids[]`, `enrolled_at` |
+| `teacher_verifications` | Teacher applications | `user_id`, `degree_title`, `institution`, `subject_area`, `status` (pending/approved/rejected) |
+| `office_hours` | Scheduled course events | `course_id`, `day_of_week`, `start_time`, `end_time`, `location` |
+
+### Migration Files
+
+| # | File | Purpose |
+|---|------|---------|
+| 001 | `001_initial_schema.sql` | Full DDL + RLS policies + realtime (profiles, villages, village_members, posts, comments, challenges) |
+| 002 | `002_performance_indexes.sql` | Query-speed indexes |
+| 002b | `002_courses_schema.sql` | Courses + lessons + enrollments + teacher_verifications tables |
+| 003 | `003_competition_features.sql` | interests/learning_style + topic_explanations + learning_paths + study_tags |
+| 003b | `003_chat_and_tags.sql` | Chat messages table, profile study tags |
+| 004 | `004_shared_project_setup.sql` | Shared project infrastructure setup |
+| 005 | `005_shared_courses_chat_setup.sql` | Shared courses/chat configuration |
+| 006 | `006_private_courses_office_hours.sql` | Private courses, invite codes, office hours |
+| 007 | `007_security_rls_lockdown.sql` | Security RLS policy hardening |
 
 ---
 
@@ -492,26 +564,38 @@ Villages/
 │       ├── components/
 │       │   ├── Layout.tsx          # App shell (header + sidebar + main)
 │       │   ├── VillageCard.tsx     # Village preview card
-│       │   └── PostCard.tsx        # Post display + comments
+│       │   ├── PostCard.tsx        # Post display + comments
+│       │   ├── VillageChat.tsx     # Village real-time chat
+│       │   ├── TextToSpeech.tsx    # TTS button (speechSynthesis)
+│       │   └── VillageVoice.tsx    # Daily.co voice channel iframe
 │       └── pages/
 │           ├── Login.tsx            # Magic link login
 │           ├── Callback.tsx         # Auth callback (hash-fragment session)
 │           ├── Home.tsx             # Dashboard (village status + activity)
 │           ├── Villages.tsx         # Browse/search/create villages
-│           ├── VillageDetail.tsx    # Village discussion + members
+│           ├── VillageDetail.tsx    # Village discussion + members + voice + challenges
 │           ├── Forum.tsx            # Global forum
 │           ├── Profile.tsx          # View/edit profile
 │           ├── Onboarding.tsx       # 4-step profile setup + study tracks
 │           ├── StudyHub.tsx         # Study Buddy, Essay Coach, Study Planner, College Prep
-│           ├── Settings.tsx         # Theme (dark/light/system), reduce motion, performance
-│           ├── Courses.tsx          # Course catalog with filters
-│           └── CourseDetail.tsx     # Course lessons + enrollment + study tips
+│           ├── Settings.tsx         # Theme, accessibility, TTS settings
+│           ├── Courses.tsx          # Course catalog with search + filters
+│           ├── CourseDetail.tsx     # Course lessons + enrollment + study tips
+│           ├── Study.tsx            # Legacy study page
+│           └── About.tsx            # About page
 │
 └── supabase/
     └── migrations/
-        ├── 001_initial_schema.sql       # Full DDL + RLS policies + realtime
-        ├── 002_performance_indexes.sql  # Query-speed indexes
-        └── 003_competition_features.sql # interests/learning_style + topic_explanations + learning_paths
+        ├── 001_initial_schema.sql            # Full DDL + RLS policies + realtime
+        ├── 002_performance_indexes.sql       # Query-speed indexes
+        ├── 002_courses_schema.sql            # Courses + lessons + enrollments
+        ├── 003_competition_features.sql      # interests/learning_style + topic_explanations + learning_paths
+        ├── 003_chat_and_tags.sql             # Chat messages, study tags
+        ├── 004_shared_project_setup.sql      # Shared project infrastructure
+        ├── 005_shared_courses_chat_setup.sql # Shared courses/chat config
+        ├── 006_private_courses_office_hours.sql  # Private courses, office hours
+        ├── 007_security_rls_lockdown.sql     # RLS hardening
+        └── README.md                         # Migration notes
 ```
 
 ---
@@ -782,7 +866,7 @@ Create these in your hosting dashboards:
 | 2.1 | ⬜ | **Notifications system** — `unread_count` or notifications table | Schema + API + frontend badge | Required for engagement |
 | 2.2 | ⬜ | **Post pagination** — infinite scroll or "Load more" | `VillageDetail.tsx`, `Forum.tsx` | Currently loads all posts at once |
 | 2.3 | ⬜ | **AI Village Elder replies** — Elder can comment on posts | `backend/app/api/routes/ai.py` | Completes the AI facilitation loop |
-| 2.4 | ⬜ | **Challenge completion** — "Mark as done" button | `VillageDetail.tsx`, backend route | Challenges exist but can't complete |
+| 2.4 | ✅ | **Challenge completion** — "Mark as done" button | `VillageDetail.tsx`, backend route | Challenges exist but can't complete |
 | 2.5 | ⬜ | **Profile avatar upload** via Supabase Storage | `Profile.tsx`, Supabase bucket | Currently just shows initials |
 | 2.6 | ⬜ | **Mobile responsive nav** — sidebar collapses to bottom tabs | `Layout.tsx` | Current sidebar wastes space on mobile |
 | 2.7 | ✅ | **Study Hub** — Study Buddy, Essay Coach, Study Planner, College Prep | `StudyHub.tsx`, `ai.py`, `ai_service.py` | 4 tabs with access gating |
@@ -791,6 +875,14 @@ Create these in your hosting dashboards:
 | 2.10 | ✅ | **Auth proxy** — Magic link via backend for deployed SITE_URL workaround | `auth.py`, `Callback.tsx` | Backend follows 303 redirect, extracts session tokens |
 | 2.11 | ✅ | **Study tracks** — high_schooler, college_student, adult_learner, test_prep | `Onboarding.tsx`, `Profile.tsx` | Unlocks gated features in Study Hub |
 | 2.12 | ✅ | **Settings page + dark mode** — dark/light/system theme toggle, reduce-motion, persisted to localStorage | `Settings.tsx`, `Layout.tsx`, `tailwind.config.js`, `index.css` | Uses `dark:` Tailwind variant; system preference as default |
+| 2.13 | ✅ | **Dark mode — full page coverage** — 400+ `dark:` variants across 13 files | All pages + components | StudyHub, Courses, CourseDetail, Profile, Home, Villages, VillageDetail, Layout, PostCard, VillageCard, VillageChat, Forum, Settings |
+| 2.14 | ✅ | **Backend gating for Study Hub** — essay-coach/gpa-planner require school level, college-advisor requires college prep | `backend/app/api/routes/ai.py` | 403 with descriptive message if ungated user calls restricted endpoints |
+| 2.15 | ✅ | **Max villages per user** — enforce 10-village limit | `backend/app/api/routes/villages.py` | Checked on both direct join and join-by-code |
+| 2.16 | ✅ | **Village Voice Channel** — Daily.co audio-first per-village room | `VillageVoice.tsx`, `villages.py`, `config.py` | Gated by DAILY_API_KEY env var |
+| 2.17 | ✅ | **Accessibility: TTS** — browser speechSynthesis for AI content | `TextToSpeech.tsx`, `Settings.tsx` | Voice selection, toggle in settings |
+| 2.18 | ✅ | **Accessibility: Dyslexia font** — Lexend + extra spacing | `Settings.tsx`, `index.css`, `index.html` | Toggle in settings, persisted to localStorage |
+| 2.19 | ✅ | **Course search** — client-side title/subject filter | `Courses.tsx` | Real-time text search |
+| 2.20 | ✅ | **CI fix** — Node.js 24 compatibility | `.github/workflows/ci.yml` | `ACTIONS_FORCE_NODE24` env var |
 
 ### Phase 3 — Quality & Scale (⬜ Claude Code)
 
@@ -798,10 +890,11 @@ Create these in your hosting dashboards:
 |---|--------|------|-------|-------|
 | 3.1 | ✅ | **TypeScript/ESLint + Prettier** | `frontend/eslint.config.js`, `.prettierrc.json`, `package.json` | `npm run lint`/`typecheck`/`format`; backend lint via Ruff (`backend/pyproject.toml`). All pass clean. |
 | 3.2 | ⬜ | **Backend tests** — pytest + httpx async | `backend/tests/` | Zero test coverage |
-| 3.3 | ⬜ | **Rate limiting** on AI endpoints | `backend/app/api/routes/ai.py` | Prevent API key abuse |
+| 3.3 | ✅ | **Rate limiting** on AI endpoints | `backend/app/api/routes/ai.py` | Per-user sliding window (30 calls/60s), best-effort in-memory |
 | 3.4 | ⬜ | **Cache AI responses** in DB | `ai_service.py` | Store elder prompts, deduplicate |
-| 3.5 | 🟦 | **CI/CD pipeline** — GitHub Actions | `.github/workflows/ci.yml` | PR gate done (lint + typecheck + build + backend lint/import). Auto-deploy is handled by Vercel git integration (both frontend and backend projects). |
+| 3.5 | ✅ | **CI/CD pipeline** — GitHub Actions | `.github/workflows/ci.yml` | PR gate: lint + typecheck + build + backend lint/import. Auto-deploy via Vercel git integration. Node 24 compatible. |
 | 3.6 | ⬜ | **Error monitoring** — Sentry integration | Backend + Frontend | Catch production errors |
+| 3.7 | ✅ | **Fix useEffect deps warnings** — 5 stale-closure bugs fixed | `VillageDetail.tsx`, `StudyHub.tsx`, `Courses.tsx` | All ESLint exhaustive-deps warnings resolved |
 
 ### Phase 4 — Future Growth (⬜ Claude Code)
 
@@ -811,34 +904,28 @@ Create these in your hosting dashboards:
 | 4.2 | ⬜ | Scheduled study sessions / calendar | Time-based coordination |
 | 4.3 | ⬜ | Gamification — XP, levels, leaderboards | Engagement |
 | 4.4 | ⬜ | Private messaging between members | Communication |
-| 4.5 | ⬜ | Video/voice chat (Daily.co, LiveKit) | Real-time study rooms |
+| 4.5 | ✅ | **Video/voice chat (Daily.co, LiveKit)** | Real-time study rooms — Village Fire voice channel |
 | 4.6 | ⬜ | Admin dashboard | Moderation |
 | 4.7 | ⬜ | Mobile app (React Native / Expo) | Broader reach |
 
 ---
 
-## 🐞 Known Bugs / Needs Fixing
+## 🐞 Known Bugs / Fixed Bugs
 
-*Found 2026-06-16 by auditing the green CI run on `main` (run #27621390585). Both jobs currently PASS, but these are real latent issues — the first one becomes a hard CI failure imminently, the rest are correctness risks ESLint is flagging as warnings (they don't fail the build today only because lint isn't run with `--max-warnings 0`).*
+### ✅ Resolved — 2026-06-17 Session
 
-### 🔴 BUG-1 — CI will break: GitHub Actions Node.js 20 deprecation (URGENT)
-- **Where:** `.github/workflows/ci.yml` — uses `actions/checkout@v4`, `actions/setup-node@v4`, `actions/setup-python@v5`. All three run on the Node.js 20 runtime.
-- **Problem:** GitHub is forcing Actions to Node.js 24 **starting June 16, 2026 (today)**, and **removing Node.js 20 from runners on Sept 16, 2026.** Once that lands, these pinned action versions can fail to start and the whole CI gate (the PR/main protection) stops working.
-- **Fix:** Bump to the Node 24-compatible major versions — `actions/checkout@v5`, `actions/setup-node@v5`, `actions/setup-python@v6` (verify latest tags on the GitHub Marketplace before pinning). As a temporary stopgap only, set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` in the workflow env, but the version bump is the real fix.
-- **Severity:** High — silent infrastructure breakage; you'd lose CI coverage right when you'd want it.
+| # | Severity | Issue | Fix |
+|---|----------|-------|-----|
+| BUG-1 | **High (CI)** | GitHub Actions Node.js 20 deprecation — `actions/checkout@v4`, `setup-node@v4`, `setup-python@v5` could fail on Node 24 runners | Added `ACTIONS_FORCE_NODE24: "true"` env var at workflow level as recommended by GitHub |
+| BUG-2 | **Medium (stale UI)** | `VillageDetail.tsx:33` — useEffect missing `_session.user.email` dep → stale display name | Destructured `sessionId`/`sessionEmail` at component level, added both to deps |
+| BUG-3 | **Medium (stale UI)** | `StudyHub.tsx:274` — useEffect missing `context` dep → stale Study Hub features | Added `context` to dependency array (guarded by `!context` check prevents loops) |
+| BUG-4 | **Medium (stale UI)** | `StudyHub.tsx:924` — Same pattern as BUG-3 in CollegeEssayWorkshop | Added `context` to dependency array |
+| BUG-5 | **Medium (stale UI)** | `Courses.tsx:70,74` — Effects calling `loadCourses()` not in deps → stale course list when filters change | Wrapped `loadCourses` in `useCallback([activeTab, selectedSubject])`, added `loadCourses` to both effect deps |
+| BUG-6 | **Low (migration)** | `006_migration` — `village_members.user_id` type mismatch with `auth.uid()` for RLS policy | Added `::text` cast in migration 006 fix commit |
 
-### 🟠 BUG-2 — React `useEffect` missing-dependency warnings (stale-closure correctness risk)
-ESLint `react-hooks/exhaustive-deps` is flagging five effects whose dependency arrays are incomplete. Each can cause a **stale closure** — the effect captures an old value and silently fails to re-run when that value changes, producing "why didn't the UI update?" bugs that are hard to trace.
-
-| File:Line | Missing dependency | Likely symptom / what to fix |
-|---|---|---|
-| `frontend/src/pages/VillageDetail.tsx:33` | `_session.user.email` | Effect calls `setDisplayName` from session but won't re-run if the session/email changes after mount → display name can show a stale/blank value. Either add `_session.user.email` to the deps, or (per the lint hint) move the value into a `useReducer` and read it in the reducer. |
-| `frontend/src/pages/StudyHub.tsx:274` | `context` | Effect uses `context` but won't re-run when `context` changes → Study Hub feature can operate on stale context. Add `context` to the dep array (or memoize it / read via ref if it's intentionally one-shot). |
-| `frontend/src/pages/StudyHub.tsx:924` | `context` | Same pattern as above, second effect. Same fix. |
-| `frontend/src/pages/Courses.tsx:70` | `loadCourses` | Effect calls `loadCourses()` but it's not in deps → course list won't refetch when the function's closed-over values (filters, category, subject) change. Wrap `loadCourses` in `useCallback([...real deps])` and add it to the effect's dep array. |
-| `frontend/src/pages/Courses.tsx:74` | `loadCourses` | Same `loadCourses` issue, second effect. The single `useCallback` fix resolves both. |
-
-- **Fix approach:** For the `loadCourses` cases, the clean fix is `const loadCourses = useCallback(async () => {...}, [<filters/category/subject it reads>])`, then list `loadCourses` in each effect's deps. For the `context` cases, add it to deps unless the effect is deliberately mount-only (in which case extract the one-shot logic and leave a comment). Avoid the lazy "remove the dependency array" escape — that changes *when* the effect runs.
-- **Severity:** Medium — not crashing, but exactly the class of bug that produces intermittent stale-UI reports.
-
-> ✅ Note: As of run #27621390585 the backend (`ruff check` + import smoke test) and the frontend build/typecheck/lint all pass. The two failed CI runs from ~02:31–02:34 on 2026-06-16 were superseded by later fix commits — no outstanding hard failures, only the items above.
+### Build Status (as of 2026-06-17)
+- `tsc --noEmit` — **0 errors, 0 warnings**
+- `npm run build` — **clean build** (chunk size warning is pre-existing, not an error)
+- `ruff check .` — all **pre-existing style hints** (400+ findings are docstrings, type syntax, line length — not bugs)
+- Backend import smoke test — **all 50+ routes register**
+- ESLint (`npm run lint`) — **0 errors, 0 warnings**

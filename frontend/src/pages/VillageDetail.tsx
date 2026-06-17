@@ -29,12 +29,14 @@ export default function VillageDetail({ session: _session }: Props) {
   const [live, setLive] = useState(false)
   const postIdsRef = useRef(new Set<string>())
 
+  const sessionId = _session.user.id
+  const sessionEmail = _session.user.email
+
   useEffect(() => {
-    const email = _session.user.email
-    api.users.getProfile(_session.user.id)
+    api.users.getProfile(sessionId)
       .then((p) => setDisplayName(p.display_name))
-      .catch(() => setDisplayName(email?.split('@')[0] ?? 'Villager'))
-  }, [_session.user.id])
+      .catch(() => setDisplayName(sessionEmail?.split('@')[0] ?? 'Villager'))
+  }, [sessionId, sessionEmail])
 
   useEffect(() => {
     if (!id) return
