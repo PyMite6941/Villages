@@ -27,9 +27,10 @@ export default function VillageDetail({ session: _session }: Props) {
   const postIdsRef = useRef(new Set<string>())
 
   useEffect(() => {
+    const email = _session.user.email
     api.users.getProfile(_session.user.id)
       .then((p) => setDisplayName(p.display_name))
-      .catch(() => setDisplayName(_session.user.email?.split('@')[0] ?? 'Villager'))
+      .catch(() => setDisplayName(email?.split('@')[0] ?? 'Villager'))
   }, [_session.user.id])
 
   useEffect(() => {
@@ -113,35 +114,35 @@ export default function VillageDetail({ session: _session }: Props) {
     }
   }
 
-  if (!village) return <div className="text-center py-12 text-gray-500">Loading village...</div>
+  if (!village) return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading village...</div>
 
   return (
     <div className="max-w-3xl mx-auto">
       {/* Village header */}
-      <div className="card mb-6 bg-gradient-to-br from-village-50 to-amber-50 border-village-200">
+      <div className="card mb-6 bg-gradient-to-br from-village-50 to-amber-50 border-village-200 dark:from-village-950/40 dark:to-amber-950/30 dark:border-village-800">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">🏘️</span>
-              <h1 className="text-xl font-bold text-village-800">{village.name}</h1>
+              <h1 className="text-xl font-bold text-village-800 dark:text-village-300">{village.name}</h1>
               {live && (
-                <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
             <Wifi size={12} className="text-green-500" /> Live
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 mb-3">{village.description}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{village.description}</p>
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="badge bg-village-100 text-village-700">{village.focus_area}</span>
-              <span className="flex items-center gap-1 text-sm text-gray-500"><Users size={12} className="text-gray-400" />{village.member_count}/{village.max_members} members</span>
+              <span className="badge bg-village-100 text-village-700 dark:bg-village-900/40 dark:text-village-300">{village.focus_area}</span>
+              <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"><Users size={12} className="text-gray-400 dark:text-gray-500" />{village.member_count}/{village.max_members} members</span>
             </div>
           </div>
         </div>
         {village.resources.length > 0 && (
           <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-            <BookOpen size={12} className="text-gray-400" />
+            <BookOpen size={12} className="text-gray-400 dark:text-gray-500" />
             {village.resources.map((r) => (
-              <span key={r} className="badge bg-white border border-village-200 text-village-700">{r}</span>
+              <span key={r} className="badge bg-white dark:bg-gray-800 border border-village-200 dark:border-village-800 text-village-700 dark:text-village-300">{r}</span>
             ))}
           </div>
         )}
@@ -150,12 +151,12 @@ export default function VillageDetail({ session: _session }: Props) {
       {/* Group AI tools */}
       <div className="mb-3">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">👥 Group Tools</span>
-          <span className="text-xs text-gray-400">— shared with everyone in this village</span>
+          <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">👥 Group Tools</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">— shared with everyone in this village</span>
         </div>
         <div className="flex gap-3 flex-wrap">
           <button onClick={callVillageElder} disabled={elderLoading} className="btn-secondary flex items-center gap-2 text-sm">
-            <Sparkles size={14} className="text-village-600" />
+            <Sparkles size={14} className="text-village-600 dark:text-village-300" />
             {elderLoading ? 'Summoning...' : 'Ask Village Elder'}
           </button>
           <div className="flex gap-2 flex-1 min-w-48">
@@ -168,17 +169,17 @@ export default function VillageDetail({ session: _session }: Props) {
       </div>
 
       {/* Personal tools nudge */}
-      <div className="flex items-center gap-2 mb-6 px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs text-gray-500">
+      <div className="flex items-center gap-2 mb-6 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg text-xs text-gray-500 dark:text-gray-400">
         <span>👤</span>
         <span>Need solo AI tutoring, essay coaching, or a personal study plan?</span>
-        <Link to="/study-hub" className="text-village-600 font-medium hover:underline shrink-0">Study Hub →</Link>
+        <Link to="/study-hub" className="text-village-600 dark:text-village-300 font-medium hover:underline shrink-0">Study Hub →</Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 border-b border-gray-200">
+      <div className="flex gap-1 mb-4 border-b border-gray-200 dark:border-gray-700">
         {(['discussion', 'chat', 'members'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${tab === t ? 'border-village-600 text-village-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${tab === t ? 'border-village-600 text-village-700 dark:text-village-300' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>
             {t === 'chat' ? '💬 Chat' : t}
           </button>
         ))}
@@ -203,9 +204,9 @@ export default function VillageDetail({ session: _session }: Props) {
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
             <MessageCircle size={16} className="text-village-600" />
-            <span className="font-semibold text-gray-900">Village Chat</span>
-            <span className="badge bg-emerald-100 text-emerald-700 text-xs">Live</span>
-            <span className="text-xs text-gray-400 ml-auto">Share code, links, or ask quick questions</span>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">Village Chat</span>
+            <span className="badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 text-xs">Live</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">Share code, links, or ask quick questions</span>
           </div>
           <VillageChat
             villageId={id}
@@ -224,10 +225,10 @@ export default function VillageDetail({ session: _session }: Props) {
               </div>
               <div>
                 <div className="font-medium text-sm">{m.profiles?.display_name || 'Unknown'}</div>
-                <div className="text-xs text-gray-500">{m.profiles?.academic_level}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{m.profiles?.academic_level}</div>
               </div>
               {m.role !== 'member' && (
-                <span className="badge bg-village-100 text-village-700 ml-auto capitalize">{m.role}</span>
+                <span className="badge bg-village-100 text-village-700 dark:bg-village-900/40 dark:text-village-300 ml-auto capitalize">{m.role}</span>
               )}
             </div>
           ))}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { BookOpen, Plus, X, Users, Clock, Sparkles, BadgeCheck } from 'lucide-react'
 import { api } from '../lib/api'
@@ -81,9 +81,9 @@ const SUBJECT_EMOJIS: Record<string, string> = {
 }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: 'bg-emerald-100 text-emerald-700',
-  intermediate: 'bg-village-100 text-village-700',
-  advanced: 'bg-rose-100 text-rose-700',
+  beginner: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400',
+  intermediate: 'bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300',
+  advanced: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
 }
 
 const emptyForm = (): CourseCreate => ({
@@ -122,16 +122,7 @@ export default function Courses({ session }: Props) {
     api.users.getProfile(session.user.id).then(setProfile).catch(() => null)
   }, [session.user.id])
 
-  useEffect(() => {
-    setSelectedSubject(null)
-    loadCourses()
-  }, [activeTab])
-
-  useEffect(() => {
-    loadCourses()
-  }, [selectedSubject])
-
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     setLoading(true)
     try {
       const data = await api.courses.list(activeTab, selectedSubject ?? undefined)
@@ -141,7 +132,16 @@ export default function Courses({ session }: Props) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab, selectedSubject])
+
+  useEffect(() => {
+    setSelectedSubject(null)
+    loadCourses()
+  }, [activeTab, loadCourses])
+
+  useEffect(() => {
+    loadCourses()
+  }, [selectedSubject, loadCourses])
 
   const handleEnroll = async (courseId: string) => {
     setEnrollingId(courseId)
@@ -228,11 +228,11 @@ export default function Courses({ session }: Props) {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BookOpen className="text-village-600" size={22} />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <BookOpen className="text-village-600 dark:text-village-300" size={22} />
             Knowledge Grove
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             Courses taught by your community — from AP Calculus to guitar basics
           </p>
         </div>
@@ -248,15 +248,15 @@ export default function Courses({ session }: Props) {
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-1 mb-5 border-b border-amber-100 overflow-x-auto">
+      <div className="flex gap-1 mb-5 border-b border-amber-100 dark:border-gray-800 overflow-x-auto">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.key}
             onClick={() => onTabChange(cat.key)}
             className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap shrink-0 ${
               activeTab === cat.key
-                ? 'border-village-600 text-village-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-village-600 text-village-700 dark:text-village-300'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
             <span>{cat.emoji}</span>
@@ -270,7 +270,7 @@ export default function Courses({ session }: Props) {
         <button
           onClick={() => setSelectedSubject(null)}
           className={`badge py-1 px-3 cursor-pointer ${
-            selectedSubject === null ? 'bg-village-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            selectedSubject === null ? 'bg-village-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
           All {activeCategory.label}
@@ -280,7 +280,7 @@ export default function Courses({ session }: Props) {
             key={s}
             onClick={() => setSelectedSubject(s === selectedSubject ? null : s)}
             className={`badge py-1 px-3 cursor-pointer ${
-              selectedSubject === s ? 'bg-village-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              selectedSubject === s ? 'bg-village-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             {SUBJECT_EMOJIS[s]} {s}
@@ -290,12 +290,12 @@ export default function Courses({ session }: Props) {
 
       {/* Course grid */}
       {loading ? (
-        <div className="text-center py-16 text-gray-400">Loading courses...</div>
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">Loading courses...</div>
       ) : courses.length === 0 ? (
         <div className="text-center py-16 card">
           <div className="text-4xl mb-3">{activeCategory.emoji}</div>
-          <div className="text-gray-600 font-medium mb-1">No {activeCategory.label} courses yet</div>
-          <div className="text-gray-400 text-sm">Be the first to teach one!</div>
+          <div className="text-gray-600 dark:text-gray-400 font-medium mb-1">No {activeCategory.label} courses yet</div>
+          <div className="text-gray-400 dark:text-gray-500 text-sm">Be the first to teach one!</div>
           <button onClick={() => setShowModal(true)} className="btn-primary mt-4 text-sm">
             + Teach a Course
           </button>
@@ -318,16 +318,16 @@ export default function Courses({ session }: Props) {
       {/* Create course modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-amber-100 sticky top-0 bg-white">
-              <h2 className="font-semibold text-gray-900">Teach a Course in the Village</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-amber-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Teach a Course in the Village</h2>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400">
                 <X size={16} />
               </button>
             </div>
             <div className="p-5 space-y-4">
               {profile?.is_verified_teacher && (
-                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
                   <span>📜</span>
                   <span>Your Village Scholar badge will appear on this course</span>
                 </div>
@@ -336,15 +336,15 @@ export default function Courses({ session }: Props) {
               {/* Templates — available to verified Village Scholars */}
               {profile?.is_verified_teacher ? (
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-village-600" /> Start from a template
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-village-600 dark:text-village-300" /> Start from a template
                   </label>
                   {appliedTemplate ? (
-                    <div className="flex items-center justify-between bg-village-50 border border-village-200 rounded-lg px-3 py-2 text-sm">
-                      <span className="text-village-800">
+                    <div className="flex items-center justify-between bg-village-50 dark:bg-village-900/30 border border-village-200 dark:border-village-800 rounded-lg px-3 py-2 text-sm">
+                      <span className="text-village-800 dark:text-village-300">
                         ✓ {COURSE_TEMPLATES.find((t) => t.id === appliedTemplate)?.name} · {templateLessons.length} lessons
                       </span>
-                      <button onClick={clearTemplate} className="text-xs text-gray-500 hover:text-gray-700 underline">Clear</button>
+                      <button onClick={clearTemplate} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline">Clear</button>
                     </div>
                   ) : (
                     <div className="grid gap-2">
@@ -352,26 +352,26 @@ export default function Courses({ session }: Props) {
                         <button
                           key={t.id}
                           onClick={() => applyTemplate(t)}
-                          className="text-left border border-gray-200 rounded-lg px-3 py-2 hover:border-village-300 transition-colors"
+                          className="text-left border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 hover:border-village-300 dark:hover:border-village-600 transition-colors"
                         >
-                          <div className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+                          <div className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
                             <span>{t.emoji}</span> {t.name}
-                            <span className="badge bg-gray-100 text-gray-500 text-xs">{t.lessons.length} lessons</span>
+                            <span className="badge bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs">{t.lessons.length} lessons</span>
                           </div>
-                          <div className="text-xs text-gray-400 mt-0.5">{t.blurb}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t.blurb}</div>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                  💡 Become a <Link to="/profile" className="text-village-600 underline">Village Scholar</Link> to unlock ready-made course templates (incl. AP courses).
+                <div className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                  💡 Become a <Link to="/profile" className="text-village-600 dark:text-village-300 underline">Village Scholar</Link> to unlock ready-made course templates (incl. AP courses).
                 </div>
               )}
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Category</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Category</label>
                 <select
                   value={form.category}
                   onChange={(e) => onTabChange(e.target.value)}
@@ -384,7 +384,7 @@ export default function Courses({ session }: Props) {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Topic</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Topic</label>
                 <select
                   value={form.subject}
                   onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
@@ -397,7 +397,7 @@ export default function Courses({ session }: Props) {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Course Title</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Course Title</label>
                 <input
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -407,7 +407,7 @@ export default function Courses({ session }: Props) {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -418,8 +418,8 @@ export default function Courses({ session }: Props) {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
-                  Content source <span className="text-gray-400 font-normal">(optional — credit your source)</span>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                  Content source <span className="text-gray-400 dark:text-gray-500 font-normal">(optional — credit your source)</span>
                 </label>
                 <input
                   value={form.source ?? ''}
@@ -428,7 +428,7 @@ export default function Courses({ session }: Props) {
                   className="input"
                 />
                 {isApprovedSource(form.source) && (
-                  <p className="mt-1 text-xs text-emerald-600 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <BadgeCheck size={12} /> Approved source — auto-trusted for AP / verified content
                   </p>
                 )}
@@ -440,15 +440,15 @@ export default function Courses({ session }: Props) {
                     type="checkbox"
                     checked={form.is_private ?? false}
                     onChange={(e) => setForm((f) => ({ ...f, is_private: e.target.checked }))}
-                    className="rounded border-gray-300 text-village-600 focus:ring-village-400"
+                    className="rounded border-gray-300 dark:border-gray-600 text-village-600 dark:text-village-300 focus:ring-village-400"
                   />
-                  <span className="text-sm text-gray-700">Private course (invite only)</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Private course (invite only)</span>
                 </label>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Difficulty</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Difficulty</label>
                   <select
                     value={form.difficulty}
                     onChange={(e) => setForm((f) => ({ ...f, difficulty: e.target.value }))}
@@ -460,7 +460,7 @@ export default function Courses({ session }: Props) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Est. hours</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Est. hours</label>
                   <input
                     type="number"
                     min={1}
@@ -488,15 +488,15 @@ export default function Courses({ session }: Props) {
       {/* Join by code modal */}
       {showJoinCode && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-amber-100">
-              <h2 className="font-semibold text-gray-900">Join a Private Course</h2>
-              <button onClick={() => setShowJoinCode(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-amber-100 dark:border-gray-800">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Join a Private Course</h2>
+              <button onClick={() => setShowJoinCode(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400">
                 <X size={16} />
               </button>
             </div>
             <div className="p-5 space-y-4">
-              <p className="text-sm text-gray-500">Enter the invite code shared by your teacher.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Enter the invite code shared by your teacher.</p>
               <input
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
@@ -539,36 +539,36 @@ function CourseCard({
       <div className="flex items-start justify-between mb-3">
         <span className="text-3xl">{course.thumbnail_emoji}</span>
         <div className="flex gap-1.5 flex-wrap justify-end">
-          <span className={`badge text-xs ${DIFFICULTY_COLORS[course.difficulty] ?? 'bg-gray-100 text-gray-600'}`}>
+          <span className={`badge text-xs ${DIFFICULTY_COLORS[course.difficulty] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
             {course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1)}
           </span>
           {course.is_private && (
-            <span className="badge text-xs bg-purple-100 text-purple-700">🔒 Private</span>
+            <span className="badge text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">🔒 Private</span>
           )}
-          <span className="badge text-xs bg-village-100 text-village-700">
+          <span className="badge text-xs bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300">
             {SUBJECT_EMOJIS[course.subject] ?? ''} {course.subject}
           </span>
         </div>
       </div>
 
-      <h3 className="font-semibold text-gray-900 mb-1 leading-snug">{course.title}</h3>
-      <p className="text-sm text-gray-500 mb-3 line-clamp-2 flex-1">{course.description}</p>
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-snug">{course.title}</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">{course.description}</p>
 
-      <div className="text-xs text-gray-400 flex items-center gap-1 mb-3">
+      <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mb-3">
         {course.teacher_is_verified ? (
-          <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+          <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium">
             <span>📜</span>
             {course.teacher_name}
-            <span className="badge bg-amber-100 text-amber-700 ml-0.5">Village Scholar</span>
+            <span className="badge bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 ml-0.5">Village Scholar</span>
           </span>
         ) : (
           <span>{course.teacher_name}</span>
         )}
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-gray-400 mb-4">
-        <span className="flex items-center gap-1"><Clock size={12} className="text-gray-400" />{course.estimated_hours}h</span>
-        <span className="flex items-center gap-1"><Users size={12} className="text-gray-400" />{course.enrollment_count} enrolled</span>
+      <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 mb-4">
+        <span className="flex items-center gap-1"><Clock size={12} className="text-gray-400 dark:text-gray-500" />{course.estimated_hours}h</span>
+        <span className="flex items-center gap-1"><Users size={12} className="text-gray-400 dark:text-gray-500" />{course.enrollment_count} enrolled</span>
       </div>
 
       <div className="flex gap-2 mt-auto">
@@ -579,9 +579,9 @@ function CourseCard({
           View
         </Link>
         {isOwn ? (
-          <span className="badge bg-village-100 text-village-700 self-center text-xs px-3">Your course</span>
+          <span className="badge bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300 self-center text-xs px-3">Your course</span>
         ) : isEnrolled ? (
-          <span className="badge bg-emerald-100 text-emerald-700 self-center text-xs px-3">✓ Enrolled</span>
+          <span className="badge bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 self-center text-xs px-3">✓ Enrolled</span>
         ) : (
           <button
             onClick={onEnroll}

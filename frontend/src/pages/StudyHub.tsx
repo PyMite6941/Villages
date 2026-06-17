@@ -4,6 +4,7 @@ import { Brain, PenLine, CalendarDays, Send, RotateCcw, AlertCircle, CheckCircle
 import { api } from '../lib/api'
 import type { UserProfile } from '../types'
 import toast from 'react-hot-toast'
+import TextToSpeech from '../components/TextToSpeech'
 
 interface Props { session: Session }
 
@@ -57,23 +58,23 @@ export default function StudyHub({ session }: Props) {
     <div className="max-w-3xl mx-auto">
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Brain className="text-village-600" size={22} />
             Study Hub
           </h1>
-          <span className="badge bg-village-100 text-village-700 text-xs">👤 Personal</span>
+          <span className="badge bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300 text-xs">👤 Personal</span>
         </div>
-        <p className="text-gray-500 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
           Your private AI study space — 1-on-1 tools that exist outside your Villages
         </p>
       </div>
 
       {/* Distinction callout */}
-      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 text-sm">
+      <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl px-4 py-3 mb-6 text-sm">
         <span className="text-lg mt-0.5">🏘️</span>
         <div>
-          <span className="font-medium text-amber-900">Study Hub vs. Villages</span>
-          <span className="text-amber-800 ml-1.5">
+          <span className="font-medium text-amber-900 dark:text-amber-300">Study Hub vs. Villages</span>
+          <span className="text-amber-800 dark:text-amber-300 ml-1.5">
             Study Hub is for personal work — solo AI tutoring, your own essays, your own schedule.
             For group discussion, peer collaboration, and shared challenges, go to your{' '}
             <a href="/villages" className="underline font-medium">Villages</a>.
@@ -82,7 +83,7 @@ export default function StudyHub({ session }: Props) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 p-1 bg-amber-50 rounded-xl border border-amber-100 flex-wrap">
+      <div className="flex gap-1 mb-6 p-1 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-100 dark:border-gray-700 flex-wrap">
         {tabs.map(({ id, label, icon, desc, lockReason }) => {
           const isLocked = !!lockReason
           return (
@@ -92,10 +93,10 @@ export default function StudyHub({ session }: Props) {
             title={lockReason}
             className={`flex-1 min-w-[6rem] flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative ${
               isLocked
-                ? 'text-gray-300 cursor-not-allowed'
+                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
                 : tab === id
-                ? 'bg-white shadow-sm text-village-700 border border-amber-100'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-gray-800 shadow-sm text-village-700 dark:text-village-300 border border-amber-100 dark:border-gray-700'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
           >
             <span className="flex items-center gap-1.5">{icon}{label}</span>
@@ -159,7 +160,7 @@ function StudyBuddy() {
       {/* Header row */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="text-xs font-medium text-gray-500 mb-1 block">Subject</label>
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Subject</label>
           <div className="relative">
             <select
               value={subject}
@@ -168,7 +169,7 @@ function StudyBuddy() {
             >
               {ALL_SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
           </div>
         </div>
         {messages.length > 0 && (
@@ -179,7 +180,7 @@ function StudyBuddy() {
       </div>
 
       {/* Anti-direct-answer notice */}
-      <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
+      <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
         <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-500" />
         <span>
           Your Study Buddy uses the <strong>Socratic method</strong> — it guides you to find the
@@ -190,9 +191,9 @@ function StudyBuddy() {
       {/* Chat area */}
       <div className="min-h-56 max-h-96 overflow-y-auto space-y-3 pr-1">
         {messages.length === 0 && (
-          <div className="text-center py-12 text-gray-400 text-sm">
+          <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
             <Brain size={24} className="mx-auto mb-2 text-village-300" />
-            Ask anything about <strong className="text-gray-600">{subject}</strong> — your Study Buddy will
+            Ask anything about <strong className="text-gray-600 dark:text-gray-400">{subject}</strong> — your Study Buddy will
             guide you with questions.
           </div>
         )}
@@ -207,17 +208,18 @@ function StudyBuddy() {
               className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
                 m.role === 'user'
                   ? 'bg-village-600 text-white rounded-br-sm'
-                  : 'bg-amber-50 text-gray-800 border border-amber-100 rounded-bl-sm'
+                  : 'bg-amber-50 dark:bg-amber-950/30 text-gray-800 dark:text-gray-200 border border-amber-100 dark:border-gray-700 rounded-bl-sm'
               }`}
             >
               {m.content}
+              {m.role === 'assistant' && <TextToSpeech text={m.content} className="mt-2" />}
             </div>
           </div>
         ))}
         {loading && (
           <div className="flex gap-2 justify-start">
             <div className="w-7 h-7 rounded-full bg-village-600 text-white flex items-center justify-center text-xs shrink-0">🧠</div>
-            <div className="bg-amber-50 border border-amber-100 rounded-xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-400 italic">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-gray-700 rounded-xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-400 dark:text-gray-500 italic">
               Thinking of a question for you...
             </div>
           </div>
@@ -271,7 +273,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
     if (profile && !context) {
       setContext(`Academic level: ${profile.academic_level}. Goals: ${profile.goals.join(', ')}.`)
     }
-  }, [profile])
+  }, [profile, context])
 
   const analyze = async () => {
     if (essay.trim().length < 50) {
@@ -293,7 +295,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="card space-y-4">
       {/* Anti-ghostwriting notice */}
-      <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
+      <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
         <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-500" />
         <span>
           <strong>Anti-ghostwriting policy:</strong> This tool only critiques and analyzes your writing.
@@ -302,7 +304,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-1 block">Essay Prompt <span className="text-gray-400 font-normal">(optional)</span></label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Essay Prompt <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span></label>
         <input
           value={essayPrompt}
           onChange={(e) => setEssayPrompt(e.target.value)}
@@ -312,8 +314,8 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-1 block">
-          Student Context <span className="text-gray-400 font-normal">(optional — helps evaluate achievement in context)</span>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+          Student Context <span className="text-gray-400 dark:text-gray-500 font-normal">(optional — helps evaluate achievement in context)</span>
         </label>
         <textarea
           value={context}
@@ -325,7 +327,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-1 block">Your Essay</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Your Essay</label>
         <textarea
           value={essay}
           onChange={(e) => setEssay(e.target.value)}
@@ -333,7 +335,7 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
           rows={10}
           className="input text-sm resize-none font-mono leading-relaxed"
         />
-        <div className="text-xs text-gray-400 mt-1 text-right">{essay.length} characters</div>
+        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">{essay.length} characters</div>
       </div>
 
       <button onClick={analyze} disabled={loading || essay.trim().length < 50} className="btn-primary text-sm w-full">
@@ -342,22 +344,25 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
 
       {/* Feedback output */}
       {feedback && (
-        <div className="space-y-4 pt-2 border-t border-amber-100">
+        <div className="space-y-4 pt-2 border-t border-amber-100 dark:border-gray-700">
           {feedback.overall && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <div className="text-xs font-semibold text-amber-800 mb-1 uppercase tracking-wide">Overall Assessment</div>
-              <p className="text-sm text-gray-700 leading-relaxed">{feedback.overall}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4">
+              <div className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1 uppercase tracking-wide">Overall Assessment</div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{feedback.overall}</p>
+              <div className="mt-2">
+                <TextToSpeech text={feedback.overall} />
+              </div>
             </div>
           )}
 
           {feedback.strengths.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 mb-2">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-2">
                 <CheckCircle size={14} /> Key Strengths
               </div>
               <ul className="space-y-1.5">
                 {feedback.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="text-emerald-500 mt-0.5 shrink-0">✓</span>{s}
                   </li>
                 ))}
@@ -367,12 +372,12 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
 
           {feedback.improvements.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 mb-2">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">
                 <PenLine size={14} /> Areas to Improve
               </div>
               <ul className="space-y-1.5">
                 {feedback.improvements.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="text-blue-400 mt-0.5 shrink-0">→</span>{s}
                   </li>
                 ))}
@@ -382,12 +387,12 @@ function EssayCoach({ profile }: { profile: UserProfile | null }) {
 
           {feedback.vulnerabilities.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-700 mb-2">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-700 dark:text-rose-400 mb-2">
                 <AlertCircle size={14} /> Strategic Vulnerabilities
               </div>
               <ul className="space-y-1.5">
                 {feedback.vulnerabilities.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="text-rose-400 mt-0.5 shrink-0">⚠</span>{s}
                   </li>
                 ))}
@@ -460,8 +465,8 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="card space-y-5">
       <div>
-        <h2 className="font-semibold text-gray-900 mb-1">Multi-Week Study Planner</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Multi-Week Study Planner</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Plan from today toward a specific target date — exams, project deadlines,
           or personal milestones. The AI builds a week-by-week timeline.
         </p>
@@ -469,16 +474,16 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
 
       {/* Profile context preview */}
       {profile && (
-        <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-sm space-y-1.5">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Planning based on</div>
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-gray-700 rounded-lg p-3 text-sm space-y-1.5">
+          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Planning based on</div>
           <div className="flex flex-wrap gap-1.5">
-            <span className="badge bg-village-100 text-village-700 text-xs">{profile.academic_level}</span>
+            <span className="badge bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300 text-xs">{profile.academic_level}</span>
             {profile.goals.slice(0, 4).map((g) => (
-              <span key={g} className="badge bg-gray-100 text-gray-600 text-xs">{g}</span>
+              <span key={g} className="badge bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs">{g}</span>
             ))}
           </div>
           {profile.weaknesses.length > 0 && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Prioritizing: {profile.weaknesses.join(', ')}
             </div>
           )}
@@ -487,7 +492,7 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Subject</label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Subject</label>
           <select
             value={subject}
             onChange={(e) => { setSubject(e.target.value); setCustomSubject('') }}
@@ -498,7 +503,7 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Custom Subject</label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Custom Subject</label>
           <input
             value={customSubject}
             onChange={(e) => { setCustomSubject(e.target.value); setSubject('') }}
@@ -510,7 +515,7 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Target / Goal</label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Target / Goal</label>
           <input
             value={target}
             onChange={(e) => setTarget(e.target.value)}
@@ -519,7 +524,7 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Target Date</label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Target Date</label>
           <input
             type="date"
             value={targetDate}
@@ -530,8 +535,8 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-2 block">
-          Available study hours per week: <strong className="text-village-700">{weeklyHours}h</strong>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+          Available study hours per week: <strong className="text-village-700 dark:text-village-300">{weeklyHours}h</strong>
         </label>
         <input
           type="range"
@@ -542,7 +547,7 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
           onChange={(e) => setWeeklyHours(Number(e.target.value))}
           className="w-full accent-village-600"
         />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
           <span>3h</span><span>20h</span><span>40h</span>
         </div>
       </div>
@@ -553,38 +558,41 @@ function StudyPlan({ profile }: { profile: UserProfile | null }) {
 
       {plan && (
         <div className="space-y-4">
-          <div className="border border-amber-100 rounded-xl overflow-hidden">
+          <div className="border border-amber-100 dark:border-gray-700 rounded-xl overflow-hidden">
             <div className="bg-village-700 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-2">
               <CalendarDays size={14} /> Study Timeline — {effectiveSubject}
             </div>
-            <div className="p-4 bg-amber-50 text-sm text-gray-700 leading-relaxed border-b border-amber-100">
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/30 text-sm text-gray-700 dark:text-gray-300 leading-relaxed border-b border-amber-100 dark:border-gray-700">
               {plan.summary}
             </div>
-            <div className="divide-y divide-amber-100">
+            <div className="divide-y divide-amber-100 dark:divide-gray-700">
               {plan.weeks.map((w) => (
-                <div key={w.week} className="px-4 py-3 hover:bg-amber-50/50 transition-colors">
+                <div key={w.week} className="px-4 py-3 hover:bg-amber-50/50 dark:hover:bg-gray-800/50 transition-colors">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-bold text-village-700 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-village-700 dark:text-village-300 uppercase tracking-wide">
                       Week {w.week}
                     </span>
-                    <span className="text-xs text-gray-400">{w.dates}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{w.dates}</span>
                   </div>
-                  <div className="text-sm font-medium text-gray-900 mb-1">{w.focus}</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{w.focus}</div>
                   <ul className="space-y-0.5 mb-2">
                     {w.tasks.map((t, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600">
-                        <span className="text-village-400 mt-0.5 shrink-0">▸</span>{t}
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                        <span className="text-village-400 dark:text-village-500 mt-0.5 shrink-0">▸</span>{t}
                       </li>
                     ))}
                   </ul>
-                  <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-100/50 rounded-md px-2 py-1">
+                  <div className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 bg-amber-100/50 rounded-md px-2 py-1">
                     <CheckCircle size={11} /> Milestone: {w.milestone}
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          <div className="text-xs text-gray-400 text-center">
+          <div className="flex justify-center">
+            <TextToSpeech text={plan.summary} label="Read plan aloud" />
+          </div>
+          <div className="text-xs text-gray-400 dark:text-gray-500 text-center">
             Regenerate anytime — adjust your hours, subject, or target date.
           </div>
         </div>
@@ -662,8 +670,8 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="card space-y-5">
       <div>
-        <h2 className="font-semibold text-gray-900 mb-1">GPA Goal Planner</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">GPA Goal Planner</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Add your current courses and set a target GPA. The AI calculates what grades you need
           in each class and creates a study plan tailored to your favorites.
         </p>
@@ -672,7 +680,7 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
       {/* Current & Target GPA */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Target GPA</label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Target GPA</label>
           <input
             value={targetGpa}
             onChange={(e) => setTargetGpa(e.target.value)}
@@ -685,7 +693,7 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Current GPA <span className="text-gray-400">(optional)</span></label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Current GPA <span className="text-gray-400 dark:text-gray-500">(optional)</span></label>
           <input
             value={currentGpa}
             onChange={(e) => setCurrentGpa(e.target.value)}
@@ -702,14 +710,14 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
       {/* Course list */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-700">Your Courses</label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Your Courses</label>
           <button onClick={addCourse} className="btn-secondary text-xs flex items-center gap-1 py-1 px-2">
             <Plus size={12} /> Add course
           </button>
         </div>
         <div className="space-y-2">
           {courses.map((c, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-gray-100">
+            <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-2 border border-gray-100 dark:border-gray-700">
               <input
                 value={c.name}
                 onChange={(e) => updateCourse(i, 'name', e.target.value)}
@@ -736,13 +744,13 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
               />
               <button
                 onClick={() => updateCourse(i, 'is_favorite', !c.is_favorite)}
-                className={`text-xs px-1.5 py-1 rounded-md transition-colors ${c.is_favorite ? 'bg-rose-100 text-rose-600' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`text-xs px-1.5 py-1 rounded-md transition-colors ${c.is_favorite ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
                 title={c.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
               >
                 {c.is_favorite ? '❤️' : '♡'}
               </button>
               {courses.length > 1 && (
-                <button onClick={() => removeCourse(i)} className="text-gray-300 hover:text-red-400 transition-colors">
+                <button onClick={() => removeCourse(i)} className="text-gray-300 hover:text-red-400 dark:text-gray-600 dark:hover:text-red-400 transition-colors">
                   <X size={14} />
                 </button>
               )}
@@ -753,8 +761,8 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
 
       {/* Hours slider */}
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-2 block">
-          Available study hours per week: <strong className="text-village-700">{weeklyHours}h</strong>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+          Available study hours per week: <strong className="text-village-700 dark:text-village-300">{weeklyHours}h</strong>
         </label>
         <input
           type="range"
@@ -765,7 +773,7 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
           onChange={(e) => setWeeklyHours(Number(e.target.value))}
           className="w-full accent-village-600"
         />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
           <span>3h</span><span>20h</span><span>40h</span>
         </div>
       </div>
@@ -777,7 +785,7 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
       {/* Output */}
       {plan && (
         <div className="space-y-4">
-          <div className="border border-amber-100 rounded-xl overflow-hidden">
+          <div className="border border-amber-100 dark:border-gray-700 rounded-xl overflow-hidden">
             <div className={`px-4 py-2.5 text-sm font-medium flex items-center gap-2 ${plan.feasible ? 'bg-village-700 text-white' : 'bg-rose-600 text-white'}`}>
               <Calculator size={14} />
               {plan.feasible ? 'Your GPA Plan' : 'Target may not be feasible'}
@@ -787,44 +795,44 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
             </div>
 
             {/* GPA summary */}
-            <div className="grid grid-cols-3 gap-3 p-4 bg-amber-50 border-b border-amber-100">
+            <div className="grid grid-cols-3 gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 dark:border-gray-700">
               <div className="text-center">
-                <div className="text-xs text-gray-500 uppercase tracking-wide">Current</div>
-                <div className="text-xl font-bold text-gray-900">{plan.current_gpa?.toFixed(2) ?? '—'}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{plan.current_gpa?.toFixed(2) ?? '—'}</div>
               </div>
               <div className="text-center">
-                <div className="text-xs text-gray-500 uppercase tracking-wide">Target</div>
-                <div className="text-xl font-bold text-village-700">{plan.target_gpa.toFixed(2)}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Target</div>
+                <div className="text-xl font-bold text-village-700 dark:text-village-300">{plan.target_gpa.toFixed(2)}</div>
               </div>
               <div className="text-center">
-                <div className="text-xs text-gray-500 uppercase tracking-wide">Gap</div>
-                <div className={`text-xl font-bold ${plan.current_gpa ? (plan.current_gpa >= plan.target_gpa ? 'text-emerald-600' : 'text-rose-500') : 'text-gray-400'}`}>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Gap</div>
+                <div className={`text-xl font-bold ${plan.current_gpa ? (plan.current_gpa >= plan.target_gpa ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400') : 'text-gray-400 dark:text-gray-500'}`}>
                   {plan.current_gpa ? (plan.target_gpa - plan.current_gpa >= 0 ? `+${(plan.target_gpa - plan.current_gpa).toFixed(2)}` : (plan.target_gpa - plan.current_gpa).toFixed(2)) : '—'}
                 </div>
               </div>
             </div>
 
             {/* Per-course breakdown */}
-            <div className="divide-y divide-amber-100">
+            <div className="divide-y divide-amber-100 dark:divide-gray-700">
               {plan.courses.map((c, i) => (
-                <div key={i} className="px-4 py-3 hover:bg-amber-50/50 transition-colors">
+                <div key={i} className="px-4 py-3 hover:bg-amber-50/50 dark:hover:bg-gray-800/50 transition-colors">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{c.name}</span>
                       {c.is_favorite && <span className="text-xs">❤️</span>}
                     </div>
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-400">Now:</span>
+                      <span className="text-gray-400 dark:text-gray-500">Now:</span>
                       <span className="font-medium">{c.current_grade || '—'}</span>
-                      <span className="text-gray-300">→</span>
-                      <span className="font-bold text-village-700">{c.target_grade}</span>
+                      <span className="text-gray-300 dark:text-gray-600">→</span>
+                      <span className="font-bold text-village-700 dark:text-village-300">{c.target_grade}</span>
                     </div>
                   </div>
                   {c.study_focus.length > 0 && (
                     <ul className="space-y-0.5 mt-1">
                       {c.study_focus.map((f, j) => (
-                        <li key={j} className="flex items-start gap-1.5 text-xs text-gray-600">
-                          <span className="text-village-400 mt-0.5 shrink-0">▸</span>{f}
+                        <li key={j} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                          <span className="text-village-400 dark:text-village-500 mt-0.5 shrink-0">▸</span>{f}
                         </li>
                       ))}
                     </ul>
@@ -835,18 +843,18 @@ function GpaPlanner({ profile }: { profile: UserProfile | null }) {
           </div>
 
           {/* Recommendation */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <div className="text-xs font-semibold text-amber-800 mb-1 uppercase tracking-wide">Recommendation</div>
-            <p className="text-sm text-gray-700 leading-relaxed">{plan.recommendation}</p>
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4">
+            <div className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1 uppercase tracking-wide">Recommendation</div>
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{plan.recommendation}</p>
           </div>
 
           {/* Weekly plan */}
-          <div className="bg-village-50 border border-village-100 rounded-lg p-4">
-            <div className="text-xs font-semibold text-village-800 mb-1 uppercase tracking-wide">Weekly Study Plan</div>
-            <p className="text-sm text-gray-700 leading-relaxed">{plan.weekly_plan}</p>
+          <div className="bg-village-50 dark:bg-village-900/30 border border-village-100 dark:border-village-800/50 rounded-lg p-4">
+            <div className="text-xs font-semibold text-village-800 dark:text-village-300 mb-1 uppercase tracking-wide">Weekly Study Plan</div>
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{plan.weekly_plan}</p>
           </div>
 
-          <div className="text-xs text-gray-400 text-center">
+          <div className="text-xs text-gray-400 dark:text-gray-500 text-center">
             Adjust your courses, grades, or target and regenerate anytime.
           </div>
         </div>
@@ -877,11 +885,11 @@ function CollegePrep({ profile }: { profile: UserProfile | null }) {
     <div>
       <div className="flex items-center gap-2 mb-4">
         <GraduationCap size={16} className="text-village-600" />
-        <h2 className="font-semibold text-gray-900">College Prep</h2>
-        <span className="badge bg-blue-100 text-blue-700 text-xs">🎓 High Schooler Track</span>
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100">College Prep</h2>
+        <span className="badge bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 text-xs">🎓 High Schooler Track</span>
       </div>
 
-      <div className="flex gap-1 p-1 bg-amber-50 rounded-xl border border-amber-100 mb-5">
+      <div className="flex gap-1 p-1 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-100 dark:border-gray-700 mb-5">
         {([
           { id: 'essay' as CollegeTab, label: '✍️ Application Essay', desc: 'College-specific critique' },
           { id: 'advisor' as CollegeTab, label: '🏛️ College Fit Advisor', desc: 'Find the right schools' },
@@ -891,8 +899,8 @@ function CollegePrep({ profile }: { profile: UserProfile | null }) {
             onClick={() => setColTab(id)}
             className={`flex-1 flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
               colTab === id
-                ? 'bg-white shadow-sm text-village-700 border border-amber-100'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-gray-800 shadow-sm text-village-700 dark:text-village-300 border border-amber-100 dark:border-gray-700'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
           >
             {label}
@@ -921,7 +929,7 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
     if (profile && !context) {
       setContext(`${profile.academic_level}. Goals: ${profile.goals.join(', ')}.`)
     }
-  }, [profile])
+  }, [profile, context])
 
   const analyze = async () => {
     const prompt = selectedPrompt || customPrompt
@@ -943,7 +951,7 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
 
   return (
     <div className="card space-y-4">
-      <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
+      <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
         <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-500" />
         <span>
           <strong>Anti-ghostwriting:</strong> This workshop critiques and coaches only.
@@ -952,7 +960,7 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-2 block">Common App Prompt</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Common App Prompt</label>
         <div className="space-y-1.5 mb-2">
           {COMMON_APP_PROMPTS.map((p, i) => (
             <button
@@ -960,11 +968,11 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
               onClick={() => setSelectedPrompt(selectedPrompt === p ? '' : p)}
               className={`w-full text-left text-xs px-3 py-2 rounded-lg border transition-colors ${
                 selectedPrompt === p
-                  ? 'border-village-400 bg-village-50 text-village-800'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  ? 'border-village-400 bg-village-50 text-village-800 dark:border-village-600 dark:bg-village-900/30 dark:text-village-300'
+                  : 'border-gray-200 text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500'
               }`}
             >
-              <span className="font-medium text-gray-400 mr-2">#{i + 1}</span>{p.slice(0, 90)}…
+              <span className="font-medium text-gray-400 dark:text-gray-500 mr-2">#{i + 1}</span>{p.slice(0, 90)}…
             </button>
           ))}
         </div>
@@ -977,8 +985,8 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-1 block">
-          Student Context <span className="text-gray-400 font-normal">(helps evaluate achievement fairly)</span>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+          Student Context <span className="text-gray-400 dark:text-gray-500 font-normal">(helps evaluate achievement fairly)</span>
         </label>
         <textarea
           value={context}
@@ -990,7 +998,7 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-1 block">Your Essay</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Your Essay</label>
         <textarea
           value={essay}
           onChange={(e) => setEssay(e.target.value)}
@@ -998,9 +1006,9 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
           rows={10}
           className="input text-sm resize-none font-mono leading-relaxed"
         />
-        <div className="text-xs text-gray-400 mt-1 flex justify-between">
+        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex justify-between">
           <span>{essay.length} chars</span>
-          <span className={essay.length > 650 ? 'text-rose-500 font-medium' : ''}>{essay.split(/\s+/).filter(Boolean).length} words</span>
+          <span className={essay.length > 650 ? 'text-rose-500 dark:text-rose-400 font-medium' : ''}>{essay.split(/\s+/).filter(Boolean).length} words</span>
         </div>
       </div>
 
@@ -1009,21 +1017,24 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
       </button>
 
       {feedback && (
-        <div className="space-y-4 pt-2 border-t border-amber-100">
+        <div className="space-y-4 pt-2 border-t border-amber-100 dark:border-gray-700">
           {feedback.overall && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <div className="text-xs font-semibold text-amber-800 mb-1 uppercase tracking-wide">Overall Assessment</div>
-              <p className="text-sm text-gray-700 leading-relaxed">{feedback.overall}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4">
+              <div className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1 uppercase tracking-wide">Overall Assessment</div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{feedback.overall}</p>
+              <div className="mt-2">
+                <TextToSpeech text={feedback.overall} />
+              </div>
             </div>
           )}
           {feedback.strengths.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 mb-2">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-2">
                 <CheckCircle size={14} /> Key Strengths
               </div>
               <ul className="space-y-1.5">
                 {feedback.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="text-emerald-500 mt-0.5 shrink-0">✓</span>{s}
                   </li>
                 ))}
@@ -1032,12 +1043,12 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
           )}
           {feedback.improvements.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 mb-2">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">
                 <PenLine size={14} /> Areas to Improve
               </div>
               <ul className="space-y-1.5">
                 {feedback.improvements.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="text-blue-400 mt-0.5 shrink-0">→</span>{s}
                   </li>
                 ))}
@@ -1046,12 +1057,12 @@ function CollegeEssayWorkshop({ profile }: { profile: UserProfile | null }) {
           )}
           {feedback.vulnerabilities.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-700 mb-2">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-700 dark:text-rose-400 mb-2">
                 <AlertCircle size={14} /> Strategic Vulnerabilities
               </div>
               <ul className="space-y-1.5">
                 {feedback.vulnerabilities.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="text-rose-400 mt-0.5 shrink-0">⚠</span>{s}
                   </li>
                 ))}
@@ -1120,25 +1131,25 @@ function CollegeFitAdvisor({ profile }: { profile: UserProfile | null }) {
     return (
       <div className="card space-y-4">
         <div>
-          <h3 className="font-semibold text-gray-900 mb-1">College Fit Advisor</h3>
-          <p className="text-sm text-gray-500">Tell me a bit about yourself and I'll suggest schools that fit your profile.</p>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">College Fit Advisor</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Tell me a bit about yourself and I'll suggest schools that fit your profile.</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">GPA (unweighted)</label>
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">GPA (unweighted)</label>
             <input value={gpa} onChange={(e) => setGpa(e.target.value)} placeholder="e.g. 3.8" className="input text-sm" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Test Scores <span className="text-gray-400">(optional)</span></label>
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Test Scores <span className="text-gray-400 dark:text-gray-500">(optional)</span></label>
             <input value={testScores} onChange={(e) => setTestScores(e.target.value)} placeholder="e.g. SAT 1380, ACT 31" className="input text-sm" />
           </div>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Interests / Intended Major</label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Interests / Intended Major</label>
           <input value={interests} onChange={(e) => setInterests(e.target.value)} placeholder="e.g. Computer Science, Psychology, pre-med" className="input text-sm" />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Preferences <span className="text-gray-400">(optional)</span></label>
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Preferences <span className="text-gray-400 dark:text-gray-500">(optional)</span></label>
           <input value={preferences} onChange={(e) => setPreferences(e.target.value)} placeholder="e.g. small liberal arts, Northeast, affordable, STEM research" className="input text-sm" />
         </div>
         <button onClick={startChat} className="btn-primary text-sm w-full">
@@ -1151,7 +1162,7 @@ function CollegeFitAdvisor({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="card flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-medium text-gray-700">College Fit Advisor</div>
+        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">College Fit Advisor</div>
         <button onClick={() => { setProfileSet(false); setMessages([]) }} className="btn-secondary text-xs flex items-center gap-1">
           <RotateCcw size={12} /> Restart
         </button>
@@ -1166,16 +1177,17 @@ function CollegeFitAdvisor({ profile }: { profile: UserProfile | null }) {
             <div className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
               m.role === 'user'
                 ? 'bg-village-600 text-white rounded-br-sm'
-                : 'bg-amber-50 text-gray-800 border border-amber-100 rounded-bl-sm'
+                : 'bg-amber-50 dark:bg-amber-950/30 text-gray-800 dark:text-gray-200 border border-amber-100 dark:border-gray-700 rounded-bl-sm'
             }`}>
               {m.content}
+              {m.role === 'assistant' && <TextToSpeech text={m.content} className="mt-2" />}
             </div>
           </div>
         ))}
         {loading && (
           <div className="flex gap-2 justify-start">
             <div className="w-7 h-7 rounded-full bg-village-600 text-white flex items-center justify-center text-xs shrink-0">🏛️</div>
-            <div className="bg-amber-50 border border-amber-100 rounded-xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-400 italic">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-gray-700 rounded-xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-400 dark:text-gray-500 italic">
               Researching schools for you...
             </div>
           </div>

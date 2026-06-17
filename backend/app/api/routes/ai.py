@@ -261,6 +261,44 @@ async def lesson_quiz(course_id: str, lesson_id: str, _user_id: str = Depends(ge
     return quiz
 
 
+# ── Access gating for Study Hub features ───────────────────────────────────────
+_SCHOOL_LEVELS = frozenset({
+    "6th Grade", "7th Grade", "8th Grade",
+    "9th Grade", "10th Grade", "11th Grade", "12th Grade",
+    "College Freshman", "College Sophomore", "College Junior", "College Senior",
+    "Graduate Student", "Doctoral Student",
+    "Law School", "Medical School", "Trade School", "Vocational Program",
+})
+
+_COLLEGE_PREP_LEVELS = frozenset({"11th Grade", "12th Grade"})
+
+
+async def _require_school_level(user_id: str, sb):
+    """Raise 403 if the user's academic_level is not a recognised school level."""
+    prof = sb.table("profiles").select("academic_level").eq("id", user_id).maybe_single().execute()
+    level = (prof.data or {}).get("academic_level", "")
+    if level not in _SCHOOL_LEVELS:
+        raise HTTPException(
+            status_code=403,
+            detail="This feature is available for students (Grade 6–University). Update your academic level in your profile.",
+        )
+
+
+async def _require_college_prep(user_id: str, sb):
+    """Raise 403 unless user is 11th/12th grade or has college-prep study_tags."""
+    prof = sb.table("profiles").select("academic_level, study_tags").eq("id", user_id).maybe_single().execute()
+    data = prof.data or {}
+    level = data.get("academic_level", "")
+    tags = data.get("study_tags") or []
+    if level not in _COLLEGE_PREP_LEVELS and not any(
+        t.lower() in ("college", "university", "high_schooler") for t in tags
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail='Enable "High Schooler" in your profile or set grade to 11/12 to access College Prep.',
+        )
+
+
 # ── Study Hub ──────────────────────────────────────────────────────────────────
 
 class StudyBuddyRequest(BaseModel):
@@ -291,6 +329,8 @@ async def study_buddy(data: StudyBuddyRequest, _user_id: str = Depends(get_curre
 
 @router.post("/essay-coach")
 async def essay_coach(data: EssayCoachRequest, _user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_school_level(_user_id, sb)
     if len(data.essay.strip()) < 50:
         raise HTTPException(status_code=400, detail="Essay must be at least 50 characters")
     feedback = await generate_essay_feedback(data.essay, data.essay_prompt, data.student_context)
@@ -352,6 +392,8 @@ class GpaPlannerRequest(BaseModel):
 
 @router.post("/gpa-planner")
 async def gpa_planner(data: GpaPlannerRequest, _user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_school_level(_user_id, sb)
     plan = await generate_gpa_plan(
         courses=[c.model_dump() for c in data.courses],
         target_gpa=data.target_gpa,
@@ -373,6 +415,8 @@ class CollegeAdvisorRequest(BaseModel):
 
 @router.post("/college-advisor")
 async def college_advisor(data: CollegeAdvisorRequest, _user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_college_prep(_user_id, sb)
     response = await generate_college_advisor_response(
         message=data.message,
         gpa=data.gpa,

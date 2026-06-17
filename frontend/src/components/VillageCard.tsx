@@ -16,28 +16,28 @@ export default function VillageCard({ village, onJoin, currentVillageId }: Props
     <div className="card hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-semibold text-gray-900">{village.name}</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{village.name}</h3>
           <div className="flex gap-1.5 mt-1">
             <span className="badge bg-village-100 text-village-700">{village.focus_area}</span>
-            {village.is_private && <span className="badge bg-purple-100 text-purple-700">🔒 Private</span>}
+            {village.is_private && <span className="badge bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">🔒 Private</span>}
           </div>
         </div>
-        <div className="flex items-center gap-1 text-sm text-gray-500">
-          <Users size={12} className="text-gray-400" />
+        <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+          <Users size={12} className="text-gray-400 dark:text-gray-500" />
           <span>{village.member_count}/{village.max_members}</span>
         </div>
       </div>
 
-      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{village.description}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{village.description}</p>
 
       {village.resources.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap mb-4">
-          <BookOpen size={12} className="text-gray-400" />
+          <BookOpen size={12} className="text-gray-400 dark:text-gray-500" />
           {village.resources.slice(0, 3).map((r) => (
-            <span key={r} className="badge bg-amber-50 text-amber-700">{r}</span>
+            <span key={r} className="badge bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">{r}</span>
           ))}
           {village.resources.length > 3 && (
-            <span className="text-xs text-gray-400">+{village.resources.length - 3} more</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">+{village.resources.length - 3} more</span>
           )}
         </div>
       )}
@@ -56,7 +56,7 @@ export default function VillageCard({ village, onJoin, currentVillageId }: Props
           </button>
         )}
         {isCurrentVillage && (
-          <span className="btn-secondary text-sm flex-1 text-center text-village-600 font-semibold">
+          <span className="btn-secondary text-sm flex-1 text-center text-village-600 dark:text-village-300 font-semibold">
             Your Village
           </span>
         )}

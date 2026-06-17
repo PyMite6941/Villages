@@ -103,25 +103,25 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
   const pinned = messages.filter((m) => m.is_pinned)
   const regular = messages.filter((m) => !m.is_pinned)
 
-  if (loading) return <div className="text-center py-12 text-gray-400 text-sm">Loading chat...</div>
+  if (loading) return <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">Loading chat...</div>
 
   return (
     <div className="flex flex-col">
       {/* Pinned messages */}
       {pinned.length > 0 && (
         <div className="mb-3 space-y-1">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1">
             <Pin size={11} className="text-amber-500" /> Pinned
           </div>
           {pinned.map((m) => (
-            <div key={m.id} className="flex items-start gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs">
+            <div key={m.id} className="flex items-start gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg text-xs">
               <div className="flex-1 min-w-0">
-                <span className="font-medium text-amber-800">{m.author_name}:</span>
-                <span className="text-gray-600 ml-1 line-clamp-1">{m.content}</span>
+                <span className="font-medium text-amber-800 dark:text-amber-300">{m.author_name}:</span>
+                <span className="text-gray-600 dark:text-gray-400 ml-1 line-clamp-1">{m.content}</span>
               </div>
               <button
                 onClick={() => togglePin(m)}
-                className="text-gray-400 hover:text-gray-600 shrink-0"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 shrink-0"
                 title="Unpin"
               >
                 <X size={11} />
@@ -134,8 +134,8 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
       {/* Message area */}
       <div className="min-h-80 max-h-[480px] overflow-y-auto space-y-1 pr-1 mb-3">
         {regular.length === 0 && (
-          <div className="text-center py-16 text-gray-400 text-sm">
-            <Hash size={22} className="mx-auto mb-2 text-gray-200" />
+          <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-sm">
+            <Hash size={22} className="mx-auto mb-2 text-gray-200 dark:text-gray-600" />
             No messages yet — say hello to your village!
           </div>
         )}
@@ -147,7 +147,7 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
           return (
             <div
               key={m.id}
-              className={`group flex gap-2 px-1 py-0.5 rounded-lg hover:bg-gray-50 ${isOwn ? 'flex-row-reverse' : ''}`}
+              className={`group flex gap-2 px-1 py-0.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 ${isOwn ? 'flex-row-reverse' : ''}`}
             >
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-1 ${isOwn ? 'bg-village-600' : 'bg-amber-500'}`}>
                 {m.author_name[0]?.toUpperCase() ?? '?'}
@@ -155,13 +155,13 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
 
               <div className={`flex-1 min-w-0 flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                 <div className={`flex items-center gap-1.5 mb-0.5 ${isOwn ? 'flex-row-reverse' : ''}`}>
-                  <span className="text-xs font-semibold text-gray-700">{isOwn ? 'You' : m.author_name}</span>
-                  <span className="text-xs text-gray-400">{time}</span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{isOwn ? 'You' : m.author_name}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{time}</span>
                   {m.is_pinned && <Pin size={10} className="text-amber-500" />}
                 </div>
 
                 {m.reply_preview && (
-                  <div className="text-xs text-gray-400 bg-gray-100 rounded px-2 py-0.5 mb-1 line-clamp-1 border-l-2 border-gray-300 max-w-[85%]">
+                  <div className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 rounded px-2 py-0.5 mb-1 line-clamp-1 border-l-2 border-gray-300 dark:border-gray-600 max-w-[85%]">
                     ↩ {m.reply_preview}
                   </div>
                 )}
@@ -175,12 +175,12 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
                     href={m.content.startsWith('http') ? m.content : `https://${m.content}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-village-600 underline break-all max-w-[85%]"
+                    className="text-sm text-village-600 dark:text-village-300 underline break-all max-w-[85%]"
                   >
                     {m.content}
                   </a>
                 ) : (
-                  <div className={`max-w-[85%] rounded-xl px-3 py-1.5 text-sm leading-snug ${isOwn ? 'bg-village-600 text-white' : 'bg-white border border-gray-100 text-gray-800'}`}>
+                  <div className={`max-w-[85%] rounded-xl px-3 py-1.5 text-sm leading-snug ${isOwn ? 'bg-village-600 text-white' : 'bg-white border border-gray-100 text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200'}`}>
                     {m.content}
                   </div>
                 )}
@@ -191,14 +191,14 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
                 <button
                   onClick={() => setReplyTo(m)}
                   title="Reply"
-                  className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                  className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-700 rounded"
                 >
                   <CornerDownLeft size={12} />
                 </button>
                 <button
                   onClick={() => togglePin(m)}
                   title={m.is_pinned ? 'Unpin' : 'Pin'}
-                  className={`p-1 rounded ${m.is_pinned ? 'text-amber-500 bg-amber-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                  className={`p-1 rounded ${m.is_pinned ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-700'}`}
                 >
                   <Pin size={12} />
                 </button>
@@ -211,11 +211,11 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
 
       {/* Reply preview */}
       {replyTo && (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg mb-2 text-xs">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg mb-2 text-xs">
           <CornerDownLeft size={12} className="text-amber-600 shrink-0" />
-          <span className="text-amber-700 font-medium">{replyTo.author_name}:</span>
-          <span className="text-gray-600 line-clamp-1 flex-1">{replyTo.content}</span>
-          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-600 shrink-0">
+          <span className="text-amber-700 dark:text-amber-400 font-medium">{replyTo.author_name}:</span>
+          <span className="text-gray-600 dark:text-gray-400 line-clamp-1 flex-1">{replyTo.content}</span>
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 shrink-0">
             <X size={12} />
           </button>
         </div>
@@ -223,13 +223,13 @@ export default function VillageChat({ villageId, session, authorName }: Props) {
 
       {/* Input row */}
       <div className="flex gap-2">
-        <div className="flex border border-gray-200 rounded-lg overflow-hidden text-xs shrink-0">
+        <div className="flex border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden text-xs shrink-0">
           {([['text', '💬', 'Text'], ['code', '{ }', 'Code'], ['link', '🔗', 'Link']] as [MsgType, string, string][]).map(([t, icon, label]) => (
             <button
               key={t}
               onClick={() => setMsgType(t)}
               title={label}
-              className={`px-2.5 py-1.5 font-medium transition-colors ${msgType === t ? 'bg-village-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              className={`px-2.5 py-1.5 font-medium transition-colors ${msgType === t ? 'bg-village-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
             >
               {icon}
             </button>

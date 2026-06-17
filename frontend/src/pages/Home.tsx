@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
 import type { UserProfile, Village, Post } from '../types'
 import PostCard from '../components/PostCard'
+import TextToSpeech from '../components/TextToSpeech'
 import { Sparkles, Users, ArrowRight, Lightbulb, CheckSquare, ListChecks } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -75,46 +76,47 @@ export default function Home({ session }: Props) {
     }
   }
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading your village...</div>
+  if (loading) return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading your village...</div>
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome back, {profile?.display_name} 👋</h1>
-        <p className="text-gray-500 text-sm mt-1">{profile?.academic_level} · {profile?.goals.join(', ')}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Welcome back, {profile?.display_name} 👋</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{profile?.academic_level} · {profile?.goals.join(', ')}</p>
       </div>
 
       {/* Village status */}
       {village ? (
-        <div className="card border-village-200 bg-gradient-to-br from-village-50 to-amber-50">
+        <div className="card border-village-200 dark:border-village-800 bg-gradient-to-br from-village-50 to-amber-50 dark:from-village-950/40 dark:to-amber-950/30">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-xl">🏘️</span>
-              <h2 className="font-semibold text-village-800">{village.name}</h2>
+              <h2 className="font-semibold text-village-800 dark:text-village-300">{village.name}</h2>
             </div>
-            <Link to={`/villages/${village.id}`} className="text-sm text-village-600 hover:underline flex items-center gap-1">
+            <Link to={`/villages/${village.id}`} className="text-sm text-village-600 dark:text-village-300 hover:underline flex items-center gap-1">
               View <ArrowRight size={14} />
             </Link>
           </div>
-          <p className="text-sm text-gray-600 mb-1">{village.description}</p>
-          <div className="flex items-center gap-3 text-sm text-gray-500">
-            <span className="flex items-center gap-1"><Users size={12} className="text-gray-400" />{village.member_count} members</span>
-            <span className="badge bg-village-100 text-village-700">{village.focus_area}</span>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{village.description}</p>
+          <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+            <span className="flex items-center gap-1"><Users size={12} className="text-gray-400 dark:text-gray-500" />{village.member_count} members</span>
+            <span className="badge bg-village-100 text-village-700 dark:bg-village-900/40 dark:text-village-300">{village.focus_area}</span>
           </div>
         </div>
       ) : (
         <div className="card text-center py-8">
           <span className="text-4xl">🔍</span>
           <h2 className="font-semibold mt-3 mb-1">You're not in a Village yet</h2>
-          <p className="text-sm text-gray-500 mb-4">Let our AI find the perfect study cohort for you</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Let our AI find the perfect study cohort for you</p>
           <button onClick={handleAIMatch} disabled={matching} className="btn-primary mx-auto">
             <Sparkles size={14} className="inline mr-1.5" />
             {matching ? 'Finding your village...' : 'AI Match me'}
           </button>
           {matchResult && (
-            <div className="mt-4 p-4 bg-village-50 rounded-lg text-left">
-              <p className="text-sm font-medium text-village-800 mb-1">We found a match!</p>
-              <p className="text-sm text-gray-600 mb-3">{matchResult.reasoning}</p>
+            <div className="mt-4 p-4 bg-village-50 dark:bg-village-900/30 rounded-lg text-left">
+              <p className="text-sm font-medium text-village-800 dark:text-village-300 mb-1">We found a match!</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{matchResult.reasoning}</p>
+              <TextToSpeech text={matchResult.reasoning} label="Listen to match" className="mb-3" />
               <Link to={`/villages/${matchResult.recommended_village_id}`} className="btn-primary text-sm">
                 View recommended Village →
               </Link>
@@ -127,8 +129,8 @@ export default function Home({ session }: Props) {
       {recentPosts.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900">Village activity</h2>
-            <Link to={`/villages/${village?.id}`} className="text-sm text-village-600 hover:underline">See all</Link>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Village activity</h2>
+            <Link to={`/villages/${village?.id}`} className="text-sm text-village-600 dark:text-village-300 hover:underline">See all</Link>
           </div>
           <div className="space-y-3">
             {recentPosts.map((p) => <PostCard key={p.id} post={p} />)}
@@ -137,12 +139,12 @@ export default function Home({ session }: Props) {
       )}
 
       {/* Topic Explorer — AI plain-language explainer */}
-      <div className="card border-amber-200">
+      <div className="card border-amber-200 dark:border-amber-800/50">
         <div className="flex items-center gap-2 mb-3">
           <Lightbulb size={18} className="text-amber-500" />
-          <h2 className="font-semibold text-gray-900">Topic Explorer</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Topic Explorer</h2>
         </div>
-        <p className="text-sm text-gray-500 mb-3">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
           Turn confusing topics into plain language, a checklist, and clear next steps — for you or your group.
         </p>
         <div className="flex gap-2">
@@ -160,17 +162,18 @@ export default function Home({ session }: Props) {
         </div>
 
         {topicResult && (
-          <div className="mt-4 space-y-4 border-t border-amber-100 pt-4">
+          <div className="mt-4 space-y-4 border-t border-amber-100 dark:border-gray-800 pt-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Plain language summary</p>
-              <div className="p-3 bg-amber-50 rounded-lg text-sm text-gray-700">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plain language summary</p>
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg text-sm text-gray-700 dark:text-gray-300">
                 {topicResult.plain_language}
               </div>
+              <TextToSpeech text={topicResult.plain_language} label="Listen" />
             </div>
             {topicResult.key_points.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Key points</p>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Key points</p>
+                <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   {topicResult.key_points.map((p, i) => (
                     <li key={i}>{p}</li>
                   ))}
@@ -179,12 +182,12 @@ export default function Home({ session }: Props) {
             )}
             {topicResult.checklist.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
                   <CheckSquare size={14} /> Checklist
                 </p>
                 <div className="space-y-1">
                   {topicResult.checklist.map((item, i) => (
-                    <label key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                    <label key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <input type="checkbox" className="rounded" />
                       {item.title}
                     </label>
@@ -194,21 +197,21 @@ export default function Home({ session }: Props) {
             )}
             {topicResult.next_steps.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
                   <ListChecks size={14} /> Next steps
                 </p>
                 <div className="space-y-2">
                   {topicResult.next_steps.map((step, i) => (
-                    <div key={i} className="p-2 bg-gray-50 rounded text-sm">
+                    <div key={i} className="p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
                       <span className="font-medium">{step.title}</span>
-                      <p className="text-gray-500">{step.description}</p>
+                      <p className="text-gray-500 dark:text-gray-400">{step.description}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
             {topicResult._audience.length > 0 && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
                 Tailored for: {topicResult._audience.join(', ')}
               </p>
             )}

@@ -87,8 +87,8 @@ export default function Villages() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Villages</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Find your study community</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Villages</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Find your study community</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowJoinCode(true)} className="btn-secondary flex items-center gap-2 text-sm">
@@ -101,24 +101,24 @@ export default function Villages() {
       </div>
 
       {showCreate && (
-        <div className="card mb-6 border-village-200">
+        <div className="card mb-6 border-village-200 dark:border-village-800">
           <h2 className="font-semibold mb-4">Create a new Village</h2>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Village name</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Village name</label>
               <input value={newVillage.name} onChange={(e) => setNewVillage((p) => ({ ...p, name: e.target.value }))} className="input" placeholder="AP Calc Warriors" />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Focus area</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Focus area</label>
               <input value={newVillage.focus_area} onChange={(e) => setNewVillage((p) => ({ ...p, focus_area: e.target.value }))} className="input" placeholder="AP Calculus AB" />
             </div>
           </div>
           <div className="mb-3">
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Description</label>
             <textarea value={newVillage.description} onChange={(e) => setNewVillage((p) => ({ ...p, description: e.target.value }))} className="input resize-none" rows={2} placeholder="What's this village about?" />
           </div>
           <div className="mb-4">
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Resources (comma-separated)</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Resources (comma-separated)</label>
             <input value={newVillage.resources} onChange={(e) => setNewVillage((p) => ({ ...p, resources: e.target.value }))} className="input" placeholder="Limits, Derivatives, Integrals" />
           </div>
           <div className="mb-4">
@@ -127,9 +127,9 @@ export default function Villages() {
                 type="checkbox"
                 checked={newVillage.is_private}
                 onChange={(e) => setNewVillage((p) => ({ ...p, is_private: e.target.checked }))}
-                className="rounded border-gray-300 text-village-600 focus:ring-village-400"
+                className="rounded border-gray-300 dark:border-gray-600 text-village-600 focus:ring-village-400"
               />
-              <span className="text-sm text-gray-700">Private village (invite only)</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Private village (invite only)</span>
             </label>
           </div>
           <div className="flex gap-2">
@@ -142,14 +142,14 @@ export default function Villages() {
       )}
 
       <div className="relative mb-4">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         <input value={search} onChange={(e) => setSearch(e.target.value)} className="input pl-9" placeholder="Search villages by name or subject..." />
       </div>
 
       {loading ? (
-        <p className="text-center text-gray-500 py-12">Loading villages...</p>
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">Loading villages...</p>
       ) : villages.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">No villages found. Create the first one!</p>
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">No villages found. Create the first one!</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {villages.map((v) => <VillageCard key={v.id} village={v} onJoin={handleJoin} currentVillageId={currentVillageId} />)}
@@ -162,12 +162,12 @@ export default function Villages() {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm dark:bg-gray-900">
             <div className="flex items-center justify-between px-5 py-4 border-b border-amber-100 dark:border-gray-800">
               <h2 className="font-semibold text-gray-900 dark:text-gray-100">Join a Private Village</h2>
-              <button onClick={() => setShowJoinCode(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowJoinCode(false)} className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
                 <X size={16} />
               </button>
             </div>
             <div className="p-5 space-y-4">
-              <p className="text-sm text-gray-500">Enter the invite code shared by the village chief.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Enter the invite code shared by the village chief.</p>
               <input
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}

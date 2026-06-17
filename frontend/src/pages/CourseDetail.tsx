@@ -10,9 +10,9 @@ import toast from 'react-hot-toast'
 interface Props { session: Session }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: 'bg-emerald-100 text-emerald-700',
-  intermediate: 'bg-village-100 text-village-700',
-  advanced: 'bg-rose-100 text-rose-700',
+  beginner: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400',
+  intermediate: 'bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300',
+  advanced: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
 }
 
 // Convert a video URL into an embeddable iframe src.
@@ -156,21 +156,21 @@ export default function CourseDetail({ session }: Props) {
   }
 
   if (loading) {
-    return <div className="text-center py-16 text-gray-400">Loading course...</div>
+    return <div className="text-center py-16 text-gray-400 dark:text-gray-500">Loading course...</div>
   }
 
   if (!course) {
     return (
       <div className="text-center py-16">
-        <div className="text-gray-500">Course not found.</div>
-        <Link to="/courses" className="text-village-600 text-sm mt-2 inline-block">← Back to courses</Link>
+        <div className="text-gray-500 dark:text-gray-400">Course not found.</div>
+        <Link to="/courses" className="text-village-600 dark:text-village-300 text-sm mt-2 inline-block">← Back to courses</Link>
       </div>
     )
   }
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link to="/courses" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-5">
+      <Link to="/courses" className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mb-5">
         <ArrowLeft size={14} /> Back to Knowledge Grove
       </Link>
 
@@ -180,20 +180,20 @@ export default function CourseDetail({ session }: Props) {
           <div className="flex items-start gap-4">
             <span className="text-5xl">{course.thumbnail_emoji}</span>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 mb-1">{course.title}</h1>
-              <p className="text-gray-500 text-sm mb-3">{course.description}</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{course.title}</h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">{course.description}</p>
               <div className="flex flex-wrap gap-2 text-xs">
-                <span className={`badge ${DIFFICULTY_COLORS[course.difficulty] ?? 'bg-gray-100 text-gray-600'}`}>
+                <span className={`badge ${DIFFICULTY_COLORS[course.difficulty] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
                   {course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1)}
                 </span>
-                <span className="badge bg-village-100 text-village-700">
+                <span className="badge bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300">
                   {course.subject}
                 </span>
-                <span className="flex items-center gap-1 text-gray-400">
-                  <Clock size={12} className="text-gray-400" /> {course.estimated_hours}h
+                <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
+                  <Clock size={12} className="text-gray-400 dark:text-gray-500" /> {course.estimated_hours}h
                 </span>
-                <span className="flex items-center gap-1 text-gray-400">
-                  <Users size={12} className="text-gray-400" /> {course.enrollment_count} enrolled
+                <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
+                  <Users size={12} className="text-gray-400 dark:text-gray-500" /> {course.enrollment_count} enrolled
                 </span>
               </div>
             </div>
@@ -201,9 +201,9 @@ export default function CourseDetail({ session }: Props) {
 
           <div className="shrink-0">
             {isTeacher ? (
-              <span className="badge bg-village-100 text-village-700 text-xs">Your course</span>
+              <span className="badge bg-village-100 dark:bg-village-900/40 text-village-700 dark:text-village-300 text-xs">Your course</span>
             ) : enrollment?.enrolled ? (
-              <span className="badge bg-emerald-100 text-emerald-700 text-xs">✓ Enrolled</span>
+              <span className="badge bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs">✓ Enrolled</span>
             ) : (
               <button onClick={handleEnroll} disabled={enrolling} className="btn-primary text-sm">
                 {enrolling ? 'Enrolling...' : 'Enroll →'}
@@ -213,27 +213,27 @@ export default function CourseDetail({ session }: Props) {
         </div>
 
         {/* Teacher info */}
-        <div className="mt-4 pt-4 border-t border-amber-50 flex items-center gap-2 text-sm">
+        <div className="mt-4 pt-4 border-t border-amber-50 dark:border-gray-800 flex items-center gap-2 text-sm">
           <div className="w-7 h-7 rounded-full bg-village-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
             {course.teacher_name[0]?.toUpperCase()}
           </div>
-          <span className="text-gray-600">Taught by</span>
+          <span className="text-gray-600 dark:text-gray-400">Taught by</span>
           {course.teacher_is_verified ? (
-            <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+            <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium">
               <span>📜</span>
               {course.teacher_name}
-              <span className="badge bg-amber-100 text-amber-700 text-xs">Village Scholar</span>
+              <span className="badge bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-xs">Village Scholar</span>
             </span>
           ) : (
-            <span className="font-medium text-gray-800">{course.teacher_name}</span>
+            <span className="font-medium text-gray-800 dark:text-gray-200">{course.teacher_name}</span>
           )}
         </div>
 
         {course.source && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
-            <span>Content source: <span className="font-medium text-gray-700">{course.source}</span></span>
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <span>Content source: <span className="font-medium text-gray-700 dark:text-gray-300">{course.source}</span></span>
             {isApprovedSource(course.source) && (
-              <span className="inline-flex items-center gap-1 badge bg-emerald-100 text-emerald-700">
+              <span className="inline-flex items-center gap-1 badge bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">
                 <BadgeCheck size={12} /> Approved source
               </span>
             )}
@@ -243,13 +243,13 @@ export default function CourseDetail({ session }: Props) {
         {/* Private badge + invite code */}
         {course.is_private && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="badge bg-purple-100 text-purple-700">🔒 Private course</span>
+            <span className="badge bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">🔒 Private course</span>
             {isTeacher && course.invite_code && (
-              <span className="text-gray-500">
-                Invite code: <span className="font-mono font-bold text-village-700 tracking-wider bg-amber-50 px-2 py-0.5 rounded">{course.invite_code}</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                Invite code: <span className="font-mono font-bold text-village-700 dark:text-village-300 tracking-wider bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded">{course.invite_code}</span>
                 <button
                   onClick={() => { navigator.clipboard.writeText(course.invite_code!); toast.success('Copied!') }}
-                  className="ml-1 text-village-600 underline hover:text-village-700"
+                  className="ml-1 text-village-600 dark:text-village-300 underline hover:text-village-700 dark:hover:text-village-300"
                 >
                   Copy
                 </button>
@@ -262,8 +262,8 @@ export default function CourseDetail({ session }: Props) {
       {/* Office Hours */}
       <div className="card mb-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-            <Clock size={15} className="text-village-600" /> Office Hours
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 text-sm flex items-center gap-1.5">
+            <Clock size={15} className="text-village-600 dark:text-village-300" /> Office Hours
           </h2>
           {isTeacher && (
             <button
@@ -276,10 +276,10 @@ export default function CourseDetail({ session }: Props) {
         </div>
 
         {showAddOfficeHour && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
+          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg space-y-3">
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="text-xs text-gray-600 mb-1 block">Day</label>
+                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Day</label>
                 <select
                   value={officeHourForm.day_of_week}
                   onChange={(e) => setOfficeHourForm((f) => ({ ...f, day_of_week: parseInt(e.target.value) }))}
@@ -291,7 +291,7 @@ export default function CourseDetail({ session }: Props) {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-600 mb-1 block">Start</label>
+                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Start</label>
                 <input
                   type="time"
                   value={officeHourForm.start_time}
@@ -300,7 +300,7 @@ export default function CourseDetail({ session }: Props) {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-600 mb-1 block">End</label>
+                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">End</label>
                 <input
                   type="time"
                   value={officeHourForm.end_time}
@@ -310,7 +310,7 @@ export default function CourseDetail({ session }: Props) {
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-600 mb-1 block">Location / Link</label>
+              <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Location / Link</label>
               <input
                 value={officeHourForm.location}
                 onChange={(e) => setOfficeHourForm((f) => ({ ...f, location: e.target.value }))}
@@ -327,14 +327,14 @@ export default function CourseDetail({ session }: Props) {
         {course.office_hours && course.office_hours.length > 0 ? (
           <div className="space-y-2">
             {course.office_hours.map((oh) => (
-              <div key={oh.id} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-sm">
+              <div key={oh.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2 text-sm">
                 <div className="flex items-center gap-3">
-                  <span className="font-medium text-gray-800 w-24">{DAY_NAMES[oh.day_of_week]}</span>
-                  <span className="text-gray-600">{oh.start_time.slice(0, 5)} – {oh.end_time.slice(0, 5)}</span>
-                  {oh.location && <span className="text-gray-400 text-xs">{oh.location}</span>}
+                  <span className="font-medium text-gray-800 dark:text-gray-200 w-24">{DAY_NAMES[oh.day_of_week]}</span>
+                  <span className="text-gray-600 dark:text-gray-400">{oh.start_time.slice(0, 5)} – {oh.end_time.slice(0, 5)}</span>
+                  {oh.location && <span className="text-gray-400 dark:text-gray-500 text-xs">{oh.location}</span>}
                 </div>
                 {isTeacher && (
-                  <button onClick={() => handleDeleteOfficeHour(oh.id)} className="text-gray-400 hover:text-red-500">
+                  <button onClick={() => handleDeleteOfficeHour(oh.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400">
                     <Trash2 size={14} />
                   </button>
                 )}
@@ -342,7 +342,7 @@ export default function CourseDetail({ session }: Props) {
             ))}
           </div>
         ) : (
-          <p className="text-xs text-gray-400">{isTeacher ? 'Add your office hours so students know when you\'re available.' : 'No office hours set yet.'}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{isTeacher ? 'Add your office hours so students know when you\'re available.' : 'No office hours set yet.'}</p>
         )}
       </div>
 
@@ -350,17 +350,17 @@ export default function CourseDetail({ session }: Props) {
       {enrollment?.enrolled && lessonCount > 0 && (
         <div className="card mb-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Your progress</span>
-            <span className="text-sm text-gray-500">{completedCount}/{lessonCount} lessons · {progress}%</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Your progress</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{completedCount}/{lessonCount} lessons · {progress}%</span>
           </div>
-          <div className="h-2 bg-amber-100 rounded-full overflow-hidden">
+          <div className="h-2 bg-amber-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-village-600 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
           {progress === 100 && (
-            <div className="mt-2 text-center text-sm text-emerald-700 font-medium">🎉 Course complete!</div>
+            <div className="mt-2 text-center text-sm text-emerald-700 dark:text-emerald-400 font-medium">🎉 Course complete!</div>
           )}
         </div>
       )}
@@ -369,8 +369,8 @@ export default function CourseDetail({ session }: Props) {
       <div className="card mb-5">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="font-semibold text-gray-900 text-sm">Village Elder Study Tips</h2>
-            <p className="text-xs text-gray-400">AI-generated advice from your community guide</p>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Village Elder Study Tips</h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500">AI-generated advice from your community guide</p>
           </div>
           <button
             onClick={handleGetTips}
@@ -382,7 +382,7 @@ export default function CourseDetail({ session }: Props) {
           </button>
         </div>
         {aiTips && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-3 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
             {aiTips}
           </div>
         )}
@@ -390,12 +390,12 @@ export default function CourseDetail({ session }: Props) {
 
       {/* Lessons */}
       <div className="card">
-        <h2 className="font-semibold text-gray-900 mb-4">
-          Lessons <span className="text-gray-400 font-normal text-sm">({lessonCount})</span>
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Lessons <span className="text-gray-400 dark:text-gray-500 font-normal text-sm">({lessonCount})</span>
         </h2>
 
         {course.lessons.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">
+          <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
             {isTeacher ? 'Add your first lesson below.' : 'No lessons yet — check back soon!'}
           </div>
         ) : (
@@ -406,26 +406,26 @@ export default function CourseDetail({ session }: Props) {
               const canComplete = enrollment?.enrolled && !isDone
 
               return (
-                <div key={lesson.id} className="border border-amber-100 rounded-lg overflow-hidden">
+                <div key={lesson.id} className="border border-amber-100 dark:border-gray-800 rounded-lg overflow-hidden">
                   <button
                     onClick={() => setExpandedLesson(isExpanded ? null : lesson.id)}
-                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-amber-50 transition-colors"
+                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-amber-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     {isDone ? (
-                      <CheckCircle size={16} className="text-emerald-500 shrink-0" />
+                      <CheckCircle size={16} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
                     ) : (
-                      <Circle size={16} className="text-gray-300 shrink-0" />
+                      <Circle size={16} className="text-gray-300 dark:text-gray-600 shrink-0" />
                     )}
-                    <span className="text-xs text-gray-400 w-5 shrink-0 font-mono">{idx + 1}</span>
-                    <span className="flex-1 text-sm font-medium text-gray-800">{lesson.title}</span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1 shrink-0">
-                      <Clock size={12} className="text-gray-400" /> {lesson.duration_minutes}m
+                    <span className="text-xs text-gray-400 dark:text-gray-500 w-5 shrink-0 font-mono">{idx + 1}</span>
+                    <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200">{lesson.title}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 shrink-0">
+                      <Clock size={12} className="text-gray-400 dark:text-gray-500" /> {lesson.duration_minutes}m
                     </span>
-                    {isExpanded ? <ChevronUp size={14} className="text-gray-400 shrink-0" /> : <ChevronDown size={14} className="text-gray-400 shrink-0" />}
+                    {isExpanded ? <ChevronUp size={14} className="text-gray-400 dark:text-gray-500 shrink-0" /> : <ChevronDown size={14} className="text-gray-400 dark:text-gray-500 shrink-0" />}
                   </button>
 
                   {isExpanded && (
-                    <div className="px-4 pb-4 border-t border-amber-50">
+                    <div className="px-4 pb-4 border-t border-amber-50 dark:border-gray-800">
                       {lesson.video_url && toEmbedUrl(lesson.video_url) && (
                         <div className="pt-3 mb-3 aspect-video w-full overflow-hidden rounded-lg bg-black">
                           <iframe
@@ -439,7 +439,7 @@ export default function CourseDetail({ session }: Props) {
                           />
                         </div>
                       )}
-                      <div className="pt-3 text-sm text-gray-700 whitespace-pre-line leading-relaxed mb-3">
+                      <div className="pt-3 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed mb-3">
                         {lesson.content}
                       </div>
 
@@ -456,12 +456,12 @@ export default function CourseDetail({ session }: Props) {
                         </button>
                       )}
                       {isDone && (
-                        <span className="text-emerald-600 text-sm font-medium flex items-center gap-1">
+                        <span className="text-emerald-600 dark:text-emerald-400 text-sm font-medium flex items-center gap-1">
                           <CheckCircle size={14} /> Completed
                         </span>
                       )}
                       {!enrollment?.enrolled && !isTeacher && (
-                        <p className="text-xs text-gray-400">Enroll to track your progress</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Enroll to track your progress</p>
                       )}
                     </div>
                   )}
@@ -473,7 +473,7 @@ export default function CourseDetail({ session }: Props) {
 
         {/* Add lesson (teacher only) */}
         {isTeacher && (
-          <div className="mt-5 pt-4 border-t border-amber-100">
+          <div className="mt-5 pt-4 border-t border-amber-100 dark:border-gray-800">
             {!showAddLesson ? (
               <button
                 onClick={() => setShowAddLesson(true)}
@@ -483,10 +483,10 @@ export default function CourseDetail({ session }: Props) {
               </button>
             ) : (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-700">New Lesson</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">New Lesson</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Title</label>
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Title</label>
                     <input
                       value={lessonForm.title}
                       onChange={(e) => setLessonForm((f) => ({ ...f, title: e.target.value }))}
@@ -495,7 +495,7 @@ export default function CourseDetail({ session }: Props) {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Duration (min)</label>
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Duration (min)</label>
                     <input
                       type="number"
                       min={1}
@@ -506,8 +506,8 @@ export default function CourseDetail({ session }: Props) {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">
-                    Video URL <span className="text-gray-400 font-normal">(optional — YouTube / Vimeo, embeds automatically)</span>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
+                    Video URL                     <span className="text-gray-400 dark:text-gray-500 font-normal">(optional — YouTube / Vimeo, embeds automatically)</span>
                   </label>
                   <input
                     value={lessonForm.video_url ?? ''}
@@ -517,7 +517,7 @@ export default function CourseDetail({ session }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Lesson Content</label>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Lesson Content</label>
                   <textarea
                     value={lessonForm.content}
                     onChange={(e) => setLessonForm((f) => ({ ...f, content: e.target.value }))}
@@ -569,11 +569,11 @@ function LessonQuiz({ courseId, lessonId }: { courseId: string; lessonId: string
   const allAnswered = questions ? questions.every((_, i) => answers[i] !== undefined) : false
 
   return (
-    <div className="mb-3 rounded-lg border border-amber-100 bg-amber-50/50 p-3">
+    <div className="mb-3 rounded-lg border border-amber-100 dark:border-gray-800 bg-amber-50/50 dark:bg-amber-950/20 p-3">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-          <HelpCircle size={15} className="text-village-600" /> Practice Questions
-          <span className="text-xs font-normal text-gray-400">AI-generated from this lesson</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+          <HelpCircle size={15} className="text-village-600 dark:text-village-300" /> Practice Questions
+          <span className="text-xs font-normal text-gray-400 dark:text-gray-500">AI-generated from this lesson</span>
         </span>
         <button onClick={generate} disabled={loading} className="btn-secondary text-xs flex items-center gap-1.5">
           <Sparkles size={13} />
@@ -585,18 +585,18 @@ function LessonQuiz({ courseId, lessonId }: { courseId: string; lessonId: string
         <div className="space-y-3">
           {questions.map((q, qi) => (
             <div key={qi} className="text-sm">
-              <p className="font-medium text-gray-800 mb-1.5">{qi + 1}. {q.question}</p>
+              <p className="font-medium text-gray-800 dark:text-gray-200 mb-1.5">{qi + 1}. {q.question}</p>
               <div className="space-y-1">
                 {q.options.map((opt, oi) => {
                   const selected = answers[qi] === oi
                   const isCorrect = q.correct_index === oi
-                  let cls = 'border-gray-200 hover:border-village-300'
+                  let cls = 'border-gray-200 dark:border-gray-700 hover:border-village-300 dark:hover:border-village-600'
                   if (revealed) {
-                    if (isCorrect) cls = 'border-emerald-400 bg-emerald-50'
-                    else if (selected) cls = 'border-rose-300 bg-rose-50'
-                    else cls = 'border-gray-200 opacity-70'
+                    if (isCorrect) cls = 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30'
+                    else if (selected) cls = 'border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-900/30'
+                    else cls = 'border-gray-200 dark:border-gray-700 opacity-70'
                   } else if (selected) {
-                    cls = 'border-village-500 bg-village-50'
+                    cls = 'border-village-500 dark:border-village-600 bg-village-50 dark:bg-village-900/30'
                   }
                   return (
                     <button
@@ -605,15 +605,15 @@ function LessonQuiz({ courseId, lessonId }: { courseId: string; lessonId: string
                       onClick={() => setAnswers((a) => ({ ...a, [qi]: oi }))}
                       className={`w-full text-left px-3 py-1.5 rounded-md border text-sm transition-colors ${cls}`}
                     >
-                      <span className="font-mono text-xs text-gray-400 mr-2">{String.fromCharCode(65 + oi)}</span>
+                      <span className="font-mono text-xs text-gray-400 dark:text-gray-500 mr-2">{String.fromCharCode(65 + oi)}</span>
                       {opt}
-                      {revealed && isCorrect && <span className="ml-1.5 text-emerald-600">✓</span>}
+                      {revealed && isCorrect && <span className="ml-1.5 text-emerald-600 dark:text-emerald-400">✓</span>}
                     </button>
                   )
                 })}
               </div>
               {revealed && (
-                <p className="mt-1.5 text-xs text-gray-500 bg-white border border-amber-100 rounded p-2">
+                <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 border border-amber-100 dark:border-gray-800 rounded p-2">
                   {q.explanation}
                 </p>
               )}
@@ -629,7 +629,7 @@ function LessonQuiz({ courseId, lessonId }: { courseId: string; lessonId: string
               {allAnswered ? 'Check answers' : 'Answer all questions to check'}
             </button>
           ) : (
-            <div className="text-center text-sm font-medium text-gray-700">
+            <div className="text-center text-sm font-medium text-gray-700 dark:text-gray-300">
               You scored {score}/{questions.length} {score === questions.length ? '🎉' : ''}
             </div>
           )}

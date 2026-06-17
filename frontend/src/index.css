@@ -8,6 +8,28 @@ html.reduce-motion * {
   animation-delay: 0s !important;
 }
 
+html.font-dyslexic {
+  font-family: 'Lexend', 'Verdana', 'Tahoma', sans-serif !important;
+  letter-spacing: 0.035em;
+  word-spacing: 0.12em;
+}
+
+html.font-dyslexic body,
+html.font-dyslexic p,
+html.font-dyslexic span,
+html.font-dyslexic div,
+html.font-dyslexic input,
+html.font-dyslexic textarea,
+html.font-dyslexic button {
+  font-family: inherit !important;
+}
+
+html.font-dyslexic h1, html.font-dyslexic h2, html.font-dyslexic h3,
+html.font-dyslexic h4, html.font-dyslexic h5, html.font-dyslexic h6 {
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
 @layer base {
   body {
     @apply bg-amber-50 text-gray-900 font-sans dark:bg-gray-950 dark:text-gray-100;
@@ -29,5 +51,8 @@ html.reduce-motion * {
   }
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .tts-btn {
+    @apply inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors;
   }
 }
