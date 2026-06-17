@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.auth import get_current_user
 from app.config import settings
 from app.database import get_supabase
-from app.models.village import Village, VillageCreate, VillageSettingsUpdate
+from app.models.village import Village, VillageBan, VillageCreate, VillageSettingsUpdate
 from app.services.ai_service import generate_village_match_reasoning
 
 router = APIRouter(prefix="/villages", tags=["villages"])
@@ -273,8 +273,6 @@ async def mute_member(village_id: str, target_id: str, user_id: str = Depends(ge
     member = sb.table("village_members").select("user_id").eq("village_id", village_id).eq("user_id", target_id).maybe_single().execute()
     if not member.data:
         raise HTTPException(status_code=404, detail="Member not found in this village")
-    expires = datetime.utcnow().isoformat(timespec="seconds") + "+00:00"
-    # Mute for 24 hours
     from datetime import timedelta
     expires = (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec="seconds") + "+00:00"
     sb.table("village_members").update({"muted_until": expires}).eq("village_id", village_id).eq("user_id", target_id).execute()
@@ -341,7 +339,7 @@ async def ban_user(village_id: str, data: dict, user_id: str = Depends(get_curre
     return {"banned": True}
 
 
-@router.get("/{village_id}/bans")
+@router.get("/{village_id}/bans", response_model=list[VillageBan])
 async def list_bans(village_id: str, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
     await _require_chief(village_id, user_id, sb)

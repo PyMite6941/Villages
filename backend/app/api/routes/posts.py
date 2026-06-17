@@ -31,12 +31,21 @@ async def list_posts(village_id: Optional[str] = None, limit: int = 20, offset: 
     return query.execute().data
 
 
+async def _should_moderate(sb, village_id: str | None) -> bool:
+    """Check whether AI moderation should run for this village."""
+    if not village_id:
+        return True
+    v = sb.table("villages").select("ai_moderation").eq("id", village_id).maybe_single().execute()
+    return v.data.get("ai_moderation", True) if v.data else True
+
+
 @router.post("", response_model=Post)
 async def create_post(data: PostCreate, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
-    mod = await moderate_content(data.content)
-    if not mod.get("safe", True):
-        raise HTTPException(status_code=400, detail=f"Content flagged: {mod.get('reason')}")
+    if await _should_moderate(sb, data.village_id):
+        mod = await moderate_content(data.content)
+        if not mod.get("safe", True):
+            raise HTTPException(status_code=400, detail=f"Content flagged: {mod.get('reason')}")
     profile = sb.table("profiles").select("display_name").eq("id", user_id).execute()
     author_name = profile.data[0]["display_name"] if profile.data else "Unknown"
     post = {
@@ -75,9 +84,13 @@ async def get_comments(post_id: str):
 @router.post("/{post_id}/comments", response_model=Comment)
 async def add_comment(post_id: str, data: CommentCreate, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
-    mod = await moderate_content(data.content)
-    if not mod.get("safe", True):
-        raise HTTPException(status_code=400, detail=f"Content flagged: {mod.get('reason')}")
+    # Look up the post's village to respect its ai_moderation flag
+    post = sb.table("posts").select("village_id").eq("id", post_id).maybe_single().execute()
+    village_id = post.data.get("village_id") if post.data else None
+    if await _should_moderate(sb, village_id):
+        mod = await moderate_content(data.content)
+        if not mod.get("safe", True):
+            raise HTTPException(status_code=400, detail=f"Content flagged: {mod.get('reason')}")
     profile = sb.table("profiles").select("display_name").eq("id", user_id).execute()
     author_name = profile.data[0]["display_name"] if profile.data else "Unknown"
     comment = {

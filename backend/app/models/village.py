@@ -38,3 +38,11 @@ class VillageMember(BaseModel):
     role: str = "member"  # "member" | "elder" (AI facilitator proxy) | "chief"
     muted_until: Optional[datetime] = None
     joined_at: Optional[datetime] = None
+
+class VillageBan(BaseModel):
+    id: str
+    village_id: str
+    user_id: str
+    banned_by: str
+    reason: str = ""
+    created_at: Optional[datetime] = None
