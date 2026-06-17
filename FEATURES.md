@@ -896,7 +896,7 @@ Create these in your hosting dashboards:
 | 2.3 | ⬜ | **AI Village Elder replies** — Elder can comment on posts | `backend/app/api/routes/ai.py` | Completes the AI facilitation loop |
 | 2.4 | ✅ | **Challenge completion** — "Mark as done" button | `VillageDetail.tsx`, backend route | Challenges exist but can't complete |
 | 2.5 | ⬜ | **Profile avatar upload** via Supabase Storage | `Profile.tsx`, Supabase bucket | Currently just shows initials |
-| 2.6 | ⬜ | **Mobile responsive nav** — sidebar collapses to bottom tabs | `Layout.tsx` | Current sidebar wastes space on mobile |
+| 2.6 | ✅ | **Mobile responsive nav** — sidebar collapses to bottom tab bar on small screens | `Layout.tsx` | Bottom bar with Home/Study/Villages/Courses/Profile + "More" menu for remaining items. Desktop keeps sidebar. |
 | 2.7 | ✅ | **Study Hub** — Study Buddy, Essay Coach, Study Planner, College Prep | `StudyHub.tsx`, `ai.py`, `ai_service.py` | 4 tabs with access gating |
 | 2.8 | ✅ | **Study Planner** — Multi-week timeline toward target date | `StudyHub.tsx`, `ai.py`, `ai_service.py` | Uses `POST /ai/study-planner` |
 | 2.9 | ✅ | **Courses + Lessons** — Course CRUD, enrollment, lesson completion | `Courses.tsx`, `CourseDetail.tsx`, `courses.py` | With teacher verification flow |
@@ -937,7 +937,7 @@ Create these in your hosting dashboards:
 | 4.4 | ⬜ | Private messaging between members | Communication |
 | 4.5 | ✅ | **Video/voice chat (Daily.co, LiveKit)** | Real-time study rooms — Village Fire voice channel |
 | 4.6 | ⬜ | Admin dashboard | Moderation |
-| 4.7 | ⬜ | Mobile app (React Native / Expo) | Broader reach |
+| 4.7 | ✅ | **Mobile responsive web** — bottom tab bar + responsive cards + responsive grids | `Layout.tsx`, `index.css`, all pages | Sidebar replaced by bottom nav on mobile; card padding reduces from p-5 to p-4 on small screens; all grids use responsive breakpoints |
 
 ---
 
@@ -948,6 +948,9 @@ Create these in your hosting dashboards:
 | # | Severity | Issue | Fix |
 |---|----------|-------|-----|
 | BUG-7 | **Medium (dark mode)** | `Study.tsx` Topic Explorer page — header `text-gray-900` had no `dark:` variant, making it invisible on dark background. Same issue across all result cards, subtitles, and empty state text. | Added `dark:text-gray-100` to header, `dark:text-gray-400/300` to all text elements, `dark:bg-gray-800/60` to card backgrounds, `dark:border-amber-800/50` to borders — 20+ class additions across the page. |
+| BUG-8 | **High (logic)** | AI Moderation toggle in Village Settings was cosmetic — the backend stored `ai_moderation` on the village but `posts.py` never checked it, so `moderate_content()` ran unconditionally on every post and comment. | Added `_should_moderate(sb, village_id)` helper that reads the `ai_moderation` flag; applied conditionally in both `create_post` and `add_comment`. |
+| BUG-9 | **Low (dead code)** | `mute_member` in `villages.py` assigned `expires` twice — line 276 was immediately overwritten by line 279. | Removed the redundant first assignment. |
+| BUG-10 | **Low (missing type)** | `list_bans` route returned raw DB rows with no Pydantic validation — frontend had `VillageBan` interface but backend had no model. | Added `VillageBan` Pydantic model to `models/village.py` and wired as `response_model` on the route. |
 
 ### ✅ Resolved — 2026-06-17 Session
 
@@ -967,8 +970,21 @@ Create these in your hosting dashboards:
 - Backend import smoke test — **58 routes register** (was 50+, new: settings/mute/unmute/kick/ban/lift-ban)
 - ESLint (`npm run lint`) — **0 errors, 0 warnings**
 
-### Build Status (as of 2026-06-18)
+### Build Status (as of 2026-06-18, deploy 1)
 - `tsc --noEmit` — **0 errors, 0 warnings**
 - `npm run build` — **clean production build**
 - Backend import smoke test — **58 routes register** (villages router + ai + posts + users + courses + teacher + auth)
 - Vercel deploy (frontend + backend) — **both live**
+
+### Build Status (as of 2026-06-18, deploy 2 — moderation fixes)
+- `tsc --noEmit` — **0 errors, 0 warnings**
+- `npm run build` — **clean production build**
+- Backend import smoke test — **58 routes register** (villages + ai + posts + users + courses + teacher + auth)
+- Vercel deploy (frontend + backend) — **both live**
+- **Fixes deployed:** AI moderation toggle now functional, `VillageBan` model added, dead code removed
+
+### Build Status (as of 2026-06-18, deploy 3 — mobile responsive)
+- `tsc --noEmit` — **0 errors, 0 warnings**
+- `npm run build` — **clean production build**
+- Backend unchanged (routes still 58)
+- **Mobile deployed:** Sidebar → bottom tab bar on `< sm` screens, More menu for secondary nav, responsive card padding (`p-4 sm:p-5`), responsive grids

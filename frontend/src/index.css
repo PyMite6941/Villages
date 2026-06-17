@@ -52,7 +52,7 @@ html.dark ::selection {
     @apply bg-white border border-village-300 text-village-700 px-4 py-2 rounded-lg font-medium hover:bg-village-50 transition-colors dark:bg-gray-800 dark:border-village-700 dark:text-village-300 dark:hover:bg-gray-800/80;
   }
   .card {
-    @apply bg-white rounded-xl border border-amber-100 shadow-sm p-5 dark:bg-gray-800/80 dark:border-gray-700/60;
+    @apply bg-white rounded-xl border border-amber-100 shadow-sm p-4 sm:p-5 dark:bg-gray-800/80 dark:border-gray-700/60;
   }
   .input {
     @apply w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-village-400 focus:border-transparent dark:bg-gray-800/60 dark:border-gray-700 dark:text-gray-200 dark:placeholder-gray-500;

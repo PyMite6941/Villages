@@ -277,7 +277,7 @@ export default function CourseDetail({ session }: Props) {
 
         {showAddOfficeHour && (
           <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg space-y-3">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div>
                 <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Day</label>
                 <select
