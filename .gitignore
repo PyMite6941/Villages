@@ -40,3 +40,4 @@ Thumbs.db
 
 # Vercel env pulls
 .env.vercel-*
+.vercel

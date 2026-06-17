@@ -36,15 +36,15 @@ export default function Study({ session: _session }: Props) {
       <div className="flex items-center gap-3">
         <Lightbulb size={28} className="text-amber-500" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Topic Explorer</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Topic Explorer</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Turn confusing topics into plain language, a checklist, and clear next steps.
           </p>
         </div>
       </div>
 
       {/* Input */}
-      <div className="card border-amber-200">
+      <div className="card border-amber-200 dark:border-amber-800/50">
         <div className="flex gap-2">
           <input
             value={topicInput}
@@ -68,19 +68,19 @@ export default function Study({ session: _session }: Props) {
       {history && (
         <div className="space-y-4">
           {/* Plain language */}
-          <div className="card border-amber-200 bg-gradient-to-br from-amber-50 to-white">
-            <h2 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+          <div className="card border-amber-200 dark:border-amber-800/50 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/40 dark:to-gray-800/80">
+            <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
               <Lightbulb size={18} className="text-amber-500" />
               Plain language summary
             </h2>
-            <p className="text-gray-700 leading-relaxed">{history.plain_language}</p>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{history.plain_language}</p>
           </div>
 
           {/* Key points */}
           {history.key_points.length > 0 && (
             <div className="card">
-              <h3 className="font-semibold text-gray-800 mb-2">Key points</h3>
-              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Key points</h3>
+              <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 {history.key_points.map((p, i) => (
                   <li key={i}>{p}</li>
                 ))}
@@ -91,15 +91,15 @@ export default function Study({ session: _session }: Props) {
           {/* Checklist */}
           {history.checklist.length > 0 && (
             <div className="card">
-              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-1.5">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-1.5">
                 <CheckSquare size={16} className="text-village-600" />
                 Checklist
               </h3>
               <div className="space-y-2">
                 {history.checklist.map((item, i) => (
-                  <label key={i} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-village-600 focus:ring-village-500" />
-                    <span className="text-sm text-gray-700">{item.title}</span>
+                  <label key={i} className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-village-600 focus:ring-village-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{item.title}</span>
                   </label>
                 ))}
               </div>
@@ -109,19 +109,19 @@ export default function Study({ session: _session }: Props) {
           {/* Next steps */}
           {history.next_steps.length > 0 && (
             <div className="card">
-              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-1.5">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-1.5">
                 <ListChecks size={16} className="text-village-600" />
                 Next steps
               </h3>
               <div className="space-y-3">
                 {history.next_steps.map((step, i) => (
-                  <div key={i} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div key={i} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-lg">
                     <div className="w-7 h-7 rounded-full bg-village-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                       {i + 1}
                     </div>
                     <div>
-                      <p className="font-medium text-sm text-gray-800">{step.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{step.description}</p>
+                      <p className="font-medium text-sm text-gray-800 dark:text-gray-200">{step.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{step.description}</p>
                     </div>
                   </div>
                 ))}
@@ -131,7 +131,7 @@ export default function Study({ session: _session }: Props) {
 
           {/* Audience */}
           {history._audience && history._audience.length > 0 && (
-            <p className="text-xs text-gray-400 text-center">
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
               Tailored for: {history._audience.join(', ')}
             </p>
           )}
@@ -142,8 +142,8 @@ export default function Study({ session: _session }: Props) {
       {!history && !topicLoading && (
         <div className="card text-center py-12">
           <span className="text-5xl">🔍</span>
-          <h2 className="font-semibold text-gray-700 mt-4 mb-1">Type any topic to get started</h2>
-          <p className="text-sm text-gray-500 max-w-md mx-auto">
+          <h2 className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">Type any topic to get started</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
             Whether it's a school subject, a confusing policy, or something you've always wondered about — our AI breaks it down so everyone can understand.
           </p>
         </div>
