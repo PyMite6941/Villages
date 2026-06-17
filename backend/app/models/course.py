@@ -30,6 +30,7 @@ class CourseCreate(BaseModel):
     thumbnail_emoji: str = "📚"
     source: Optional[str] = None  # content attribution, e.g. "College Board AP"
     is_private: bool = False
+    tags: list[str] = []  # granular filter tags, e.g. ["Math","AP","Calculus"]
 
 
 class Course(BaseModel):
@@ -49,6 +50,7 @@ class Course(BaseModel):
     source: Optional[str] = None
     is_private: bool = False
     invite_code: Optional[str] = None
+    tags: list[str] = []
     created_at: Optional[datetime] = None
 
 
@@ -95,6 +97,7 @@ class CourseWithLessons(BaseModel):
     source: Optional[str] = None
     is_private: bool = False
     invite_code: Optional[str] = None
+    tags: list[str] = []
     created_at: Optional[datetime] = None
     lessons: List[Lesson] = []
     office_hours: List["OfficeHour"] = []

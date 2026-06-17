@@ -129,6 +129,7 @@ export interface Course {
   source?: string
   is_private: boolean
   invite_code?: string
+  tags?: string[]
   created_at?: string
 }
 
@@ -176,6 +177,7 @@ export interface CourseCreate {
   thumbnail_emoji: string
   source?: string
   is_private?: boolean
+  tags?: string[]
 }
 
 export interface LessonCreate {

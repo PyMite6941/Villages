@@ -23,7 +23,7 @@ teacher_router = APIRouter(prefix="/teacher", tags=["teacher"])
 
 
 @router.get("", response_model=list[Course])
-async def list_courses(category: str | None = None, subject: str | None = None, user_id: str = Depends(get_current_user)):
+async def list_courses(category: str | None = None, subject: str | None = None, tag: str | None = None, user_id: str = Depends(get_current_user)):
     sb = get_supabase()
     # Show public courses + private courses the user is enrolled in or teaches
     q = sb.table("courses").select("*").eq("is_published", True)
@@ -31,6 +31,8 @@ async def list_courses(category: str | None = None, subject: str | None = None, 
         q = q.eq("category", category)
     if subject:
         q = q.eq("subject", subject)
+    if tag:
+        q = q.contains("tags", [tag])
     result = q.order("created_at", desc=True).execute()
 
     courses = []
@@ -78,6 +80,7 @@ async def create_course(data: CourseCreate, user_id: str = Depends(get_current_u
         "source": data.source,
         "is_private": data.is_private,
         "invite_code": invite_code,
+        "tags": data.tags,
         "created_at": datetime.utcnow().isoformat(),
     }
     result = sb.table("courses").insert(course).execute()

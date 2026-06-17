@@ -95,6 +95,7 @@ const emptyForm = (): CourseCreate => ({
   estimated_hours: 2,
   thumbnail_emoji: '📚',
   is_private: false,
+  tags: [],
 })
 
 export default function Courses({ session }: Props) {
@@ -103,6 +104,7 @@ export default function Courses({ session }: Props) {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<CourseCreate>(emptyForm())
   const [templateLessons, setTemplateLessons] = useState<TemplateLesson[]>([])
@@ -274,6 +276,17 @@ export default function Courses({ session }: Props) {
           placeholder="Search courses by title or subject..."
           className="input"
         />
+        {selectedTag && (
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            <span className="text-gray-500 dark:text-gray-400">Filtered by tag:</span>
+            <button
+              onClick={() => setSelectedTag(null)}
+              className="badge bg-village-600 text-white px-2.5 py-1 flex items-center gap-1"
+            >
+              #{selectedTag} <span className="font-bold">×</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Subject filters */}
@@ -316,7 +329,9 @@ export default function Courses({ session }: Props) {
           {courses
             .filter((course) => {
               const q = search.trim().toLowerCase()
-              return !q || course.title.toLowerCase().includes(q) || course.subject.toLowerCase().includes(q)
+              const matchesSearch = !q || course.title.toLowerCase().includes(q) || course.subject.toLowerCase().includes(q)
+              const matchesTag = !selectedTag || (course.tags ?? []).includes(selectedTag)
+              return matchesSearch && matchesTag
             })
             .map((course) => (
             <CourseCard
@@ -326,6 +341,7 @@ export default function Courses({ session }: Props) {
               isEnrolling={enrollingId === course.id}
               isOwn={course.teacher_id === session.user.id}
               onEnroll={() => handleEnroll(course.id)}
+              onTagClick={setSelectedTag}
             />
           ))}
         </div>
@@ -450,6 +466,18 @@ export default function Courses({ session }: Props) {
                 )}
               </div>
 
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                  Tags <span className="text-gray-400 font-normal">(comma-separated — helps learners filter)</span>
+                </label>
+                <input
+                  value={(form.tags ?? []).join(', ')}
+                  onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) }))}
+                  placeholder="e.g. Math, AP, Calculus, Limits"
+                  className="input"
+                />
+              </div>
+
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -543,12 +571,14 @@ function CourseCard({
   isEnrolling,
   isOwn,
   onEnroll,
+  onTagClick,
 }: {
   course: Course
   isEnrolled: boolean
   isEnrolling: boolean
   isOwn: boolean
   onEnroll: () => void
+  onTagClick: (tag: string) => void
 }) {
   return (
     <div className="card flex flex-col hover:shadow-md transition-shadow">
@@ -568,7 +598,21 @@ function CourseCard({
       </div>
 
       <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-snug">{course.title}</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">{course.description}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2 flex-1">{course.description}</p>
+
+      {course.tags && course.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {course.tags.slice(0, 6).map((t) => (
+            <button
+              key={t}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onTagClick(t) }}
+              className="badge text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-village-100 hover:text-village-700 dark:hover:bg-village-900/40 dark:hover:text-village-300 cursor-pointer"
+            >
+              #{t}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mb-3">
         {course.teacher_is_verified ? (
