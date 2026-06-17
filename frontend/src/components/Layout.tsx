@@ -1,6 +1,6 @@
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import { Home, Users, MessageSquare, User, LogOut, Lightbulb, Info, BookOpen, Brain, Settings as SettingsIcon } from 'lucide-react'
+import { Home, Users, MessageSquare, User, LogOut, Lightbulb, Info, BookOpen, Brain, Settings as SettingsIcon, HelpCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface Props {
@@ -20,6 +20,7 @@ const personalNav = [
   { to: '/profile', label: 'Profile', icon: User },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
   { to: '/about', label: 'About', icon: Info },
+  { to: '/help', label: 'Help', icon: HelpCircle },
 ]
 
 export default function Layout({ session }: Props) {

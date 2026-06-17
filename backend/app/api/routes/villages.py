@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.auth import get_current_user
 from app.config import settings
 from app.database import get_supabase
-from app.models.village import Village, VillageCreate
+from app.models.village import Village, VillageCreate, VillageSettingsUpdate
 from app.services.ai_service import generate_village_match_reasoning
 
 router = APIRouter(prefix="/villages", tags=["villages"])
@@ -237,6 +237,127 @@ async def complete_challenge(
         sb.table("challenges").update({"completed_by": completed}).eq("id", challenge_id).execute()
     return {"completed_by": completed, "completed": True}
 
+
+# ── Moderation helpers ────────────────────────────────────────────────────────
+
+async def _require_chief(village_id: str, user_id: str, sb):
+    """Raise 403 if the user is not a chief of this village."""
+    member = sb.table("village_members").select("role").eq("village_id", village_id).eq("user_id", user_id).maybe_single().execute()
+    if not member.data or member.data.get("role") != "chief":
+        raise HTTPException(status_code=403, detail="Only the village chief can perform this action")
+
+
+# ── Village settings (chief only) ─────────────────────────────────────────────
+
+@router.patch("/{village_id}/settings", response_model=Village)
+async def update_village_settings(village_id: str, data: VillageSettingsUpdate, user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_chief(village_id, user_id, sb)
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No settings to update")
+    result = sb.table("villages").update(updates).eq("id", village_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Village not found")
+    return Village(**result.data[0])
+
+
+# ── Mute a member (chief only) ────────────────────────────────────────────────
+
+@router.post("/{village_id}/members/{target_id}/mute")
+async def mute_member(village_id: str, target_id: str, user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_chief(village_id, user_id, sb)
+    if target_id == user_id:
+        raise HTTPException(status_code=400, detail="You cannot mute yourself")
+    member = sb.table("village_members").select("user_id").eq("village_id", village_id).eq("user_id", target_id).maybe_single().execute()
+    if not member.data:
+        raise HTTPException(status_code=404, detail="Member not found in this village")
+    expires = datetime.utcnow().isoformat(timespec="seconds") + "+00:00"
+    # Mute for 24 hours
+    from datetime import timedelta
+    expires = (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec="seconds") + "+00:00"
+    sb.table("village_members").update({"muted_until": expires}).eq("village_id", village_id).eq("user_id", target_id).execute()
+    return {"muted_until": expires}
+
+
+@router.post("/{village_id}/members/{target_id}/unmute")
+async def unmute_member(village_id: str, target_id: str, user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_chief(village_id, user_id, sb)
+    sb.table("village_members").update({"muted_until": None}).eq("village_id", village_id).eq("user_id", target_id).execute()
+    return {"muted": False}
+
+
+# ── Kick a member (chief only) ────────────────────────────────────────────────
+
+@router.post("/{village_id}/members/{target_id}/kick")
+async def kick_member(village_id: str, target_id: str, user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_chief(village_id, user_id, sb)
+    if target_id == user_id:
+        raise HTTPException(status_code=400, detail="You cannot kick yourself")
+    member = sb.table("village_members").select("user_id, role").eq("village_id", village_id).eq("user_id", target_id).maybe_single().execute()
+    if not member.data:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if member.data.get("role") == "chief":
+        raise HTTPException(status_code=400, detail="Cannot kick another chief")
+    # Remove membership
+    sb.table("village_members").delete().eq("village_id", village_id).eq("user_id", target_id).execute()
+    # Decrement member count
+    v = sb.table("villages").select("member_count").eq("id", village_id).maybe_single().execute()
+    if v.data and v.data["member_count"] > 0:
+        sb.table("villages").update({"member_count": v.data["member_count"] - 1}).eq("id", village_id).execute()
+    # Clear village_id on profile if it matches
+    sb.table("profiles").update({"village_id": None}).eq("id", target_id).eq("village_id", village_id).execute()
+    return {"kicked": True}
+
+
+# ── Ban a user (chief only) ───────────────────────────────────────────────────
+
+@router.post("/{village_id}/bans")
+async def ban_user(village_id: str, data: dict, user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_chief(village_id, user_id, sb)
+    target_id = data.get("user_id")
+    reason = data.get("reason", "")
+    if not target_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+    if target_id == user_id:
+        raise HTTPException(status_code=400, detail="You cannot ban yourself")
+    # Remove from members if present
+    sb.table("village_members").delete().eq("village_id", village_id).eq("user_id", target_id).execute()
+    v = sb.table("villages").select("member_count").eq("id", village_id).maybe_single().execute()
+    if v.data and v.data["member_count"] > 0:
+        sb.table("villages").update({"member_count": v.data["member_count"] - 1}).eq("id", village_id).execute()
+    sb.table("profiles").update({"village_id": None}).eq("id", target_id).eq("village_id", village_id).execute()
+    # Insert ban
+    sb.table("village_bans").insert({
+        "village_id": village_id,
+        "user_id": target_id,
+        "banned_by": user_id,
+        "reason": reason,
+    }).execute()
+    return {"banned": True}
+
+
+@router.get("/{village_id}/bans")
+async def list_bans(village_id: str, user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_chief(village_id, user_id, sb)
+    result = sb.table("village_bans").select("*").eq("village_id", village_id).order("created_at", desc=True).execute()
+    return result.data
+
+
+@router.post("/{village_id}/bans/{ban_id}/lift")
+async def lift_ban(village_id: str, ban_id: str, user_id: str = Depends(get_current_user)):
+    sb = get_supabase()
+    await _require_chief(village_id, user_id, sb)
+    sb.table("village_bans").delete().eq("id", ban_id).eq("village_id", village_id).execute()
+    return {"lifted": True}
+
+
+# ── Voice channel ─────────────────────────────────────────────────────────────
 
 @router.post("/{village_id}/voice")
 async def village_voice_room(village_id: str, user_id: str = Depends(get_current_user)):

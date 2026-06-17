@@ -17,6 +17,7 @@ import Courses from './pages/Courses'
 import CourseDetail from './pages/CourseDetail'
 import StudyHub from './pages/StudyHub'
 import Settings from './pages/Settings'
+import Help from './pages/Help'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="/study-hub" element={<StudyHub session={session!} />} />
         <Route path="/profile" element={<Profile session={session!} />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/help" element={<Help />} />
         <Route path="/about" element={<About />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />

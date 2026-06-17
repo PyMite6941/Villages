@@ -15,8 +15,14 @@ class Village(BaseModel):
     is_active: bool = True
     is_private: bool = False
     invite_code: Optional[str] = None
+    ai_moderation: bool = True
     created_by: str
     created_at: Optional[datetime] = None
+
+class VillageSettingsUpdate(BaseModel):
+    max_members: Optional[int] = None
+    is_private: Optional[bool] = None
+    ai_moderation: Optional[bool] = None
 
 class VillageCreate(BaseModel):
     name: str
@@ -30,4 +36,5 @@ class VillageMember(BaseModel):
     user_id: str
     village_id: str
     role: str = "member"  # "member" | "elder" (AI facilitator proxy) | "chief"
+    muted_until: Optional[datetime] = None
     joined_at: Optional[datetime] = None

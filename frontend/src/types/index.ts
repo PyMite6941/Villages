@@ -41,8 +41,31 @@ export interface Village {
   is_active: boolean
   is_private: boolean
   invite_code?: string
+  ai_moderation: boolean
   created_by: string
   created_at?: string
+}
+
+export interface VillageMember {
+  user_id: string
+  village_id: string
+  role: 'member' | 'elder' | 'chief'
+  muted_until?: string | null
+  joined_at?: string
+  profiles?: {
+    display_name: string
+    academic_level: string
+    avatar_url?: string
+  }
+}
+
+export interface VillageBan {
+  id: string
+  village_id: string
+  user_id: string
+  banned_by: string
+  reason: string
+  created_at: string
 }
 
 export interface Post {

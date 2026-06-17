@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { UserProfile, Village, Post, Comment, Course, CourseWithLessons, EnrollmentStatus, CourseCreate, LessonCreate, Lesson, TeacherVerification, QuizQuestion, OfficeHour, Challenge } from '../types'
+import type { UserProfile, Village, VillageMember, VillageBan, Post, Comment, Course, CourseWithLessons, EnrollmentStatus, CourseCreate, LessonCreate, Lesson, TeacherVerification, QuizQuestion, OfficeHour, Challenge } from '../types'
 
 const BASE = '/api'
 
@@ -44,11 +44,26 @@ export const api = {
     join: (id: string) => req<{ message: string }>('POST', `/villages/${id}/join`),
     joinByCode: (code: string) => req<{ message: string; village_id: string }>('POST', '/villages/join-by-code', { code }),
     aiMatch: () => req<{ recommended_village_id: string; reasoning: string }>('POST', '/villages/match'),
-    getMembers: (id: string) => req<unknown[]>('GET', `/villages/${id}/members`),
+    getMembers: (id: string) => req<VillageMember[]>('GET', `/villages/${id}/members`),
     listChallenges: (id: string) => req<Challenge[]>('GET', `/villages/${id}/challenges`),
     completeChallenge: (villageId: string, challengeId: string) =>
       req<{ completed_by: string[]; completed: boolean }>('POST', `/villages/${villageId}/challenges/${challengeId}/complete`),
     voiceRoom: (id: string) => req<{ url: string }>('POST', `/villages/${id}/voice`),
+    // Moderation (chief only)
+    updateSettings: (id: string, data: { max_members?: number; is_private?: boolean; ai_moderation?: boolean }) =>
+      req<Village>('PATCH', `/villages/${id}/settings`, data),
+    muteMember: (villageId: string, targetId: string) =>
+      req<{ muted_until: string }>('POST', `/villages/${villageId}/members/${targetId}/mute`),
+    unmuteMember: (villageId: string, targetId: string) =>
+      req<{ muted: boolean }>('POST', `/villages/${villageId}/members/${targetId}/unmute`),
+    kickMember: (villageId: string, targetId: string) =>
+      req<{ kicked: boolean }>('POST', `/villages/${villageId}/members/${targetId}/kick`),
+    banUser: (villageId: string, targetId: string, reason?: string) =>
+      req<{ banned: boolean }>('POST', `/villages/${villageId}/bans`, { user_id: targetId, reason }),
+    listBans: (villageId: string) =>
+      req<VillageBan[]>('GET', `/villages/${villageId}/bans`),
+    liftBan: (villageId: string, banId: string) =>
+      req<{ lifted: boolean }>('POST', `/villages/${villageId}/bans/${banId}/lift`),
   },
   posts: {
     list: (villageId?: string, offset = 0) =>
