@@ -876,10 +876,10 @@ Create these in your hosting dashboards:
 
 | # | Status | Task | Who | Details |
 |---|--------|------|-----|---------|
-| 1.1 | ⬜ | **Create separate Supabase project for Villages** | 👤 **Human** | Go to https://supabase.com/dashboard → New Project → Name `villages` → Note the new URL + anon key + service_role key + JWT secret |
-| 1.2 | ⬜ | **Update `.env` files with new Supabase project keys** | ⬜ Claude | Replace backend `.env` + frontend `.env` with keys from the new Villages Supabase project |
-| 1.3 | ⬜ | **Get Supabase JWT secret & update backend `.env`** | 👤 **Human** | Supabase Dashboard → Settings → API → JWT Settings → Copy `SUPABASE_JWT_SECRET` |
-| 1.4 | ⬜ | **Run `001_initial_schema.sql`** | 👤 **Human** | Supabase SQL Editor → paste the migration → Run. Creates all 6 tables + RLS + Realtime |
+| 1.1 | 🟦 | **Create separate Supabase project for Villages** | 👤 **Human** | Go to https://supabase.com/dashboard → New Project → Name `villages` → Note the new URL + anon key + service_role key + JWT secret. Currently sharing AI-Teacher's project — works but has `profiles` schema conflict risk. |
+| 1.2 | 🟦 | **Update `.env` files with new Supabase project keys** | ⬜ Claude | Replace backend `.env` + frontend `.env` with keys from the new Villages Supabase project. Current keys (`ooarycauxwefmxdlpxvc.supabase.co`) work for now. |
+| 1.3 | 🟦 | **Get Supabase JWT secret & update backend `.env`** | 👤 **Human** | Supabase Dashboard → Settings → API → JWT Settings → Copy `SUPABASE_JWT_SECRET`. Current value is a placeholder (`change-me-in-supabase-dashboard`). |
+| 1.4 | 🟦 | **Run all migrations (001-008)** | 👤 **Human** | Supabase SQL Editor → run each migration in order: 001 → 002 → 003 → 004 → 005 → 006 → 007 → 008. If using the existing shared project, migrations 001-008 have already been applied. |
 | 1.5 | ✅ | **Deploy frontend to Vercel** | ⬜ Claude | Deployed to project `villages` → https://villages-eight.vercel.app (`vercel deploy --prod`) |
 | 1.6 | ✅ | **Deploy backend to Vercel** (was Koyeb) | ⬜ Claude | Migrated to `@vercel/python` serverless. Project `villages-api` → https://villages-api.vercel.app. Added `backend/api/index.py`, `backend/vercel.json` (builds), `backend/.vercelignore`; pushed all env vars; disabled Deployment Protection. `/health` → 200 |
 | 1.7 | ✅ | **Update vercel.json with backend URL** | ⬜ Claude | `frontend/vercel.json` rewrite now → `https://villages-api.vercel.app/$1` |
@@ -900,7 +900,7 @@ Create these in your hosting dashboards:
 | 2.7 | ✅ | **Study Hub** — Study Buddy, Essay Coach, Study Planner, College Prep | `StudyHub.tsx`, `ai.py`, `ai_service.py` | 4 tabs with access gating |
 | 2.8 | ✅ | **Study Planner** — Multi-week timeline toward target date | `StudyHub.tsx`, `ai.py`, `ai_service.py` | Uses `POST /ai/study-planner` |
 | 2.9 | ✅ | **Courses + Lessons** — Course CRUD, enrollment, lesson completion | `Courses.tsx`, `CourseDetail.tsx`, `courses.py` | With teacher verification flow |
-| 2.10 | ✅ | **Auth proxy** — Magic link via backend for deployed SITE_URL workaround | `auth.py`, `Callback.tsx` | Backend follows 303 redirect, extracts session tokens |
+| 2.10 | ✅ | **Auth** — Standard Supabase client SDK magic link | `Login.tsx`, `Callback.tsx` | Uses `supabase.auth.signInWithOtp()` with dynamic `window.location.origin`. The `auth.py` admin proxy exists but is disabled (gated by `magic_link_admin_secret`, not set). |
 | 2.11 | ✅ | **Study tracks** — high_schooler, college_student, adult_learner, test_prep | `Onboarding.tsx`, `Profile.tsx` | Unlocks gated features in Study Hub |
 | 2.12 | ✅ | **Settings page + dark mode** — dark/light/system theme toggle, reduce-motion, persisted to localStorage | `Settings.tsx`, `Layout.tsx`, `tailwind.config.js`, `index.css` | Uses `dark:` Tailwind variant; system preference as default |
 | 2.13 | ✅ | **Dark mode — full page coverage** — 400+ `dark:` variants across 13 files | All pages + components | StudyHub, Courses, CourseDetail, Profile, Home, Villages, VillageDetail, Layout, PostCard, VillageCard, VillageChat, Forum, Settings |
@@ -1038,6 +1038,28 @@ A consolidated catch-all of everything that may or may not need to be completed,
 | Private messaging | — | DMs between members. |
 | Admin dashboard | — | User/village/content moderation panel. |
 | Custom domain | DNS + Vercel | Buy `villages.app` or similar, point to Vercel, update CORS. |
+
+### 🤖 Claude's Remaining Work — What Needs API Keys / Env Setup
+
+These items require an API key, secret token, or environment configuration that only a human can provide or approve. Once the keys are available, Claude can do the rest.
+
+| Task | Depends On | What Claude Will Do |
+|------|------------|-------------------|
+| **Daily.co voice rooms** | `DAILY_API_KEY` set in Vercel env | Verify the key, deploy backend. Or: hide the "Join Voice" button when the key is absent (code change). |
+| **Supabase JWT secret** | Human provides the real JWT secret from Supabase dashboard | Update `SUPABASE_JWT_SECRET` in backend `.env` and Vercel env. Current value is a placeholder. |
+| **Separate Supabase project** | Human creates project + provides keys | Update both `.env` files + Vercel env vars with the new project URL, anon key, and service role key. Run migrations 001-008 via SQL Editor. |
+| **Custom domain** | Human buys domain + updates DNS | Update CORS in `backend/app/main.py`. Update `frontend/vercel.json` if needed. |
+
+### Next Feature Work (No Keys Required)
+
+Claude can pick these up independently — no API keys needed:
+
+- Post pagination (infinite scroll / "Load more")
+- Profile avatar upload (Supabase Storage bucket)
+- Notifications system (DB table + API + badge)
+- AI Village Elder replies (comment on posts)
+- Backend tests (pytest + httpx)
+- Cache AI responses in DB
 
 ### ⚪ Things That Work But Are Worth Knowing
 
