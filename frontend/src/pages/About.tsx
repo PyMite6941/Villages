@@ -19,7 +19,7 @@ export default function About() {
           Villages was built for an AI competition under <strong>Brief 1 — Community Support & Understanding</strong>.
           The goal is to help people find support and understand complex information together, not alone.
         </p>
-        <p className="text-gray-700 leading-relaxed mt-3">
+        <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-3">
           Whether you're a student preparing for exams, an adult navigating a career change, or a parent
           trying to understand new education standards — Villages brings together people with shared
           learning goals and uses AI to turn confusing information into clear, actionable steps.
