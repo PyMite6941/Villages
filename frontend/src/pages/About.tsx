@@ -13,9 +13,9 @@ export default function About() {
       </div>
 
       {/* Purpose */}
-      <div className="card bg-gradient-to-br from-village-50 to-amber-50 border-village-200">
-        <h2 className="font-semibold text-lg text-village-800 mb-3">Our Purpose</h2>
-        <p className="text-gray-700 leading-relaxed">
+      <div className="card bg-gradient-to-br from-village-50 to-amber-50 dark:from-village-950/40 dark:to-amber-950/30 border-village-200 dark:border-village-800">
+        <h2 className="font-semibold text-lg text-village-800 dark:text-village-300 mb-3">Our Purpose</h2>
+        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
           Villages was built for an AI competition under <strong>Brief 1 — Community Support & Understanding</strong>.
           The goal is to help people find support and understand complex information together, not alone.
         </p>
@@ -59,9 +59,9 @@ export default function About() {
       </div>
 
       {/* Creator's story */}
-      <div className="card bg-gradient-to-br from-village-50 to-amber-50 border-village-200">
-        <h2 className="font-semibold text-lg text-village-800 mb-3">A Note from the Creator</h2>
-        <p className="text-gray-700 leading-relaxed">
+      <div className="card bg-gradient-to-br from-village-50 to-amber-50 dark:from-village-950/40 dark:to-amber-950/30 border-village-200 dark:border-village-800">
+        <h2 className="font-semibold text-lg text-village-800 dark:text-village-300 mb-3">A Note from the Creator</h2>
+        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
           As young as 8th grade, I wanted to build a digital product that enhanced education through
           connection online — using styles that both Reddit and Discord have. This is my dream come true,
           with the addition of artificial intelligence sprinkled in to make the community and learning
