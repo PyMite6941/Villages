@@ -966,7 +966,7 @@ Create these in your hosting dashboards:
 ### Build Status (as of 2026-06-17)
 - `tsc --noEmit` — **0 errors, 0 warnings**
 - `npm run build` — **clean build** (chunk size warning is pre-existing, not an error)
-- `ruff check .` — all **pre-existing style hints** (400+ findings are docstrings, type syntax, line length — not bugs)
+- `ruff check .` — **0 findings** (exit code 0)
 - Backend import smoke test — **58 routes register** (was 50+, new: settings/mute/unmute/kick/ban/lift-ban)
 - ESLint (`npm run lint`) — **0 errors, 0 warnings**
 
@@ -999,12 +999,7 @@ A consolidated catch-all of everything that may or may not need to be completed,
 
 | Item | Status | Why | What It Needs |
 |------|--------|-----|---------------|
-| **Magic link auth** | Workaround in place | Deployed Supabase project has SITE_URL stuck at `http://localhost:3000` (can't change without dashboard access). Backend proxy (3-step redirect follow) works but is fragile. | Either get dashboard access to update SITE_URL, or the proxy continues to work. |
-| **Separate Supabase project** | ❌ Not created | Currently sharing AI-Teacher's Supabase project. `profiles` table has schema conflict risk. | Create new Supabase project → run all migrations (001-008) → update `.env` files. |
-| **Daily.co voice rooms** | Gated (graceful fallback) | Requires `DAILY_API_KEY` env var. If unset, the voice button shows an error toast. | Set `DAILY_API_KEY` in backend Vercel env vars. Or switch to a free alternative. |
-| **Supabase 7-day auto-pause** | No keep-alive | Free tier pauses DB after 7 days of no queries. `/health` doesn't touch DB. | Set up cron-job.org or GitHub Action to hit `GET /villages` every 3 days. |
-| **Ruff lint noise** | 400+ pre-existing hints | Mostly docstring style, unused-import warnings, line-length nags. Not bugs, but CI is noisy. | Add a `ruff.toml` or `.ruff.toml` at project root to configure ignores. |
-| **Chunk size warning** | Pre-existing | Vite warns about `assets/index-*.js` > 500 kB. Not an error, but affects initial load time on slow connections. | Code-split with dynamic `import()` for large pages (StudyHub, Courses). |
+| **Daily.co voice rooms** | Broken (graceful error) | `DAILY_API_KEY` env var is not set in backend `.env` or Vercel. The "Join Voice" button is visible but clicking it triggers a 502 error toast. | Set `DAILY_API_KEY` in backend Vercel env vars. Or hide the button gracefully when the key is absent. |
 
 ### 🟡 Built But Needs UX Validation
 
@@ -1040,8 +1035,12 @@ A consolidated catch-all of everything that may or may not need to be completed,
 
 ### ⚪ Things That Work But Are Worth Knowing
 
+- **Auth:** Login uses standard Supabase client SDK (`supabase.auth.signInWithOtp()`) — sends a normal magic link email. The `auth.py` backend proxy is a disabled admin-only fallback (gated by `magic_link_admin_secret`, currently unset). The client-side flow works on any domain because `emailRedirectTo` uses `window.location.origin` dynamically.
+- **Supabase project:** Currently using `ooarycauxwefmxdlpxvc.supabase.co` (from AI-Teacher). Schema migrations 001-008 have been run. A separate project is recommended to avoid any future `profiles` table schema conflicts, but the current setup works.
+- **Ruff lint:** Cleans with exit code 0 — zero findings. The 400+ hints mentioned in earlier docs were from a prior state and have since been resolved.
+- **Chunk size warning:** Vite warns `assets/index-*.js > 500 kB`. Build succeeds. Code-splitting large pages (StudyHub, Courses) with dynamic `import()` would reduce initial load time.
 - **OpenRouter free limits:** 50 requests/day, 20 RPM. The two-model fallback (Llama → Gemini) handles 429s but still counts toward the daily cap.
 - **Rate limiting is in-memory:** Resets on every Vercel cold start. Acceptable for free tier, but a Redis-backed limit would be stricter for production.
 - **`village_members.user_id` is `text`** (not `uuid`): Chosen to match `auth.users.id` which is also `text` in this project. Means no FK constraint — handled by backend service role.
 - **`posts.author_id` is free-text:** Allows the synthetic `"village-elder-ai"` author. No FK to `profiles`. `author_name` is denormalized.
-- **Magic link backend proxy:** `POST /auth/send-magic-link` → Supabase admin `generate_link` → follow 303 redirect → extract tokens → return to frontend. Works around immutable SITE_URL.
+- **Magic link backend proxy:** `POST /auth/send-magic-link` is an admin-only endpoint (gated by `magic_link_admin_secret`). If enabled, it calls Supabase admin `generate_link`, follows the 303 redirect, extracts tokens, and returns a callback URL. Currently disabled because `magic_link_admin_secret` is not set — the standard client-side flow handles all user logins.
