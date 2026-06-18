@@ -67,14 +67,14 @@ export default function About() {
           with the addition of artificial intelligence sprinkled in to make the community and learning
           even better.
         </p>
-        <p className="text-gray-700 leading-relaxed mt-3">
+        <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-3">
           I also know that learning should never end — that's why I incorporated adults into this
           platform too. Whether you're 14 or 74, there's always something new to discover together.
         </p>
-        <p className="text-gray-700 leading-relaxed mt-3">
+        <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-3">
           I hope you enjoy this product.
         </p>
-        <p className="text-gray-600 font-medium mt-2">— Matt Gresham</p>
+        <p className="text-gray-700 dark:text-gray-300 font-medium mt-2">— Matt Gresham</p>
       </div>
     </div>
   )
