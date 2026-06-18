@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
@@ -6,18 +7,19 @@ import Layout from './components/Layout'
 import Home from './pages/Home'
 import Study from './pages/Study'
 import Villages from './pages/Villages'
-import VillageDetail from './pages/VillageDetail'
 import Forum from './pages/Forum'
 import Profile from './pages/Profile'
 import About from './pages/About'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
 import Callback from './pages/Callback'
-import Courses from './pages/Courses'
-import CourseDetail from './pages/CourseDetail'
-import StudyHub from './pages/StudyHub'
 import Settings from './pages/Settings'
 import Help from './pages/Help'
+
+const VillageDetail = lazy(() => import('./pages/VillageDetail'))
+const Courses = lazy(() => import('./pages/Courses'))
+const CourseDetail = lazy(() => import('./pages/CourseDetail'))
+const StudyHub = lazy(() => import('./pages/StudyHub'))
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -54,6 +56,8 @@ export default function App() {
     return <Navigate to="/login" />
   }
 
+  const fallback = <div className="flex items-center justify-center py-12 text-gray-400 dark:text-gray-500 text-sm">Loading...</div>
+
   return (
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" /> : <Login />} />
@@ -63,11 +67,11 @@ export default function App() {
         <Route path="/" element={<Home session={session!} />} />
         <Route path="/study" element={<Study session={session!} />} />
         <Route path="/villages" element={<Villages />} />
-        <Route path="/villages/:id" element={<VillageDetail session={session!} />} />
+        <Route path="/villages/:id" element={<Suspense fallback={fallback}><VillageDetail session={session!} /></Suspense>} />
         <Route path="/forum" element={<Forum session={session!} />} />
-        <Route path="/courses" element={<Courses session={session!} />} />
-        <Route path="/courses/:id" element={<CourseDetail session={session!} />} />
-        <Route path="/study-hub" element={<StudyHub session={session!} />} />
+        <Route path="/courses" element={<Suspense fallback={fallback}><Courses session={session!} /></Suspense>} />
+        <Route path="/courses/:id" element={<Suspense fallback={fallback}><CourseDetail session={session!} /></Suspense>} />
+        <Route path="/study-hub" element={<Suspense fallback={fallback}><StudyHub session={session!} /></Suspense>} />
         <Route path="/profile" element={<Profile session={session!} />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
