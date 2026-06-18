@@ -988,3 +988,60 @@ Create these in your hosting dashboards:
 - `npm run build` — **clean production build**
 - Backend unchanged (routes still 58)
 - **Mobile deployed:** Sidebar → bottom tab bar on `< sm` screens, More menu for secondary nav, responsive card padding (`p-4 sm:p-5`), responsive grids
+
+---
+
+## 🚦 Master Status — What Needs Attention
+
+A consolidated catch-all of everything that may or may not need to be completed, fixed, or investigated.
+
+### 🔴 Not Fully Working / Known Broken
+
+| Item | Status | Why | What It Needs |
+|------|--------|-----|---------------|
+| **Magic link auth** | Workaround in place | Deployed Supabase project has SITE_URL stuck at `http://localhost:3000` (can't change without dashboard access). Backend proxy (3-step redirect follow) works but is fragile. | Either get dashboard access to update SITE_URL, or the proxy continues to work. |
+| **Separate Supabase project** | ❌ Not created | Currently sharing AI-Teacher's Supabase project. `profiles` table has schema conflict risk. | Create new Supabase project → run all migrations (001-008) → update `.env` files. |
+| **Daily.co voice rooms** | Gated (graceful fallback) | Requires `DAILY_API_KEY` env var. If unset, the voice button shows an error toast. | Set `DAILY_API_KEY` in backend Vercel env vars. Or switch to a free alternative. |
+| **Supabase 7-day auto-pause** | No keep-alive | Free tier pauses DB after 7 days of no queries. `/health` doesn't touch DB. | Set up cron-job.org or GitHub Action to hit `GET /villages` every 3 days. |
+| **Ruff lint noise** | 400+ pre-existing hints | Mostly docstring style, unused-import warnings, line-length nags. Not bugs, but CI is noisy. | Add a `ruff.toml` or `.ruff.toml` at project root to configure ignores. |
+| **Chunk size warning** | Pre-existing | Vite warns about `assets/index-*.js` > 500 kB. Not an error, but affects initial load time on slow connections. | Code-split with dynamic `import()` for large pages (StudyHub, Courses). |
+
+### 🟡 Built But Needs UX Validation
+
+| Item | Status | Why | What It Needs |
+|------|--------|-----|---------------|
+| **Full end-to-end flow** | ⬜ Not manually tested | Backend imports clean, frontend builds, proxy verified — but no human has clicked through signup → onboarding → create village → post → AI Elder → challenge on the live site. | Manual walkthrough once Supabase project is ready. |
+| **Mobile responsive** | 🟦 Desktop tested only | Bottom tab bar and responsive grids deployed but not tested across real mobile devices (iOS Safari, Android Chrome). | Test on actual phones, fix any overflow/touch issues. |
+| **Dark mode completeness** | 🟦 ~400+ class additions | Coverage is broad but some pages (Study, course detail sections, chat) may have missed dark variants. | Spot-check each page in dark mode with real content. |
+| **Accessibility (screen readers)** | 🟦 Not audited | TTS, dyslexia font, and reduce-motion implemented, but no ARIA labels, focus management, or screen reader testing done. | Run a basic axe/Lighthouse audit. |
+
+### 🟠 Should Complete Soon (Medium Priority)
+
+| Item | Priority | Files | Notes |
+|------|----------|-------|-------|
+| **Post pagination** | Medium | `VillageDetail.tsx`, `Forum.tsx` | Currently loads all posts at once — will break with 1000+ posts. Add cursor-based or offset pagination. |
+| **Profile avatar upload** | Medium | `Profile.tsx`, Supabase Storage | Currently shows first-initial avatar. Create Supabase storage bucket, add upload widget. |
+| **Notifications system** | Medium | Schema + API + frontend badge | Village activity (replies, challenges, elder prompts) needs to notify members. |
+| **AI Village Elder replies** | Medium | `backend/app/api/routes/ai.py` | Elder can post prompts but can't reply to member posts — limits AI facilitation loop. |
+
+### 🔵 Nice-to-Have (Low Priority)
+
+| Item | Files | Notes |
+|------|-------|-------|
+| Backend tests | `backend/tests/` | Zero coverage. `pytest` + `httpx.AsyncClient` for route testing. |
+| Cache AI responses | `ai_service.py` | Deduplicate identical topic explanations / elder prompts. |
+| Error monitoring (Sentry) | Backend + Frontend | Catch production crashes. |
+| Study resource upload | Supabase Storage | PDFs, links, docs per village. |
+| Scheduled study sessions | — | Calendar / time-based coordination. |
+| Gamification | — | XP, levels, leaderboards. |
+| Private messaging | — | DMs between members. |
+| Admin dashboard | — | User/village/content moderation panel. |
+| Custom domain | DNS + Vercel | Buy `villages.app` or similar, point to Vercel, update CORS. |
+
+### ⚪ Things That Work But Are Worth Knowing
+
+- **OpenRouter free limits:** 50 requests/day, 20 RPM. The two-model fallback (Llama → Gemini) handles 429s but still counts toward the daily cap.
+- **Rate limiting is in-memory:** Resets on every Vercel cold start. Acceptable for free tier, but a Redis-backed limit would be stricter for production.
+- **`village_members.user_id` is `text`** (not `uuid`): Chosen to match `auth.users.id` which is also `text` in this project. Means no FK constraint — handled by backend service role.
+- **`posts.author_id` is free-text:** Allows the synthetic `"village-elder-ai"` author. No FK to `profiles`. `author_name` is denormalized.
+- **Magic link backend proxy:** `POST /auth/send-magic-link` → Supabase admin `generate_link` → follow 303 redirect → extract tokens → return to frontend. Works around immutable SITE_URL.
