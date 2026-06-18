@@ -1067,6 +1067,7 @@ Claude can pick these up independently — no API keys needed:
 - **Supabase project:** Currently using `ooarycauxwefmxdlpxvc.supabase.co` (from AI-Teacher). Schema migrations 001-008 have been run. A separate project is recommended to avoid any future `profiles` table schema conflicts, but the current setup works.
 - **Ruff lint:** Cleans with exit code 0 — zero findings. The 400+ hints mentioned in earlier docs were from a prior state and have since been resolved.
 - **Chunk size:** Main bundle 484 kB (under the 500 kB threshold). Large pages (VillageDetail, Courses, CourseDetail, StudyHub) are lazy-loaded as separate chunks via `React.lazy`.
+- **Duplicate migration fixed:** `008_moderation.sql` was a duplicate of `008_village_moderation.sql`. Deleted `008_moderation.sql`; removed unnecessary realtime publication add and public RLS policy from the survivor. Only one 008 migration remains.
 - **OpenRouter free limits:** 50 requests/day, 20 RPM. The two-model fallback (Llama → Gemini) handles 429s but still counts toward the daily cap.
 - **Rate limiting is in-memory:** Resets on every Vercel cold start. Acceptable for free tier, but a Redis-backed limit would be stricter for production.
 - **`village_members.user_id` is `text`** (not `uuid`): Chosen to match `auth.users.id` which is also `text` in this project. Means no FK constraint — handled by backend service role.

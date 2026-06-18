@@ -18,7 +18,7 @@ export default function VillageCard({ village, onJoin, currentVillageId }: Props
         <div>
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">{village.name}</h3>
           <div className="flex gap-1.5 mt-1">
-            <span className="badge bg-village-100 text-village-700">{village.focus_area}</span>
+            <span className="badge bg-village-100 text-village-700 dark:bg-village-900/40 dark:text-village-300">{village.focus_area}</span>
             {village.is_private && <span className="badge bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">🔒 Private</span>}
           </div>
         </div>

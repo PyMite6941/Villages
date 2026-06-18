@@ -27,8 +27,9 @@ export default function App() {
   const location = useLocation()
 
   useEffect(() => {
-    const stored = localStorage.getItem('village-dark-mode')
-    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const stored = localStorage.getItem('village-theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
@@ -46,7 +47,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-amber-50">
+      <div className="h-screen flex items-center justify-center bg-amber-50 dark:bg-gray-900">
         <div className="text-village-600 text-lg font-medium">Loading Villages...</div>
       </div>
     )

@@ -248,7 +248,7 @@ export default function Profile({ session }: Props) {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Learning Style</label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {LEARNING_STYLES.map((s) => (
                   <button key={s} onClick={() => setForm((p) => ({ ...p, learning_style: s }))}
                     className={`badge cursor-pointer py-1 px-3 text-sm capitalize ${form.learning_style === s ? 'bg-village-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>{s}</button>

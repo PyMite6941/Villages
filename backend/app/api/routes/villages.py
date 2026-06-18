@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import httpx
@@ -273,7 +273,6 @@ async def mute_member(village_id: str, target_id: str, user_id: str = Depends(ge
     member = sb.table("village_members").select("user_id").eq("village_id", village_id).eq("user_id", target_id).limit(1).execute()
     if not member.data:
         raise HTTPException(status_code=404, detail="Member not found in this village")
-    from datetime import timedelta
     expires = (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec="seconds") + "+00:00"
     sb.table("village_members").update({"muted_until": expires}).eq("village_id", village_id).eq("user_id", target_id).execute()
     return {"muted_until": expires}

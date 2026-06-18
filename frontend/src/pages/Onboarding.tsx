@@ -174,8 +174,8 @@ export default function Onboarding({ session: _session }: Props) {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">How do you learn best?</p>
-                <div className="flex gap-2">
-                  {LEARNING_STYLES.map((s) => (
+              <div className="flex gap-2 flex-wrap">
+                {LEARNING_STYLES.map((s) => (
                     <button key={s} onClick={() => setForm((p) => ({ ...p, learning_style: s }))}
                       className={`badge cursor-pointer py-2 px-4 capitalize ${form.learning_style === s ? 'bg-village-600 text-white ring-2 ring-village-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                       {s}

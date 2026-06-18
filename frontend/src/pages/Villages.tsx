@@ -85,10 +85,10 @@ export default function Villages() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Villages</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Find your study community</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Find or create your study community</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowJoinCode(true)} className="btn-secondary flex items-center gap-2 text-sm">

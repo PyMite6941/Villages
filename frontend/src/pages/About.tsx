@@ -58,11 +58,23 @@ export default function About() {
         </p>
       </div>
 
-      {/* Edit me — add your own story here */}
-      <div className="card border-dashed border-2 border-gray-200 bg-gray-50 text-center py-8">
-        <p className="text-sm text-gray-400 italic">
-          ✏️ Your story goes here — why you built this, who it's for, what you hope to achieve.
+      {/* Creator's story */}
+      <div className="card bg-gradient-to-br from-village-50 to-amber-50 border-village-200">
+        <h2 className="font-semibold text-lg text-village-800 mb-3">A Note from the Creator</h2>
+        <p className="text-gray-700 leading-relaxed">
+          As young as 8th grade, I wanted to build a digital product that enhanced education through
+          connection online — using styles that both Reddit and Discord have. This is my dream come true,
+          with the addition of artificial intelligence sprinkled in to make the community and learning
+          even better.
         </p>
+        <p className="text-gray-700 leading-relaxed mt-3">
+          I also know that learning should never end — that's why I incorporated adults into this
+          platform too. Whether you're 14 or 74, there's always something new to discover together.
+        </p>
+        <p className="text-gray-700 leading-relaxed mt-3">
+          I hope you enjoy this product.
+        </p>
+        <p className="text-gray-600 font-medium mt-2">— Matt Gresham</p>
       </div>
     </div>
   )

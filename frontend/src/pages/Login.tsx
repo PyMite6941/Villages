@@ -55,7 +55,7 @@ export default function Login() {
   }
 
   return (
-    <div className="h-screen bg-amber-50 flex items-center justify-center px-4 overflow-hidden">
+    <div className="h-screen bg-amber-50 dark:bg-gray-900 flex items-center justify-center px-4 overflow-hidden">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <span className="text-6xl">🏘️</span>

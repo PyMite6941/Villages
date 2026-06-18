@@ -6,7 +6,7 @@ const sections = [
     icon: Users,
     title: 'Villages & Groups',
     items: [
-      { q: 'What is a Village?', a: 'A Village is a small study cohort (2–10 people) matched by AI based on your goals, academic level, and interests. Each Village has a focus area like "SAT Math" or "AP Biology". You can discuss topics, share resources, and work on challenges together.' },
+      { q: 'What is a Village?', a: 'A Village is a small cohort (2–10 people) matched by AI based on your goals, academic level, and interests. Each Village has a focus area — it could be academic ("SAT Math"), skill-based ("Guitar Basics"), a hobby ("Gardening Tips"), or anything a group wants to learn or discuss together.' },
       { q: 'How do I get matched to a Village?', a: 'Complete your profile on the Onboarding page (especially goals, academic level, and interests). Then visit the Villages page and click "Match Me" — the AI will find the best fit. You can also browse and join villages manually.' },
       { q: 'Can I create my own Village?', a: 'Yes! Click "Create Village" on the Villages page. You become the chief and can set the name, focus area, max members, and whether it\'s private (invite-only) or public.' },
       { q: 'What happens at 100 members?', a: 'Once a Village reaches 100 members, it automatically becomes public (invite code is cleared), so anyone can find and join it.' },

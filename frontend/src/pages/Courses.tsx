@@ -229,7 +229,7 @@ export default function Courses({ session }: Props) {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-6 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <BookOpen className="text-village-600 dark:text-village-300" size={22} />

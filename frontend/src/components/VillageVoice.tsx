@@ -33,7 +33,7 @@ export default function VillageVoice({ villageId }: { villageId: string }) {
       const { url } = await api.villages.voiceRoom(villageId)
       const frame = DailyIframe.createFrame(containerRef.current!, {
         showLeaveButton: true,
-        iframeStyle: { width: '100%', height: '420px', border: '0', borderRadius: '12px' },
+        iframeStyle: { width: '100%', height: 'min(420px, 60vh)', border: '0', borderRadius: '12px' },
       })
       callRef.current = frame
       frame.on('left-meeting', leave)

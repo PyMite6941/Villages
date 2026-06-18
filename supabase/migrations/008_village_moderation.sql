@@ -31,18 +31,4 @@ create index if not exists idx_village_bans_lookup
 
 -- ── 5. RLS for bans ─────────────────────────────────────────────────────────
 alter table public.village_bans enable row level security;
-
-do $$
-begin
-  if not exists (
-    select 1 from pg_policies
-    where tablename = 'village_bans' and policyname = 'Anyone can view bans (backend-governed)'
-  ) then
-    create policy "Anyone can view bans (backend-governed)"
-      on public.village_bans for select
-      using (true);
-  end if;
-end $$;
-
--- ── 6. Realtime for bans (so chiefs see updates instantly) ──────────────────
-alter publication supabase_realtime add table public.village_bans;
+-- No public policy: only the service-role backend reads/writes bans.
