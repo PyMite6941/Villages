@@ -989,6 +989,12 @@ Create these in your hosting dashboards:
 - Backend unchanged (routes still 58)
 - **Mobile deployed:** Sidebar → bottom tab bar on `< sm` screens, More menu for secondary nav, responsive card padding (`p-4 sm:p-5`), responsive grids
 
+### Build Status (as of 2026-06-18, deploy 4 — code-split)
+- `tsc --noEmit` — **0 errors, 0 warnings**
+- `npm run build` — **clean build, no chunk size warning** (main bundle: 484 kB vs previous 854 kB)
+- Backend unchanged
+- **Code-split:** VillageDetail, Courses, CourseDetail, StudyHub now lazy-loaded via `React.lazy` + `Suspense`
+
 ---
 
 ## 🚦 Master Status — What Needs Attention
@@ -1038,7 +1044,7 @@ A consolidated catch-all of everything that may or may not need to be completed,
 - **Auth:** Login uses standard Supabase client SDK (`supabase.auth.signInWithOtp()`) — sends a normal magic link email. The `auth.py` backend proxy is a disabled admin-only fallback (gated by `magic_link_admin_secret`, currently unset). The client-side flow works on any domain because `emailRedirectTo` uses `window.location.origin` dynamically.
 - **Supabase project:** Currently using `ooarycauxwefmxdlpxvc.supabase.co` (from AI-Teacher). Schema migrations 001-008 have been run. A separate project is recommended to avoid any future `profiles` table schema conflicts, but the current setup works.
 - **Ruff lint:** Cleans with exit code 0 — zero findings. The 400+ hints mentioned in earlier docs were from a prior state and have since been resolved.
-- **Chunk size warning:** Vite warns `assets/index-*.js > 500 kB`. Build succeeds. Code-splitting large pages (StudyHub, Courses) with dynamic `import()` would reduce initial load time.
+- **Chunk size:** Main bundle 484 kB (under the 500 kB threshold). Large pages (VillageDetail, Courses, CourseDetail, StudyHub) are lazy-loaded as separate chunks via `React.lazy`.
 - **OpenRouter free limits:** 50 requests/day, 20 RPM. The two-model fallback (Llama → Gemini) handles 429s but still counts toward the daily cap.
 - **Rate limiting is in-memory:** Resets on every Vercel cold start. Acceptable for free tier, but a Redis-backed limit would be stricter for production.
 - **`village_members.user_id` is `text`** (not `uuid`): Chosen to match `auth.users.id` which is also `text` in this project. Means no FK constraint — handled by backend service role.
