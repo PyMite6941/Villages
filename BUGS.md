@@ -2,64 +2,79 @@
 
 This file documents issues found during audits. Because multiple AI agents work on
 this codebase, prefer documenting findings here over silently changing another
-agent's code.
+agent's code. Planned features live in `FEATURE_ROADMAP.md`.
 
 ---
 
-## Audit 2026-06-16 — feature-completeness + security
+## ✅ Status 2026-06-18 — fully live & verified end-to-end
 
-### ✅ Verified working (code-complete & wired across all layers)
-- All 14 pages are routed in `App.tsx` and present in the nav.
-- **API contract is fully aligned** — every frontend `api.*` call maps to a real
-  backend route (no orphaned calls). Verified incl. `join-by-code` (courses +
-  villages), `office-hours` (GET/POST/DELETE), private-course filtering, lesson quiz.
-- Backend Pydantic models define all used fields (`is_private`, `invite_code`,
-  `source`, `office_hours`; `OfficeHour`/`OfficeHourCreate`) — runtime-constructed OK.
-- Authorization is enforced on new endpoints: office-hours add/delete are
-  teacher-only (403); private courses gate on teacher/enrollment; invite codes validated.
-- `tsc`, `npm run build`, and `ruff` all pass.
+The database is fully migrated and every major feature has been tested against the
+**live** deployment (frontend `villages-eight.vercel.app`, backend
+`villages-api.vercel.app`).
 
-### 🟠 OPEN — Migrations not yet run in the live (shared) Supabase DB
-**Impact:** `GET /courses` returns **500 in production** — the courses / lessons /
-enrollments / office-hours / messages tables don't exist in the shared AI-Teacher
-Supabase project yet. Courses, Knowledge Grove, Office Hours, Private courses, and
-Village Chat are **code-complete but non-functional live** until the migrations run.
-**Fix:** run the canonical idempotent set — see `supabase/migrations/README.md`.
-*(Requires a human in the Supabase SQL editor; cannot be done from code.)*
+**Migrations applied (verified):** `004 → 005 → 006_private → 007 → 008 → 009`.
+All required tables/columns exist (courses, lessons, course_enrollments,
+course_office_hours, teacher_verifications, messages, challenges, village_bans;
+plus `courses.tags/source/is_private/invite_code`, `lessons.video_url`,
+`villages.ai_moderation`, `village_members.muted_until`).
+> The `attempts/flags/essay_grades/questions` tables in the DB belong to AI-Teacher
+> (shared project), not Villages.
 
-### ✅ FIXED — Duplicate migration number `006`
-Two files were both numbered `006` (`006_private_courses_office_hours.sql` from the
-feature agent, `006_security_rls_lockdown.sql` from the security pass). The security
-one was renamed to **`007_security_rls_lockdown.sql`**.
+**Live-verified flows:**
+- Auth (OTP login — Supabase accepts the `/auth/callback` redirect + emails)
+- Course → video lesson → AI quiz → enroll → complete
+- Challenges: generate → list → **complete**
+- Voice channel (Daily.co): member gets a room; non-member 403
+- **Village Chat**: member insert (201) + read; outsider read 0 rows + insert 403
+  (RLS correct); `messages` is in the realtime publication (live updates work)
+- Moderation: chief settings/mute/unmute/ban/list/lift; non-chief 403; non-member 404
 
-### 🟡 KNOWN — Legacy migrations are not idempotent
-`002_courses_schema.sql` (plain `create table` / ungated `create policy`) and parts
-of `003_chat_and_tags.sql` will error if re-run or run after the idempotent `005`.
-They are **superseded** by `004`/`005`/`006_private` for the shared project. Do not
-run them on the shared DB. See `supabase/migrations/README.md`. (Left in place rather
-than deleted, since they may be the intended path for a fresh dedicated project.)
-
-### 🟢 MINOR — possible page redundancy (needs product decision, not a bug)
-Both `/study` (`Study.tsx`) and `/study-hub` (`StudyHub.tsx`) exist. Confirm whether
-both are intended or one should be retired.
+**Seed content (live):** 5 villages (AP Calculus AB Cohort, SAT Prep Squad, Python
+Programmers Circle, Spanish Conversation Village, College Essay Workshop) and 3
+courses (AP Calculus AB — 8 lessons; Python for Beginners — 4; Intro to Guitar — 3),
+all by the verified "Villages Curriculum" 📜 account, each lesson with real teaching
+content + a verified YouTube video + course tags. Test/E2E villages were deleted.
 
 ---
 
-## Security audit 2026-06-16 (fixed in code; some need deploy/DB steps)
-- 🔴 **FIXED** — `/auth/send-magic-link` returned a usable session for any email
-  (account takeover). Now admin-only (gated by `MAGIC_LINK_ADMIN_SECRET`); real
-  login switched to client-side Supabase OTP. `/auth/check-email` (enumeration) removed.
-- 🟠 **FIXED (needs migration 007)** — `profiles` RLS was `SELECT USING (true)`, so
-  the public anon key could scrape all emails. `007_security_rls_lockdown.sql`
-  restricts profiles SELECT to the owner's row.
-- 🟡 **FIXED** — lesson video iframes now whitelist YouTube/Vimeo only (+ sandbox).
-- 🟡 **FIXED** — per-user rate limit (30/min) on all `/ai/*` routes.
-- 🟢 **FIXED** — CORS tightened from any `*.vercel.app` to this project only.
+## ✅ Fixed this cycle
+- **maybe_single() → 500 on missing rows** — `_require_chief`, mute/kick target
+  lookups, member-count decrements, post/profile lookups all returned 500 instead of
+  403/404 when a row was missing. Switched all 8 usages to `limit(1)` + list indexing.
+- **Orphan comments** — `add_comment` now 404s if the post doesn't exist (was creating
+  a comment with a bogus post_id).
+- **Invalid fallback AI model** — live env was `gemini-2.0-flash-exp:free` (removed
+  from OpenRouter); set to `google/gemma-4-31b-it:free` (verified valid). Primary
+  `llama-3.3-70b:free` confirmed valid.
+- **Migration `006` collision** — security file renamed to `007`.
+- **`006_private` type bug** — `village_members.user_id (text) = auth.uid() (uuid)`
+  cast to `::text`.
 
-### Deploy / human steps still required
-1. Run migrations per `supabase/migrations/README.md` (incl. `007`).
-2. Supabase → Auth → URL Configuration → add `…/auth/callback` redirect URLs
-   (prod + localhost) for OTP login.
-3. (Optional) set `MAGIC_LINK_ADMIN_SECRET` only if you need the admin endpoint;
-   leaving it unset keeps that endpoint fully disabled (safe default).
-4. Redeploy frontend + backend after committing.
+## Security audit (all FIXED & live)
+- 🔴 `/auth/send-magic-link` account-takeover → admin-only (`MAGIC_LINK_ADMIN_SECRET`),
+  login moved to client-side Supabase OTP; `/auth/check-email` enumeration removed.
+- 🟠 `profiles` RLS public email-scrape → owner-row only (migration `007`, applied).
+- 🟡 lesson iframes whitelisted to YouTube/Vimeo + sandbox.
+- 🟡 per-user 30/min rate limit on all `/ai/*` routes.
+- 🟢 CORS tightened to this project's domains only.
+
+---
+
+## 🟡 Known / low-priority
+- **Legacy non-idempotent migrations** `002_courses_schema.sql` / `003_chat_and_tags.sql`
+  are superseded by `004/005/006_private`. **Do not run them on the shared DB** (they
+  error on re-run). Kept for a possible future dedicated project. See
+  `supabase/migrations/README.md`.
+- **`/study` vs `/study-hub`** — both routes still exist; product decision whether to
+  retire `/study`.
+- **Shared Supabase project** — Villages still shares AI-Teacher's project; `007`'s
+  profiles-RLS change affects both. A dedicated project is recommended long-term
+  (see FEATURE_ROADMAP.md / earlier notes).
+
+## Operational reminders
+- Temporary Supabase access tokens used for migrations were short-lived/expiring —
+  fine to leave (auto-expire) or revoke.
+- Daily.co API key is stored server-side in Vercel env (`DAILY_API_KEY`); keep it
+  (the voice feature needs it). Regenerate + update the env if rotating.
+- Free-tier Supabase email is rate-limited (~few/hour) — fine for a demo; add custom
+  SMTP for real traffic.
