@@ -6,6 +6,7 @@ import VillageCard from '../components/VillageCard'
 import { Plus, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
+import { track } from '../lib/analytics'
 
 export default function Villages() {
   const navigate = useNavigate()
@@ -37,6 +38,7 @@ export default function Villages() {
   const handleJoin = async (villageId: string) => {
     try {
       const result = await api.villages.join(villageId)
+      track('village_joined', { method: 'public_list' })
       toast.success(result.message)
       navigate(`/villages/${villageId}`)
     } catch (e: unknown) {
@@ -59,6 +61,8 @@ export default function Villages() {
       } else {
         toast.success(`Village "${v.name}" created!`)
       }
+      track('village_created', { is_private: v.is_private })
+      track('village_joined', { method: 'created_village' })
       navigate(`/villages/${v.id}`)
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Could not create village')
@@ -72,6 +76,7 @@ export default function Villages() {
     setJoiningCode(true)
     try {
       const result = await api.villages.joinByCode(joinCode.trim())
+      track('village_joined', { method: 'invite_code' })
       setShowJoinCode(false)
       setJoinCode('')
       toast.success(result.message)

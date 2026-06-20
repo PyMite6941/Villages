@@ -15,6 +15,9 @@ import Onboarding from './pages/Onboarding'
 import Callback from './pages/Callback'
 import Settings from './pages/Settings'
 import Help from './pages/Help'
+import PublicHome from './pages/PublicHome'
+import Join from './pages/Join'
+import SlackComparison from './pages/SlackComparison'
 
 const VillageDetail = lazy(() => import('./pages/VillageDetail'))
 const Courses = lazy(() => import('./pages/Courses'))
@@ -25,6 +28,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const location = useLocation()
+  const publicPaths = ['/', '/login', '/auth/callback', '/join', '/compare/slack-vs-villages']
 
   useEffect(() => {
     const stored = localStorage.getItem('village-theme')
@@ -53,7 +57,7 @@ export default function App() {
     )
   }
 
-  if (!session && location.pathname !== '/login' && location.pathname !== '/auth/callback') {
+  if (!session && !publicPaths.includes(location.pathname)) {
     return <Navigate to="/login" />
   }
 
@@ -63,21 +67,27 @@ export default function App() {
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" /> : <Login />} />
       <Route path="/auth/callback" element={<Callback />} />
+      <Route path="/join" element={session ? <Navigate to="/villages" /> : <Join />} />
+      <Route path="/compare/slack-vs-villages" element={<SlackComparison />} />
       <Route path="/onboarding" element={session ? <Onboarding session={session} /> : <Navigate to="/login" />} />
-      <Route element={<Layout session={session!} />}>
-        <Route path="/" element={<Home session={session!} />} />
-        <Route path="/study" element={<Study session={session!} />} />
-        <Route path="/villages" element={<Villages />} />
-        <Route path="/villages/:id" element={<Suspense fallback={fallback}><VillageDetail session={session!} /></Suspense>} />
-        <Route path="/forum" element={<Forum session={session!} />} />
-        <Route path="/courses" element={<Suspense fallback={fallback}><Courses session={session!} /></Suspense>} />
-        <Route path="/courses/:id" element={<Suspense fallback={fallback}><CourseDetail session={session!} /></Suspense>} />
-        <Route path="/study-hub" element={<Suspense fallback={fallback}><StudyHub session={session!} /></Suspense>} />
-        <Route path="/profile" element={<Profile session={session!} />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="/about" element={<About />} />
-      </Route>
+      {session ? (
+        <Route element={<Layout session={session} />}>
+          <Route path="/" element={<Home session={session} />} />
+          <Route path="/study" element={<Study session={session} />} />
+          <Route path="/villages" element={<Villages />} />
+          <Route path="/villages/:id" element={<Suspense fallback={fallback}><VillageDetail session={session} /></Suspense>} />
+          <Route path="/forum" element={<Forum session={session} />} />
+          <Route path="/courses" element={<Suspense fallback={fallback}><Courses session={session} /></Suspense>} />
+          <Route path="/courses/:id" element={<Suspense fallback={fallback}><CourseDetail session={session} /></Suspense>} />
+          <Route path="/study-hub" element={<Suspense fallback={fallback}><StudyHub session={session} /></Suspense>} />
+          <Route path="/profile" element={<Profile session={session} />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/about" element={<About />} />
+        </Route>
+      ) : (
+        <Route path="/" element={<PublicHome />} />
+      )}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   )
