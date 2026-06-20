@@ -14,8 +14,16 @@ type AnalyticsEvent =
   | 'village_created'
   | 'village_joined'
 
-const posthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string | undefined
-const posthogHost = (import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string | undefined)?.replace(/\/$/, '')
+const managedPosthogKey = 'phc_s8RvokJNvYbbFVXTXSuUkY7TKWY5dqQWpMNcbpvnyxJe'
+const managedPosthogHost = 'https://us.i.posthog.com'
+
+const configuredPosthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string | undefined
+const configuredPosthogHost = (import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string | undefined)?.replace(/\/$/, '')
+
+// The managed PostHog key is a public ingestion key. Keep local dev opt-in so test traffic
+// does not pollute the funnel unless a developer sets the Vite env values explicitly.
+const posthogKey = configuredPosthogKey || (import.meta.env.PROD ? managedPosthogKey : undefined)
+const posthogHost = configuredPosthogHost || (import.meta.env.PROD ? managedPosthogHost : undefined)
 
 function getAnonymousId() {
   const storageKey = 'villages-anonymous-id'
