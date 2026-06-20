@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
 import toast from 'react-hot-toast'
+import { track } from '../lib/analytics'
 
 interface Props { session: Session }
 
@@ -51,6 +52,13 @@ export default function Onboarding({ session: _session }: Props) {
     setLoading(true)
     try {
       await api.users.createProfile(form)
+      track('profile_created', { source: 'onboarding' })
+      track('onboarding_completed', {
+        goals_count: form.goals.length,
+        interests_count: form.interests.length,
+        strengths_count: form.strengths.length,
+        weaknesses_count: form.weaknesses.length,
+      })
       toast.success('Welcome to Villages!')
       navigate('/villages')
     } catch (e: unknown) {

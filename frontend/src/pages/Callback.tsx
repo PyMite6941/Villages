@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { track } from '../lib/analytics'
 
 export default function Callback() {
   const navigate = useNavigate()
@@ -12,6 +13,7 @@ export default function Callback() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (cancelled) return
       if (session) {
+        track('magic_link_completed', { source: 'auth_callback' })
         navigate('/', { replace: true })
         return
       }
@@ -20,6 +22,7 @@ export default function Callback() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return
       if (event === 'SIGNED_IN' && session) {
+        track('magic_link_completed', { source: 'auth_callback' })
         navigate('/', { replace: true })
       }
     })
