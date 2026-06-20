@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { track } from '../lib/analytics'
+import { getAuthRedirectTo } from '../lib/authRedirect'
 
 interface Props {
   source: string
@@ -52,7 +53,7 @@ export default function MagicLinkSignup({
       const { error } = await supabase.auth.signInWithOtp({
         email: cleanEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: getAuthRedirectTo(),
           shouldCreateUser: true,
         },
       })
