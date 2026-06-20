@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+Disallow: /auth/
+Disallow: /login
+Disallow: /onboarding
+Disallow: /profile
+Disallow: /settings
+Disallow: /study
+Disallow: /study-hub
+Disallow: /villages
+Disallow: /forum
+Disallow: /courses
+Disallow: /help
+Disallow: /about
+
+Sitemap: https://villages-eight.vercel.app/sitemap.xml
