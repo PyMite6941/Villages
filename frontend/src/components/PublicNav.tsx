@@ -12,6 +12,9 @@ export default function PublicNav() {
           <Link to="/join" className="hover:text-village-700 dark:hover:text-village-200">
             Join
           </Link>
+          <Link to="/pricing" className="hover:text-village-700 dark:hover:text-village-200">
+            Pricing
+          </Link>
           <Link to="/compare/slack-vs-villages" className="hidden hover:text-village-700 dark:hover:text-village-200 sm:inline">
             Compare
           </Link>

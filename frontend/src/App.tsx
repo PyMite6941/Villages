@@ -18,6 +18,7 @@ import Help from './pages/Help'
 import PublicHome from './pages/PublicHome'
 import Join from './pages/Join'
 import SlackComparison from './pages/SlackComparison'
+import Pricing from './pages/Pricing'
 
 const VillageDetail = lazy(() => import('./pages/VillageDetail'))
 const Courses = lazy(() => import('./pages/Courses'))
@@ -28,7 +29,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const location = useLocation()
-  const publicPaths = ['/', '/login', '/auth/callback', '/join', '/compare/slack-vs-villages']
+  const publicPaths = ['/', '/login', '/auth/callback', '/join', '/pricing', '/compare/slack-vs-villages']
 
   useEffect(() => {
     const stored = localStorage.getItem('village-theme')
@@ -68,6 +69,7 @@ export default function App() {
       <Route path="/login" element={session ? <Navigate to="/" /> : <Login />} />
       <Route path="/auth/callback" element={<Callback />} />
       <Route path="/join" element={session ? <Navigate to="/villages" /> : <Join />} />
+      <Route path="/pricing" element={<Pricing />} />
       <Route path="/compare/slack-vs-villages" element={<SlackComparison />} />
       <Route path="/onboarding" element={session ? <Onboarding session={session} /> : <Navigate to="/login" />} />
       {session ? (

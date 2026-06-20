@@ -5,6 +5,7 @@ type AnalyticsProperties = Record<string, AnalyticsValue>
 type AnalyticsEvent =
   | 'landing_viewed'
   | 'join_page_viewed'
+  | 'pricing_page_viewed'
   | 'comparison_page_viewed'
   | 'signup_email_submitted'
   | 'magic_link_requested'
