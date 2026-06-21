@@ -4,6 +4,11 @@ interface PageMeta {
   canonicalPath?: string
 }
 
+interface FAQItem {
+  question: string
+  answer: string
+}
+
 function upsertMeta(name: string, content: string) {
   let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
   if (!meta) {
@@ -41,4 +46,19 @@ export function setJsonLd(id: string, data: Record<string, unknown>) {
     document.head.appendChild(script)
   }
   script.textContent = JSON.stringify(data)
+}
+
+export function setFAQJsonLd(id: string, items: FAQItem[]) {
+  setJsonLd(id, {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  })
 }

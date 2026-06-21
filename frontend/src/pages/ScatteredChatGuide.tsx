@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import PublicNav from '../components/PublicNav'
 import { track } from '../lib/analytics'
-import { setPageMeta } from '../lib/pageMeta'
+import { setFAQJsonLd, setPageMeta } from '../lib/pageMeta'
 
 const painPoints = [
   {
@@ -76,6 +76,7 @@ export default function ScatteredChatGuide() {
         'A guide for organizers whose learning communities are spread across Slack, Discord, Telegram, and old threads, with a focused Villages path forward.',
       canonicalPath: '/guides/learning-groups-scattered-chat',
     })
+    setFAQJsonLd('scattered-chat-guide-faq-schema', faqItems)
     track('pain_page_viewed', { surface: 'scattered_chat_guide' })
   }, [])
 

@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2, MessageSquare, Search, Sparkles, Users } from
 import MagicLinkSignup from '../components/MagicLinkSignup'
 import PublicNav from '../components/PublicNav'
 import { track } from '../lib/analytics'
-import { setPageMeta } from '../lib/pageMeta'
+import { setFAQJsonLd, setPageMeta } from '../lib/pageMeta'
 
 const rows = [
   [
@@ -29,6 +29,23 @@ const rows = [
   ],
 ]
 
+const faqItems = [
+  {
+    question: 'What is Slack best for?',
+    answer: 'Slack is strong for teams that already share a company, project, or workflow.',
+  },
+  {
+    question: 'When is Villages a better fit than Slack?',
+    answer:
+      'Villages is a better fit when people need to discover the right group, understand confusing material, and keep learning together after the first message.',
+  },
+  {
+    question: 'How does Villages help learning groups keep context?',
+    answer:
+      'Villages keeps discussions, challenges, courses, and AI help beside the Village instead of scattering files and threads across channels.',
+  },
+]
+
 export default function SlackComparison() {
   useEffect(() => {
     setPageMeta({
@@ -37,6 +54,7 @@ export default function SlackComparison() {
         'Compare Slack with Villages for study cohorts, adult learning circles, and community organizers who need more than another chat feed.',
       canonicalPath: '/compare/slack-vs-villages',
     })
+    setFAQJsonLd('slack-comparison-faq-schema', faqItems)
     track('comparison_page_viewed', { page: 'slack_vs_villages' })
   }, [])
 
