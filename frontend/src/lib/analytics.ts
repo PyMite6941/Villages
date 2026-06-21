@@ -6,6 +6,7 @@ type AnalyticsEvent =
   | 'landing_viewed'
   | 'join_page_viewed'
   | 'pricing_page_viewed'
+  | 'pain_page_viewed'
   | 'comparison_page_viewed'
   | 'signup_email_submitted'
   | 'magic_link_requested'
@@ -19,7 +20,9 @@ const managedPosthogKey = 'phc_s8RvokJNvYbbFVXTXSuUkY7TKWY5dqQWpMNcbpvnyxJe'
 const managedPosthogHost = 'https://us.i.posthog.com'
 
 const configuredPosthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string | undefined
-const configuredPosthogHost = (import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string | undefined)?.replace(/\/$/, '')
+const configuredPosthogHost = (
+  import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string | undefined
+)?.replace(/\/$/, '')
 
 // The managed PostHog key is a public ingestion key. Keep local dev opt-in so test traffic
 // does not pollute the funnel unless a developer sets the Vite env values explicitly.
