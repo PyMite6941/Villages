@@ -85,6 +85,9 @@ export default function SlackComparison() {
               <Link to="/guides/learning-groups-scattered-chat" className="btn-secondary">
                 Read the guide
               </Link>
+              <Link to="/compare/discord-vs-villages" className="btn-secondary">
+                Compare with Discord
+              </Link>
             </div>
           </div>
         </section>
@@ -179,6 +182,12 @@ export default function SlackComparison() {
                   compact
                 />
               </div>
+              <Link
+                to="/compare/discord-vs-villages"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
+              >
+                Compare Villages with Discord <ArrowRight size={14} />
+              </Link>
             </div>
           </div>
         </section>

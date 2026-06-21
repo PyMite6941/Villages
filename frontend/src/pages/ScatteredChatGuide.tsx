@@ -108,6 +108,12 @@ export default function ScatteredChatGuide() {
                 >
                   Compare with Slack <ArrowRight size={16} />
                 </Link>
+                <Link
+                  to="/compare/discord-vs-villages"
+                  className="btn-secondary inline-flex items-center gap-2"
+                >
+                  Compare with Discord <ArrowRight size={16} />
+                </Link>
               </div>
             </div>
 
@@ -225,6 +231,12 @@ export default function ScatteredChatGuide() {
                 className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
               >
                 Read the Slack comparison <ArrowRight size={14} />
+              </Link>
+              <Link
+                to="/compare/discord-vs-villages"
+                className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
+              >
+                Read the Discord comparison <ArrowRight size={14} />
               </Link>
             </div>
           </div>
