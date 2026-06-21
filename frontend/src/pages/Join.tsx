@@ -56,7 +56,7 @@ const pathCards = [
 ]
 
 const joinSteps = [
-  'Enter your email and open the magic link.',
+  'Enter your email so Villages can send the private link that opens your account setup.',
   'Choose whether you are organizing a group or joining as a learner.',
   'Find a public Village, use a private code, or create the first circle for your group.',
 ]
@@ -218,11 +218,20 @@ export default function Join() {
             <div className="rounded-lg border border-amber-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <h2 className="text-xl font-semibold">Start with one email link</h2>
               <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
-                No password needed. The same link works whether you are organizing a group or
-                joining one as a learner.
+                Your email is the handoff from this public page into your Villages account. We send
+                one private link, then you can choose the organizer or learner path without making a
+                password.
+              </p>
+              <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm leading-6 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                Use the link to save your place, set up your profile, and create or join the first
+                Village that fits your group or topic.
               </p>
               <div className="mt-5">
-                <MagicLinkSignup source="join_page" buttonLabel="Send my join link" />
+                <MagicLinkSignup
+                  source="join_page"
+                  buttonLabel="Send my join link"
+                  helperText="We only use this email to send your sign-in link and start your Villages account."
+                />
               </div>
             </div>
           </div>
