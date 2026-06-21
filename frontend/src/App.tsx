@@ -19,6 +19,7 @@ import PublicHome from './pages/PublicHome'
 import Join from './pages/Join'
 import SlackComparison from './pages/SlackComparison'
 import Pricing from './pages/Pricing'
+import ScatteredChatGuide from './pages/ScatteredChatGuide'
 
 const VillageDetail = lazy(() => import('./pages/VillageDetail'))
 const Courses = lazy(() => import('./pages/Courses'))
@@ -29,7 +30,15 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const location = useLocation()
-  const publicPaths = ['/', '/login', '/auth/callback', '/join', '/pricing', '/compare/slack-vs-villages']
+  const publicPaths = [
+    '/',
+    '/login',
+    '/auth/callback',
+    '/join',
+    '/pricing',
+    '/compare/slack-vs-villages',
+    '/guides/learning-groups-scattered-chat',
+  ]
 
   useEffect(() => {
     const stored = localStorage.getItem('village-theme')
@@ -46,7 +55,9 @@ export default function App() {
       setSession(session)
       setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
     return () => subscription.unsubscribe()
   }, [])
 
@@ -62,7 +73,11 @@ export default function App() {
     return <Navigate to="/login" />
   }
 
-  const fallback = <div className="flex items-center justify-center py-12 text-gray-400 dark:text-gray-500 text-sm">Loading...</div>
+  const fallback = (
+    <div className="flex items-center justify-center py-12 text-gray-400 dark:text-gray-500 text-sm">
+      Loading...
+    </div>
+  )
 
   return (
     <Routes>
@@ -71,17 +86,49 @@ export default function App() {
       <Route path="/join" element={session ? <Navigate to="/villages" /> : <Join />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/compare/slack-vs-villages" element={<SlackComparison />} />
-      <Route path="/onboarding" element={session ? <Onboarding session={session} /> : <Navigate to="/login" />} />
+      <Route path="/guides/learning-groups-scattered-chat" element={<ScatteredChatGuide />} />
+      <Route
+        path="/onboarding"
+        element={session ? <Onboarding session={session} /> : <Navigate to="/login" />}
+      />
       {session ? (
         <Route element={<Layout session={session} />}>
           <Route path="/" element={<Home session={session} />} />
           <Route path="/study" element={<Study session={session} />} />
           <Route path="/villages" element={<Villages />} />
-          <Route path="/villages/:id" element={<Suspense fallback={fallback}><VillageDetail session={session} /></Suspense>} />
+          <Route
+            path="/villages/:id"
+            element={
+              <Suspense fallback={fallback}>
+                <VillageDetail session={session} />
+              </Suspense>
+            }
+          />
           <Route path="/forum" element={<Forum session={session} />} />
-          <Route path="/courses" element={<Suspense fallback={fallback}><Courses session={session} /></Suspense>} />
-          <Route path="/courses/:id" element={<Suspense fallback={fallback}><CourseDetail session={session} /></Suspense>} />
-          <Route path="/study-hub" element={<Suspense fallback={fallback}><StudyHub session={session} /></Suspense>} />
+          <Route
+            path="/courses"
+            element={
+              <Suspense fallback={fallback}>
+                <Courses session={session} />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/courses/:id"
+            element={
+              <Suspense fallback={fallback}>
+                <CourseDetail session={session} />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/study-hub"
+            element={
+              <Suspense fallback={fallback}>
+                <StudyHub session={session} />
+              </Suspense>
+            }
+          />
           <Route path="/profile" element={<Profile session={session} />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<Help />} />
