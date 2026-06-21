@@ -18,6 +18,7 @@ import Help from './pages/Help'
 import PublicHome from './pages/PublicHome'
 import Join from './pages/Join'
 import SlackComparison from './pages/SlackComparison'
+import DiscordComparison from './pages/DiscordComparison'
 import Pricing from './pages/Pricing'
 import ScatteredChatGuide from './pages/ScatteredChatGuide'
 
@@ -37,6 +38,7 @@ export default function App() {
     '/join',
     '/pricing',
     '/compare/slack-vs-villages',
+    '/compare/discord-vs-villages',
     '/guides/learning-groups-scattered-chat',
   ]
 
@@ -86,6 +88,7 @@ export default function App() {
       <Route path="/join" element={session ? <Navigate to="/villages" /> : <Join />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/compare/slack-vs-villages" element={<SlackComparison />} />
+      <Route path="/compare/discord-vs-villages" element={<DiscordComparison />} />
       <Route path="/guides/learning-groups-scattered-chat" element={<ScatteredChatGuide />} />
       <Route
         path="/onboarding"
