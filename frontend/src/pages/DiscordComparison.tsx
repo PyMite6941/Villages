@@ -12,7 +12,7 @@ import {
 import MagicLinkSignup from '../components/MagicLinkSignup'
 import PublicNav from '../components/PublicNav'
 import { track } from '../lib/analytics'
-import { setPageMeta } from '../lib/pageMeta'
+import { setFAQJsonLd, setPageMeta } from '../lib/pageMeta'
 
 const rows = [
   [
@@ -55,6 +55,24 @@ const cards = [
   },
 ]
 
+const faqItems = [
+  {
+    question: 'What is Discord best for?',
+    answer:
+      'Discord is strong for active servers, live discussion, events, and groups that already know how the server is organized.',
+  },
+  {
+    question: 'When is Villages a better fit than Discord?',
+    answer:
+      'Villages fits when people need to find the right learning circle, keep topic context, and turn hard material into next steps.',
+  },
+  {
+    question: 'How does Villages help new learners start?',
+    answer:
+      'Topic Explorer turns confusing material into summaries, checklists, and prompts so new learners have clearer next steps.',
+  },
+]
+
 export default function DiscordComparison() {
   useEffect(() => {
     setPageMeta({
@@ -63,6 +81,7 @@ export default function DiscordComparison() {
         'Compare Discord with Villages for study cohorts, clubs, and community organizers who need more than a busy server for learning.',
       canonicalPath: '/compare/discord-vs-villages',
     })
+    setFAQJsonLd('discord-comparison-faq-schema', faqItems)
     track('comparison_page_viewed', { page: 'discord_vs_villages' })
   }, [])
 
