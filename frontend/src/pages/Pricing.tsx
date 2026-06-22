@@ -10,6 +10,7 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react'
+import MagicLinkSignup from '../components/MagicLinkSignup'
 import PublicNav from '../components/PublicNav'
 import { track } from '../lib/analytics'
 import { setFAQJsonLd, setPageMeta } from '../lib/pageMeta'
@@ -221,16 +222,24 @@ export default function Pricing() {
               </div>
             </div>
             <div className="rounded-lg border border-amber-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-lg font-semibold">Start with the join path</h3>
+              <h3 className="text-lg font-semibold">Start from this pricing page</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
                 Tell Villages what your group is learning, then create or join the Village that
                 fits. That gives you a real organizer surface before a wider pricing system exists.
               </p>
+              <div className="mt-5">
+                <MagicLinkSignup
+                  source="pricing_page"
+                  buttonLabel="Send my join link"
+                  helperText="We only use this email to send your sign-in link and start your Villages account."
+                  compact
+                />
+              </div>
               <Link
                 to="/join"
-                className="mt-5 inline-flex items-center gap-2 font-medium text-village-700 hover:underline dark:text-village-300"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
               >
-                Go to /join <ArrowRight size={15} />
+                Or open /join first <ArrowRight size={15} />
               </Link>
             </div>
           </div>
