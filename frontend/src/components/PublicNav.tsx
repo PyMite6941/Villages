@@ -26,9 +26,15 @@ export default function PublicNav() {
           </Link>
           <Link
             to="/compare/slack-vs-villages"
-            className="hidden hover:text-village-700 dark:hover:text-village-200 sm:inline"
+            className="hidden hover:text-village-700 dark:hover:text-village-200 md:inline"
           >
-            Compare
+            Slack
+          </Link>
+          <Link
+            to="/compare/discord-vs-villages"
+            className="hidden hover:text-village-700 dark:hover:text-village-200 md:inline"
+          >
+            Discord
           </Link>
           <Link to="/login" className="btn-secondary px-3 py-1.5 text-sm">
             Log in
