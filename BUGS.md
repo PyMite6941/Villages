@@ -6,6 +6,26 @@ agent's code. Planned features live in `FEATURE_ROADMAP.md`.
 
 ---
 
+## ✅ 2026-06-21 — Magic-link "localhost won't connect" FIXED (hosted Supabase config)
+
+**Symptom:** every emailed magic link, on all devices, opened `http://localhost:3000`
+("site can't be reached"), then an error.
+
+**Root cause:** NOT code. The hosted Supabase project (`ooarycauxwefmxdlpxvc`) had
+`site_url = http://localhost:3000` and an **empty** redirect allowlist. Supabase only
+honors a link's `redirect_to` if it matches the allowlist; with an empty list it always
+fell back to the localhost Site URL. The frontend was already correct
+(`emailRedirectTo` → prod `/auth/callback`, `flowType: 'implicit'` for cross-device).
+
+**Fix (via Supabase Management API — `scripts/fix_supabase_auth_urls.sh`):**
+- `site_url` → `https://villages-eight.vercel.app`
+- `uri_allow_list` → `https://villages-eight.vercel.app/**,http://localhost:5173/**`
+
+Verified persisted via GET. Old links emailed before the change still point at localhost;
+request a fresh link.
+
+---
+
 ## ✅ Status 2026-06-18 — fully live & verified end-to-end
 
 The database is fully migrated and every major feature has been tested against the
