@@ -10,6 +10,7 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react'
+import MagicLinkSignup from '../components/MagicLinkSignup'
 import PublicNav from '../components/PublicNav'
 import { track } from '../lib/analytics'
 import { setFAQJsonLd, setPageMeta } from '../lib/pageMeta'
@@ -242,6 +243,20 @@ export default function ScatteredChatGuide() {
           </div>
 
           <div className="grid gap-3">
+            <article className="rounded-lg border border-amber-100 bg-amber-50 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+              <h3 className="text-lg font-semibold">Try Villages from this guide</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                Start with an email link, then create or join a Village around the group you are
+                trying to organize.
+              </p>
+              <div className="mt-4">
+                <MagicLinkSignup
+                  source="scattered_chat_guide"
+                  buttonLabel="Send my join link"
+                  compact
+                />
+              </div>
+            </article>
             {faqItems.map((item) => (
               <article
                 key={item.question}
