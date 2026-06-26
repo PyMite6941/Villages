@@ -41,6 +41,15 @@ const guideCards = [
     href: '/guides/find-right-learning-circle',
     icon: Compass,
   },
+  {
+    title: 'Move a learning community out of chat',
+    audience:
+      'For organizers who want a clearer learning home without asking members to abandon chat overnight.',
+    promise:
+      'Move one active circle first, keep chat useful, and give members a simple first action.',
+    href: '/guides/move-learning-community-out-of-chat',
+    icon: Users,
+  },
 ]
 
 const chooserSteps = [
@@ -55,6 +64,10 @@ const chooserSteps = [
   [
     'Low follow-through',
     'Start with the follow-through guide if people join, attend once, and then quietly fade.',
+  ],
+  [
+    'Migration risk',
+    'Start with the migration guide if you already have chat activity but need a safer move into a learning home.',
   ],
 ]
 
@@ -74,6 +87,11 @@ const faqItems = [
     answer:
       'Yes. The guides explain where chat can stay useful and where Villages gives learning groups a clearer home for circles, context, and next steps.',
   },
+  {
+    question: 'How should organizers move a group out of chat?',
+    answer:
+      'Start with one active learning circle, move durable context first, and keep chat available for quick conversation until the new habit is clear.',
+  },
 ]
 
 export default function GuidesIndex() {
@@ -81,7 +99,7 @@ export default function GuidesIndex() {
     setPageMeta({
       title: 'Guides for learning-community organizers | Villages',
       description:
-        'Villages guides for organizers working through scattered chat, weak member discovery, and learning groups that lose momentum after week one.',
+        'Villages guides for organizers working through scattered chat, weak member discovery, migration risk, and learning groups that lose momentum after week one.',
       canonicalPath: '/guides',
     })
     setFAQJsonLd('guides-index-faq-schema', faqItems)
@@ -150,7 +168,7 @@ export default function GuidesIndex() {
               Villages path when the group needs a more durable home.
             </p>
           </div>
-          <div className="mt-7 grid gap-5 lg:grid-cols-3">
+          <div className="mt-7 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {guideCards.map((guide) => {
               const Icon = guide.icon
               return (

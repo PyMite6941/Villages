@@ -24,6 +24,7 @@ import GuidesIndex from './pages/GuidesIndex'
 import ScatteredChatGuide from './pages/ScatteredChatGuide'
 import FollowThroughGuide from './pages/FollowThroughGuide'
 import LearningCircleDiscoveryGuide from './pages/LearningCircleDiscoveryGuide'
+import ChatMigrationGuide from './pages/ChatMigrationGuide'
 
 const VillageDetail = lazy(() => import('./pages/VillageDetail'))
 const Courses = lazy(() => import('./pages/Courses'))
@@ -46,6 +47,7 @@ export default function App() {
     '/guides/learning-groups-scattered-chat',
     '/guides/keep-learning-group-active',
     '/guides/find-right-learning-circle',
+    '/guides/move-learning-community-out-of-chat',
   ]
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export default function App() {
       <Route path="/guides/learning-groups-scattered-chat" element={<ScatteredChatGuide />} />
       <Route path="/guides/keep-learning-group-active" element={<FollowThroughGuide />} />
       <Route path="/guides/find-right-learning-circle" element={<LearningCircleDiscoveryGuide />} />
+      <Route path="/guides/move-learning-community-out-of-chat" element={<ChatMigrationGuide />} />
       <Route
         path="/onboarding"
         element={session ? <Onboarding session={session} /> : <Navigate to="/login" />}
