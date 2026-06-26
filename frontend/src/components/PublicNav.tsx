@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 
+const SUPPORT_EMAIL = 'villages-eight@support.tin.computer'
+
 export default function PublicNav() {
   return (
     <header className="border-b border-amber-100 bg-amber-50/90 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
@@ -40,6 +42,16 @@ export default function PublicNav() {
             Log in
           </Link>
         </nav>
+      </div>
+      <div className="border-t border-amber-100/70 px-4 py-2 text-center text-xs text-gray-600 dark:border-gray-800 dark:text-gray-300 sm:px-6">
+        Questions? Email support at{' '}
+        <a
+          href={`mailto:${SUPPORT_EMAIL}`}
+          className="font-medium text-village-700 hover:underline dark:text-village-300"
+        >
+          {SUPPORT_EMAIL}
+        </a>
+        .
       </div>
     </header>
   )
