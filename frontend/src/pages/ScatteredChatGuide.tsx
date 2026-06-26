@@ -104,6 +104,12 @@ export default function ScatteredChatGuide() {
                   Start through /join <ArrowRight size={16} />
                 </Link>
                 <Link
+                  to="/guides/keep-learning-group-active"
+                  className="btn-secondary inline-flex items-center gap-2"
+                >
+                  Keep groups active <ArrowRight size={16} />
+                </Link>
+                <Link
                   to="/compare/slack-vs-villages"
                   className="btn-secondary inline-flex items-center gap-2"
                 >
@@ -226,6 +232,12 @@ export default function ScatteredChatGuide() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/join" className="btn-primary inline-flex items-center gap-2">
                 Join Villages <ArrowRight size={16} />
+              </Link>
+              <Link
+                to="/guides/keep-learning-group-active"
+                className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
+              >
+                Keep groups active after week one <ArrowRight size={14} />
               </Link>
               <Link
                 to="/compare/slack-vs-villages"
