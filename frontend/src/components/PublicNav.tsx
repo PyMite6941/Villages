@@ -21,10 +21,10 @@ export default function PublicNav() {
             Pricing
           </Link>
           <Link
-            to="/guides/learning-groups-scattered-chat"
+            to="/guides"
             className="hidden hover:text-village-700 dark:hover:text-village-200 md:inline"
           >
-            Guide
+            Guides
           </Link>
           <Link
             to="/compare/slack-vs-villages"

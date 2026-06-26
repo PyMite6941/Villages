@@ -20,6 +20,7 @@ import Join from './pages/Join'
 import SlackComparison from './pages/SlackComparison'
 import DiscordComparison from './pages/DiscordComparison'
 import Pricing from './pages/Pricing'
+import GuidesIndex from './pages/GuidesIndex'
 import ScatteredChatGuide from './pages/ScatteredChatGuide'
 import FollowThroughGuide from './pages/FollowThroughGuide'
 import LearningCircleDiscoveryGuide from './pages/LearningCircleDiscoveryGuide'
@@ -41,6 +42,7 @@ export default function App() {
     '/pricing',
     '/compare/slack-vs-villages',
     '/compare/discord-vs-villages',
+    '/guides',
     '/guides/learning-groups-scattered-chat',
     '/guides/keep-learning-group-active',
     '/guides/find-right-learning-circle',
@@ -93,6 +95,7 @@ export default function App() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/compare/slack-vs-villages" element={<SlackComparison />} />
       <Route path="/compare/discord-vs-villages" element={<DiscordComparison />} />
+      <Route path="/guides" element={<GuidesIndex />} />
       <Route path="/guides/learning-groups-scattered-chat" element={<ScatteredChatGuide />} />
       <Route path="/guides/keep-learning-group-active" element={<FollowThroughGuide />} />
       <Route path="/guides/find-right-learning-circle" element={<LearningCircleDiscoveryGuide />} />
