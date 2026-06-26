@@ -113,6 +113,9 @@ export default function DiscordComparison() {
               <Link to="/guides/learning-groups-scattered-chat" className="btn-secondary">
                 Read the guide
               </Link>
+              <Link to="/guides/move-learning-community-out-of-chat" className="btn-secondary">
+                Plan the migration
+              </Link>
             </div>
           </div>
         </section>
@@ -189,6 +192,12 @@ export default function DiscordComparison() {
                   className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
                 >
                   See the scattered-chat pattern <ArrowRight size={14} />
+                </Link>
+                <Link
+                  to="/guides/move-learning-community-out-of-chat"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
+                >
+                  Plan a safer move out of chat <ArrowRight size={14} />
                 </Link>
                 <Link
                   to="/compare/slack-vs-villages"
