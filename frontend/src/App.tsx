@@ -22,6 +22,7 @@ import DiscordComparison from './pages/DiscordComparison'
 import Pricing from './pages/Pricing'
 import ScatteredChatGuide from './pages/ScatteredChatGuide'
 import FollowThroughGuide from './pages/FollowThroughGuide'
+import LearningCircleDiscoveryGuide from './pages/LearningCircleDiscoveryGuide'
 
 const VillageDetail = lazy(() => import('./pages/VillageDetail'))
 const Courses = lazy(() => import('./pages/Courses'))
@@ -42,6 +43,7 @@ export default function App() {
     '/compare/discord-vs-villages',
     '/guides/learning-groups-scattered-chat',
     '/guides/keep-learning-group-active',
+    '/guides/find-right-learning-circle',
   ]
 
   useEffect(() => {
@@ -93,6 +95,7 @@ export default function App() {
       <Route path="/compare/discord-vs-villages" element={<DiscordComparison />} />
       <Route path="/guides/learning-groups-scattered-chat" element={<ScatteredChatGuide />} />
       <Route path="/guides/keep-learning-group-active" element={<FollowThroughGuide />} />
+      <Route path="/guides/find-right-learning-circle" element={<LearningCircleDiscoveryGuide />} />
       <Route
         path="/onboarding"
         element={session ? <Onboarding session={session} /> : <Navigate to="/login" />}
