@@ -19,6 +19,7 @@ import PublicHome from './pages/PublicHome'
 import Join from './pages/Join'
 import SlackComparison from './pages/SlackComparison'
 import DiscordComparison from './pages/DiscordComparison'
+import TelegramComparison from './pages/TelegramComparison'
 import Pricing from './pages/Pricing'
 import GuidesIndex from './pages/GuidesIndex'
 import ScatteredChatGuide from './pages/ScatteredChatGuide'
@@ -43,6 +44,7 @@ export default function App() {
     '/pricing',
     '/compare/slack-vs-villages',
     '/compare/discord-vs-villages',
+    '/compare/telegram-vs-villages',
     '/guides',
     '/guides/learning-groups-scattered-chat',
     '/guides/keep-learning-group-active',
@@ -97,6 +99,7 @@ export default function App() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/compare/slack-vs-villages" element={<SlackComparison />} />
       <Route path="/compare/discord-vs-villages" element={<DiscordComparison />} />
+      <Route path="/compare/telegram-vs-villages" element={<TelegramComparison />} />
       <Route path="/guides" element={<GuidesIndex />} />
       <Route path="/guides/learning-groups-scattered-chat" element={<ScatteredChatGuide />} />
       <Route path="/guides/keep-learning-group-active" element={<FollowThroughGuide />} />
