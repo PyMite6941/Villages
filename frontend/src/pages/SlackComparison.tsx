@@ -91,6 +91,9 @@ export default function SlackComparison() {
               <Link to="/compare/discord-vs-villages" className="btn-secondary">
                 Compare with Discord
               </Link>
+              <Link to="/compare/telegram-vs-villages" className="btn-secondary">
+                Compare with Telegram
+              </Link>
             </div>
           </div>
         </section>
@@ -196,6 +199,12 @@ export default function SlackComparison() {
                 className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
               >
                 Compare Villages with Discord <ArrowRight size={14} />
+              </Link>
+              <Link
+                to="/compare/telegram-vs-villages"
+                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
+              >
+                Compare Villages with Telegram <ArrowRight size={14} />
               </Link>
             </div>
           </div>

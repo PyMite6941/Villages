@@ -254,6 +254,12 @@ export default function GuidesIndex() {
                 Compare with Discord <ArrowRight size={14} />
               </Link>
               <Link
+                to="/compare/telegram-vs-villages"
+                className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
+              >
+                Compare with Telegram <ArrowRight size={14} />
+              </Link>
+              <Link
                 to="/pricing"
                 className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
               >

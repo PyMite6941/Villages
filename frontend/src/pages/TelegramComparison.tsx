@@ -4,10 +4,10 @@ import {
   ArrowRight,
   CheckCircle2,
   Compass,
-  MessageSquare,
+  ListChecks,
+  MessageCircle,
   Search,
   Sparkles,
-  Users,
 } from 'lucide-react'
 import MagicLinkSignup from '../components/MagicLinkSignup'
 import PublicNav from '../components/PublicNav'
@@ -17,72 +17,72 @@ import { setFAQJsonLd, setPageMeta } from '../lib/pageMeta'
 const rows = [
   [
     'Finding the right circle',
-    'Servers, channels, and roles work when members already know where to go',
-    'Profiles, interests, and Village discovery help people choose a learning group by goal',
+    'Chats, channels, and forwarded links work when members already know what to follow',
+    'Profiles, interests, and Village discovery help members choose by topic, level, and goal',
   ],
   [
-    'Keeping topic context',
-    'Useful posts can get buried between chat, events, voice rooms, and old threads',
+    'Keeping learning context',
+    'Useful answers can move quickly past announcements, replies, and media',
     'Discussions, challenges, courses, and AI help stay beside the Village',
   ],
   [
-    'Helping new learners start',
-    'A new member has to read the room and ask for direction',
-    'Topic Explorer turns confusing material into summaries, checklists, and prompts',
+    'Turning confusion into next steps',
+    'Depends on an organizer or active member replying in the moment',
+    'Topic Explorer turns hard material into summaries, checklists, and prompts',
   ],
   [
-    'Running private cohorts',
-    'Possible with channels and roles, but it takes moderator setup',
+    'Running focused cohorts',
+    'Possible with groups and channels, but the learning structure is organizer-built',
     'Public, private, and invite-only Villages are part of the core flow',
   ],
 ]
 
 const cards = [
   {
-    title: 'Use Discord when conversation is the main job.',
-    text: 'Discord is strong for active servers, live discussion, events, and groups that already know how the server is organized.',
-    icon: MessageSquare,
+    title: 'Use Telegram when speed matters most.',
+    text: 'Telegram is useful for quick announcements, broadcast-style updates, and lightweight conversation that members can follow from a phone.',
+    icon: MessageCircle,
   },
   {
-    title: 'Use Villages when matching matters.',
-    text: 'Villages helps organizers give each learner a clearer place to land by topic, level, interest, and learning goal.',
-    icon: Users,
+    title: 'Use Villages when discovery matters.',
+    text: 'Villages gives organizers a clearer way to help members find the right learning circle by topic, level, interest, and goal.',
+    icon: Search,
   },
   {
     title: 'Use Villages when context should last.',
-    text: 'A Village keeps the group, the discussion, the learning material, and AI help in one focused home.',
+    text: 'A Village keeps the group, the topic, the learning material, and AI-supported next steps in one focused home.',
     icon: Sparkles,
   },
 ]
 
 const faqItems = [
   {
-    question: 'What is Discord best for?',
+    question: 'What is Telegram best for?',
     answer:
-      'Discord is strong for active servers, live discussion, events, and groups that already know how the server is organized.',
+      'Telegram is useful for quick announcements, broadcast-style updates, and lightweight conversation that members can follow from a phone.',
   },
   {
-    question: 'When is Villages a better fit than Discord?',
+    question: 'When is Villages a better fit than Telegram?',
     answer:
-      'Villages fits when people need to find the right learning circle, keep topic context, and turn hard material into next steps.',
+      'Villages is a better fit when members need to discover the right learning circle, keep topic context, and turn hard material into next steps.',
   },
   {
-    question: 'How does Villages help new learners start?',
+    question: 'Can a learning community use Telegram and Villages together?',
     answer:
-      'Topic Explorer turns confusing material into summaries, checklists, and prompts so new learners have clearer next steps.',
+      'Yes. Telegram can stay useful for fast conversation while Villages holds the learning circle, context, blockers, and next steps.',
   },
 ]
 
-export default function DiscordComparison() {
+export default function TelegramComparison() {
   useEffect(() => {
     setPageMeta({
-      title: 'Discord vs Villages | Learning community comparison',
+      title: 'Telegram vs Villages | Learning community comparison',
       description:
-        'Compare Discord with Villages for study cohorts, clubs, and community organizers who need more than a busy server for learning.',
-      canonicalPath: '/compare/discord-vs-villages',
+        'Compare Telegram with Villages for learning communities that need quick chat plus clearer discovery, context, and next steps.',
+      canonicalPath: '/compare/telegram-vs-villages',
     })
-    setFAQJsonLd('discord-comparison-faq-schema', faqItems)
-    track('comparison_page_viewed', { page: 'discord_vs_villages' })
+    setFAQJsonLd('telegram-comparison-faq-schema', faqItems)
+    track('comparison_page_viewed', { page: 'telegram_vs_villages' })
   }, [])
 
   return (
@@ -92,16 +92,15 @@ export default function DiscordComparison() {
         <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:py-20">
           <div className="max-w-3xl">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-village-700 dark:text-village-300">
-              Discord vs Villages
+              Telegram vs Villages
             </p>
             <h1 className="text-4xl font-bold leading-tight text-gray-950 dark:text-white sm:text-5xl">
-              Discord is great for active communities. Villages is built for focused learning
-              groups.
+              Telegram is good for fast updates. Villages is built for focused learning groups.
             </h1>
             <p className="mt-5 text-lg leading-8 text-gray-600 dark:text-gray-300">
-              Discord works when a server already has clear channels, active moderators, and members
-              who know where to ask. Villages fits when people need to find the right learning
-              circle, keep topic context, and turn hard material into next steps.
+              Telegram works well when a group needs quick messages, announcements, or lightweight
+              conversation. Villages fits when members need to find the right learning circle, keep
+              topic context, and turn hard material into next steps.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/join" className="btn-primary inline-flex items-center gap-2">
@@ -110,8 +109,8 @@ export default function DiscordComparison() {
               <Link to="/compare/slack-vs-villages" className="btn-secondary">
                 Compare with Slack
               </Link>
-              <Link to="/compare/telegram-vs-villages" className="btn-secondary">
-                Compare with Telegram
+              <Link to="/compare/discord-vs-villages" className="btn-secondary">
+                Compare with Discord
               </Link>
               <Link to="/guides/learning-groups-scattered-chat" className="btn-secondary">
                 Read the guide
@@ -129,18 +128,18 @@ export default function DiscordComparison() {
               <thead>
                 <tr className="border-b border-amber-100 dark:border-gray-800">
                   <th className="py-3 pr-4 font-semibold">Need</th>
-                  <th className="px-4 py-3 font-semibold">Discord</th>
+                  <th className="px-4 py-3 font-semibold">Telegram</th>
                   <th className="px-4 py-3 font-semibold">Villages</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(([need, discord, villages]) => (
+                {rows.map(([need, telegram, villages]) => (
                   <tr
                     key={need}
                     className="border-b border-amber-100 last:border-0 dark:border-gray-800"
                   >
                     <td className="py-4 pr-4 font-medium">{need}</td>
-                    <td className="px-4 py-4 text-gray-600 dark:text-gray-300">{discord}</td>
+                    <td className="px-4 py-4 text-gray-600 dark:text-gray-300">{telegram}</td>
                     <td className="px-4 py-4 text-gray-800 dark:text-gray-100">{villages}</td>
                   </tr>
                 ))}
@@ -176,9 +175,9 @@ export default function DiscordComparison() {
               </div>
               <div className="mt-5 space-y-3">
                 {[
-                  'Discord is a strong community chat product.',
+                  'Telegram is a strong tool for fast messages and lightweight community updates.',
                   'Villages is a learning community product with discovery, group context, and AI support built in.',
-                  'If the goal is to help people choose a learning circle and keep going, Villages starts closer to the problem.',
+                  'A group can keep Telegram for quick conversation while using Villages for durable learning work.',
                 ].map((point) => (
                   <div key={point} className="flex gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <CheckCircle2
@@ -209,16 +208,16 @@ export default function DiscordComparison() {
                   Read the Slack comparison <ArrowRight size={14} />
                 </Link>
                 <Link
-                  to="/compare/telegram-vs-villages"
+                  to="/compare/discord-vs-villages"
                   className="inline-flex items-center gap-1 text-sm font-medium text-village-700 hover:underline dark:text-village-300"
                 >
-                  Read the Telegram comparison <ArrowRight size={14} />
+                  Read the Discord comparison <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
             <div className="rounded-lg border border-amber-100 bg-amber-50 p-5 dark:border-gray-800 dark:bg-gray-800">
               <div className="flex items-center gap-2">
-                <Search className="text-village-700 dark:text-village-300" size={20} />
+                <ListChecks className="text-village-700 dark:text-village-300" size={20} />
                 <h3 className="text-lg font-semibold">Try Villages for your learning group</h3>
               </div>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
@@ -227,7 +226,7 @@ export default function DiscordComparison() {
               </p>
               <div className="mt-4">
                 <MagicLinkSignup
-                  source="discord_comparison"
+                  source="telegram_comparison"
                   buttonLabel="Send my join link"
                   compact
                 />

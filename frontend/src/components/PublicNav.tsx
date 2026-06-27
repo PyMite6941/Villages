@@ -38,6 +38,12 @@ export default function PublicNav() {
           >
             Discord
           </Link>
+          <Link
+            to="/compare/telegram-vs-villages"
+            className="hidden hover:text-village-700 dark:hover:text-village-200 lg:inline"
+          >
+            Telegram
+          </Link>
           <Link to="/login" className="btn-secondary px-3 py-1.5 text-sm">
             Log in
           </Link>
