@@ -2,6 +2,8 @@ type AnalyticsValue = string | number | boolean | null | undefined
 
 type AnalyticsProperties = Record<string, AnalyticsValue>
 
+type AnalyticsContext = 'public' | 'internal_verification'
+
 type AnalyticsEvent =
   | 'landing_viewed'
   | 'join_page_viewed'
@@ -28,6 +30,33 @@ const configuredPosthogHost = (
 // does not pollute the funnel unless a developer sets the Vite env values explicitly.
 const posthogKey = configuredPosthogKey || (import.meta.env.PROD ? managedPosthogKey : undefined)
 const posthogHost = configuredPosthogHost || (import.meta.env.PROD ? managedPosthogHost : undefined)
+const analyticsContextStorageKey = 'villages-analytics-context'
+
+function normalizeAnalyticsContext(value: string | null): AnalyticsContext | null {
+  if (!value) return null
+  if (['internal', 'test', 'verification', 'internal_verification'].includes(value)) {
+    return 'internal_verification'
+  }
+  if (value === 'public') return 'public'
+  return null
+}
+
+function getAnalyticsContext(): AnalyticsContext {
+  const params = new URLSearchParams(window.location.search)
+  const queryContext = normalizeAnalyticsContext(
+    params.get('analytics_context') ?? params.get('traffic_context'),
+  )
+
+  if (queryContext === 'public') {
+    window.sessionStorage.removeItem(analyticsContextStorageKey)
+  } else if (queryContext) {
+    window.sessionStorage.setItem(analyticsContextStorageKey, queryContext)
+  }
+
+  return (
+    normalizeAnalyticsContext(window.sessionStorage.getItem(analyticsContextStorageKey)) ?? 'public'
+  )
+}
 
 function getAnonymousId() {
   const storageKey = 'villages-anonymous-id'
@@ -47,6 +76,10 @@ export function analyticsReady() {
 
 export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {}) {
   if (!analyticsReady()) return
+  const analyticsContext = getAnalyticsContext()
+  if (analyticsContext === 'internal_verification') return
+
+  const surface = properties.surface ?? properties.source ?? properties.page ?? null
 
   const payload = {
     api_key: posthogKey,
@@ -54,8 +87,10 @@ export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {
     distinct_id: getAnonymousId(),
     properties: {
       app: 'villages',
+      analytics_context: analyticsContext,
       path: window.location.pathname,
       referrer: document.referrer || null,
+      surface,
       ...properties,
     },
   }
