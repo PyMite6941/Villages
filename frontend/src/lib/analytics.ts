@@ -31,6 +31,19 @@ const configuredPosthogHost = (
 const posthogKey = configuredPosthogKey || (import.meta.env.PROD ? managedPosthogKey : undefined)
 const posthogHost = configuredPosthogHost || (import.meta.env.PROD ? managedPosthogHost : undefined)
 const analyticsContextStorageKey = 'villages-analytics-context'
+const trafficSourceStorageKey = 'villages-traffic-source'
+
+function normalizeTrafficSource(value: string | null): string | null {
+  if (!value) return null
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  return normalized || null
+}
 
 function normalizeAnalyticsContext(value: string | null): AnalyticsContext | null {
   if (!value) return null
@@ -58,6 +71,20 @@ function getAnalyticsContext(): AnalyticsContext {
   )
 }
 
+function getTrafficSource(): string | null {
+  const params = new URLSearchParams(window.location.search)
+  const querySource = normalizeTrafficSource(
+    params.get('traffic_source') ?? params.get('utm_source') ?? params.get('source'),
+  )
+
+  if (querySource) {
+    window.sessionStorage.setItem(trafficSourceStorageKey, querySource)
+    return querySource
+  }
+
+  return normalizeTrafficSource(window.sessionStorage.getItem(trafficSourceStorageKey))
+}
+
 function getAnonymousId() {
   const storageKey = 'villages-anonymous-id'
   const existing = window.localStorage.getItem(storageKey)
@@ -79,6 +106,7 @@ export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {
   const analyticsContext = getAnalyticsContext()
   if (analyticsContext === 'internal_verification') return
 
+  const trafficSource = getTrafficSource()
   const surface = properties.surface ?? properties.source ?? properties.page ?? null
 
   const payload = {
@@ -90,6 +118,7 @@ export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {
       analytics_context: analyticsContext,
       path: window.location.pathname,
       referrer: document.referrer || null,
+      traffic_source: trafficSource,
       surface,
       ...properties,
     },
