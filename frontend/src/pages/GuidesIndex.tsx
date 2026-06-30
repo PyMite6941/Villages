@@ -162,7 +162,7 @@ export default function GuidesIndex() {
 
         <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
           <div className="max-w-3xl">
-            <h2 className="text-2xl font-bold">Three ways learning groups get stuck</h2>
+            <h2 className="text-2xl font-bold">Four ways learning groups get stuck</h2>
             <p className="mt-3 text-gray-600 dark:text-gray-300">
               Each guide focuses on a different organizer problem and points back to the same
               Villages path when the group needs a more durable home.
