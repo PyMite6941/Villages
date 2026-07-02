@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-const SUPPORT_EMAIL = 'villages-eight@support.tin.computer'
+const SUPPORT_EMAIL = 'villages-eight@mail.tin.computer'
 
 export default function PublicNav() {
   return (
@@ -57,7 +57,10 @@ export default function PublicNav() {
         >
           {SUPPORT_EMAIL}
         </a>
-        .
+        . <span className="text-gray-400 dark:text-gray-500">·</span>{' '}
+        <a href="https://tin.computer" className="text-gray-500 hover:underline dark:text-gray-400">
+          Growth by Tin
+        </a>
       </div>
     </header>
   )
