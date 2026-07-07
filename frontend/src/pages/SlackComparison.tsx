@@ -49,7 +49,7 @@ const faqItems = [
 export default function SlackComparison() {
   useEffect(() => {
     setPageMeta({
-      title: 'Slack vs Villages | Learning community comparison',
+      title: 'Slack vs Villages for learning-community organizers',
       description:
         'Compare Slack with Villages for study cohorts, adult learning circles, and community organizers who need more than another chat feed.',
       canonicalPath: '/compare/slack-vs-villages',
