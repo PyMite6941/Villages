@@ -77,7 +77,7 @@ export default function SlackComparison() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/join" className="btn-primary inline-flex items-center gap-2">
-                Join Villages <ArrowRight size={16} />
+                Try Villages for one focused circle <ArrowRight size={16} />
               </Link>
               <Link to="/" className="btn-secondary">
                 Back to overview
