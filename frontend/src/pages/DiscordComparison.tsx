@@ -95,13 +95,14 @@ export default function DiscordComparison() {
               Discord vs Villages
             </p>
             <h1 className="text-4xl font-bold leading-tight text-gray-950 dark:text-white sm:text-5xl">
-              Discord is great for active communities. Villages is built for focused learning
-              groups.
+              Discord keeps communities talking. Villages keeps learning groups moving.
             </h1>
             <p className="mt-5 text-lg leading-8 text-gray-600 dark:text-gray-300">
-              Discord works when a server already has clear channels, active moderators, and members
-              who know where to ask. Villages fits when people need to find the right learning
-              circle, keep topic context, and turn hard material into next steps.
+              In a learning community, the problem is rarely the chat itself. It is helping people
+              find the right circle, keeping useful context from getting buried, and turning hard
+              material into next steps. Discord works when a server already has clear channels,
+              active moderators, and members who know where to ask. Villages starts with the
+              learning path.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/join" className="btn-primary inline-flex items-center gap-2">
