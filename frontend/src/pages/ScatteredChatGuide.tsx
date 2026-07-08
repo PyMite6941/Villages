@@ -294,8 +294,8 @@ export default function ScatteredChatGuide() {
             <article className="rounded-lg border border-amber-100 bg-amber-50 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-800">
               <h3 className="text-lg font-semibold">Try Villages from this guide</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
-                Start with an email link, then create or join a Village around the group you are
-                trying to organize.
+                Use the email link to try one focused circle first, then decide what still belongs
+                back in chat.
               </p>
               <div className="mt-4">
                 <MagicLinkSignup
