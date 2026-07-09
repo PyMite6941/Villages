@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Moon, Sun, Monitor, Gauge, Eye, ArrowLeft, Type, Volume2 } from 'lucide-react'
+import { Moon, Sun, Monitor, Gauge, Eye, ArrowLeft, Type, Volume2, ClipboardList, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 type Theme = 'dark' | 'light' | 'system'
@@ -210,6 +210,27 @@ export default function Settings() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Feedback */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-4">
+          <ClipboardList size={16} className="text-village-600" />
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Feedback</h2>
+        </div>
+
+        <a
+          href="https://docs.google.com/forms/d/e/1FAIpQLSdidqr9A-DnJIVnzvIafdtCMI55u8QE7MHsgWjgw_IQLIZ78w/viewform?usp=sharing&ouid=115377066488424172926"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between gap-3 px-3 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+        >
+          <div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Villages Survey</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Share your thoughts to help us improve Villages</div>
+          </div>
+          <ExternalLink size={16} className="text-gray-400 dark:text-gray-500 shrink-0" />
+        </a>
       </div>
 
       {/* Info */}
