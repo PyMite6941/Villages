@@ -58,7 +58,11 @@ export default function PublicNav() {
           {SUPPORT_EMAIL}
         </a>
         . <span className="text-gray-400 dark:text-gray-500">·</span>{' '}
-        <a href="https://tin.computer" className="text-gray-500 hover:underline dark:text-gray-400">
+        <a
+          href="https://tin.computer"
+          className="inline-flex items-center gap-1 text-gray-500 hover:underline dark:text-gray-400"
+        >
+          <span className="inline-block h-[1em] w-[1em] bg-[#66DC9D]" aria-hidden="true" />
           Growth by Tin
         </a>
       </div>

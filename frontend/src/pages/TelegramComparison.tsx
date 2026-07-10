@@ -104,7 +104,7 @@ export default function TelegramComparison() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/join" className="btn-primary inline-flex items-center gap-2">
-                Join Villages <ArrowRight size={16} />
+                Try Villages for one focused circle <ArrowRight size={16} />
               </Link>
               <Link to="/compare/slack-vs-villages" className="btn-secondary">
                 Compare with Slack
@@ -221,8 +221,8 @@ export default function TelegramComparison() {
                 <h3 className="text-lg font-semibold">Try Villages for your learning group</h3>
               </div>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Start with an email link, then create or join a Village around the subject your
-                group cares about.
+                Start with one focused circle, then keep Telegram for fast updates while Villages
+                holds the learning work.
               </p>
               <div className="mt-4">
                 <MagicLinkSignup
