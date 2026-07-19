@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { api } from '../lib/api'
 import type { UserProfile, TeacherVerification } from '../types'
@@ -48,7 +49,9 @@ const ALL_SUBJECTS = [
 ]
 
 export default function Profile({ session }: Props) {
+  const navigate = useNavigate()
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loadError, setLoadError] = useState(false)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ display_name: '', academic_level: '', goals: [] as string[], bio: '', interests: [] as string[], learning_style: 'visual', strengths: [] as string[], weaknesses: [] as string[] })
   const [saving, setSaving] = useState(false)
@@ -60,14 +63,29 @@ export default function Profile({ session }: Props) {
   const [scholarForm, setScholarForm] = useState({ degree_title: '', institution: '', subject_area: 'Mathematics' })
   const [applying, setApplying] = useState(false)
 
+  const loadProfile = useCallback(() => {
+    setLoadError(false)
+    api.users.getProfile(session.user.id)
+      .then((p) => {
+        setProfile(p)
+        setForm({ display_name: p.display_name, academic_level: p.academic_level, goals: p.goals, bio: p.bio ?? '', interests: p.interests ?? [], learning_style: p.learning_style ?? 'visual', strengths: p.strengths ?? [], weaknesses: p.weaknesses ?? [] })
+        setStudyTags(p.study_tags ?? [])
+      })
+      .catch((err: unknown) => {
+        // No profile row yet (e.g. onboarding never finished) → send them to set it up
+        // instead of hanging forever on "Loading profile...".
+        if (String(err instanceof Error ? err.message : err).toLowerCase().includes('not found')) {
+          navigate('/onboarding')
+        } else {
+          setLoadError(true)
+        }
+      })
+  }, [session.user.id, navigate])
+
   useEffect(() => {
-    api.users.getProfile(session.user.id).then((p) => {
-      setProfile(p)
-      setForm({ display_name: p.display_name, academic_level: p.academic_level, goals: p.goals, bio: p.bio ?? '', interests: p.interests ?? [], learning_style: p.learning_style ?? 'visual', strengths: p.strengths ?? [], weaknesses: p.weaknesses ?? [] })
-      setStudyTags(p.study_tags ?? [])
-    })
+    loadProfile()
     api.teacher.getVerification().then((v) => setVerification(v)).catch(() => setVerification(null))
-  }, [session.user.id])
+  }, [loadProfile])
 
   const toggleTag = async (tag: string) => {
     const next = studyTags.includes(tag)
@@ -137,6 +155,13 @@ export default function Profile({ session }: Props) {
     }
   }
 
+  if (loadError) return (
+    <div className="max-w-xl mx-auto text-center py-12 space-y-3">
+      <p className="text-gray-500 dark:text-gray-400">We couldn't load your profile.</p>
+      <button onClick={loadProfile} className="btn-secondary text-sm">Try again</button>
+    </div>
+  )
+
   if (!profile) return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading profile...</div>
 
   return (
@@ -147,11 +172,11 @@ export default function Profile({ session }: Props) {
       <div className="card">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-full bg-village-600 text-white flex items-center justify-center text-2xl font-bold shrink-0">
-            {profile.display_name[0].toUpperCase()}
+            {(profile.display_name || session.user.email || '?').charAt(0).toUpperCase()}
           </div>
           <div>
             <div className="font-semibold text-lg flex items-center gap-2">
-              {profile.display_name}
+              {profile.display_name || session.user.email?.split('@')[0] || 'Villager'}
               {profile.is_verified_teacher && (
                 <span className="badge bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs flex items-center gap-1">
                   <span>📜</span> Village Scholar
