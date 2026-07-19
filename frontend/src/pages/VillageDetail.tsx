@@ -38,6 +38,7 @@ export default function VillageDetail({ session: _session }: Props) {
   const [aiModeration, setAiModeration] = useState(true)
   const [savingSettings, setSavingSettings] = useState(false)
   const postIdsRef = useRef(new Set<string>())
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
 
   const sessionId = _session.user.id
   const sessionEmail = _session.user.email
@@ -47,6 +48,14 @@ export default function VillageDetail({ session: _session }: Props) {
       .then((p) => setDisplayName(p.display_name))
       .catch(() => setDisplayName(sessionEmail?.split('@')[0] ?? 'Villager'))
   }, [sessionId, sessionEmail])
+
+  useEffect(() => {
+    // Voice channel only renders once we know Daily.co is actually configured —
+    // otherwise the button was showing but every click failed with a 503.
+    api.config.getPublic()
+      .then((c) => setVoiceEnabled(c.voice_enabled))
+      .catch(() => setVoiceEnabled(false))
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -289,7 +298,7 @@ export default function VillageDetail({ session: _session }: Props) {
       </div>
 
       {/* Village Fire — live voice channel */}
-      {id && <VillageVoice villageId={id} />}
+      {id && voiceEnabled && <VillageVoice villageId={id} />}
 
       {/* Collaborative challenges */}
       {challenges.length > 0 && (

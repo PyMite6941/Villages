@@ -34,3 +34,13 @@ app.include_router(teacher_router)
 @app.get("/health")
 async def health():
     return {"status": "ok", "platform": "Villages"}
+
+
+@app.get("/config/public")
+async def public_config():
+    """
+    Non-secret feature flags the frontend needs before rendering.
+    Lets the UI hide features (like the voice channel) that aren't
+    configured yet, instead of showing a button that always fails.
+    """
+    return {"voice_enabled": bool(settings.daily_api_key)}

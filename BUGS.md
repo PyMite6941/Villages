@@ -6,6 +6,34 @@ agent's code. Planned features live in `FEATURE_ROADMAP.md`.
 
 ---
 
+## ✅ 2026-07-19 — "Join Voice" button rendered even when Daily.co unconfigured FIXED
+
+**Symptom:** `VillageVoice` (the Village Fire "Join Voice" button) rendered
+unconditionally in `VillageDetail.tsx`. When the backend's `DAILY_API_KEY` is unset,
+`POST /villages/{id}/voice` returns **503 "Voice channels are not configured"**
+(`villages.py:372-373`), so the button was a dead-end with no explanation. Not a prod
+outage — `DAILY_API_KEY` is set in the live Vercel backend (voice verified working
+2026-06-18) — but it broke local dev and any deploy missing the key.
+
+**Fix (graceful degradation — the UI now asks the server whether voice is on):**
+- Backend: new no-auth `GET /config/public` in `main.py` returning
+  `{"voice_enabled": bool(settings.daily_api_key)}` — non-secret feature flags only.
+- Frontend `api.ts`: added `api.config.getPublic()`.
+- `VillageDetail.tsx`: fetches the flag on mount into `voiceEnabled` state; renders
+  `<VillageVoice />` only when `voiceEnabled` is true (falls back to hidden on error).
+- Once `DAILY_API_KEY` is present, `voice_enabled` flips to `true` automatically — no
+  code change needed.
+
+**Verify:** backend `python -c "from app.main import app"` imports clean;
+frontend `npm run typecheck` → 0 errors.
+
+> Note on the source package that proposed this: its migration guidance claimed
+> `supabase/migrations/README.md` mandates order `004→005→006→007→008→009`. The README
+> is actually stale and lists only `004→007`; the true applied order (incl. 008/009) is
+> already recorded above (2026-06-18). Migrations were untouched by this fix.
+
+---
+
 ## ✅ 2026-06-21 — Magic-link "localhost won't connect" FIXED (hosted Supabase config)
 
 **Symptom:** every emailed magic link, on all devices, opened `http://localhost:3000`

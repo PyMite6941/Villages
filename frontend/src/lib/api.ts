@@ -26,6 +26,10 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 }
 
 export const api = {
+  config: {
+    // No auth needed — safe, non-secret feature flags only.
+    getPublic: () => req<{ voice_enabled: boolean }>('GET', '/config/public'),
+  },
   users: {
     createProfile: (data: Partial<UserProfile>) => req<UserProfile>('POST', '/users/profile', data),
     getProfile: (id: string) => req<UserProfile>('GET', `/users/profile/${id}`),
